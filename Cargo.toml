@@ -1,0 +1,28 @@
+[package]
+name = "top-gg"
+version = "0.1.0"
+authors = ["rumblefrog <contact@rumblefrog.me>"]
+categories = ["top-gg", "sdk", "asynchronous", "api-bindings"]
+keywords = ["top-gg"]
+license = "MIT"
+description = "Top.gg API client"
+edition = "2018"
+readme = "README.md"
+repository = "https://github.com/top-gg/rust-sdk.git"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+thiserror = "1.0"
+bytes = { default-features = false, version = "0.6" }
+reqwest = { default-features = false, version = "0.10" }
+tokio = { default-features = false, version = "0.3" }
+serde = { default-features = false, features = ["derive"], version = "1" }
+
+# Optional
+simd-json = { default-features = false, features = ["serde_impl", "swar-number-parsing"], optional = true, version = "0.3" }
+
+[features]
+default = ["rustls"]
+native = ["reqwest/default-tls"]
+rustls = ["reqwest/rustls-tls"]
