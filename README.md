@@ -1,14 +1,9 @@
-# topgg-rs
-A top.gg library.
+# rust-sdk
+Top.gg Rust SDK.
 
 
 
 ## How to use
-In your `Cargo.toml`
-```
-[dependencies]
-topgg-rs = "0.1.0"
-```
 
 ```rust
 #[tokio::main]
