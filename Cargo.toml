@@ -1,14 +1,14 @@
 [package]
-name = "topgg-rs"
+name = "top-gg"
 version = "0.1.0"
 authors = ["14ROVI <29734170+14ROVI@users.noreply.github.com>"]
-edition = "2018"
-repository = "https://github.com/14ROVI/topgg-rs"
-readme = "README.md"
-description = "A top.gg library that makes posting and getting info easy!"
-keywords = ["discord", "bots", "topgg", "dbl", "discordbotslist"]
-categories = ["api-bindings", "web-programming::http-client"]
+categories = ["top-gg", "sdk", "asynchronous", "api-bindings"]
+keywords = ["top-gg"]
 license = "MIT"
+description = "Top.gg API client"
+edition = "2018"
+readme = "README.md"
+repository = "https://github.com/top-gg/rust-sdk.git"
 
 
 [lib]
