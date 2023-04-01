@@ -20,9 +20,7 @@ impl<'de> Visitor<'de> for SnowflakeVisitor {
   where
     E: Error,
   {
-    Ok(Snowflake(
-      v.parse().map_err(|_| E::custom("invalid snowflake"))?,
-    ))
+    Ok(Snowflake(unsafe { v.parse().unwrap_unchecked() }))
   }
 }
 
@@ -64,11 +62,9 @@ impl<S> PartialEq<S> for Snowflake
 where
   S: SnowflakeLike,
 {
+  #[inline(always)]
   fn eq(&self, other: &S) -> bool {
-    match other.as_snowflake() {
-      Some(id) => id == self.0,
-      None => false,
-    }
+    other.as_snowflake() == self.0
   }
 }
 
@@ -85,7 +81,7 @@ where
 {
   #[inline(always)]
   fn partial_cmp(&self, other: &S) -> Option<Ordering> {
-    self.0.partial_cmp(&other.as_snowflake()?)
+    self.0.partial_cmp(&other.as_snowflake())
   }
 }
 
@@ -100,13 +96,13 @@ impl<'de> Deserialize<'de> for Snowflake {
 }
 
 pub trait SnowflakeLike {
-  fn as_snowflake(&self) -> Option<u64>;
+  fn as_snowflake(&self) -> u64;
 }
 
 impl SnowflakeLike for Bot {
   #[inline(always)]
-  fn as_snowflake(&self) -> Option<u64> {
-    Some(self.id.0)
+  fn as_snowflake(&self) -> u64 {
+    self.id.0
   }
 }
 
@@ -114,8 +110,8 @@ macro_rules! impl_snowflake_tryfrom(
   ($($t:ty),+) => {$(
     impl SnowflakeLike for $t {
       #[inline(always)]
-      fn as_snowflake(&self) -> Option<u64> {
-        (*self).try_into().ok()
+      fn as_snowflake(&self) -> u64 {
+        (*self).try_into().unwrap()
       }
     }
   )+}
@@ -125,8 +121,8 @@ macro_rules! impl_snowflake_fromstr(
   ($($t:ty),+) => {$(
     impl SnowflakeLike for $t {
       #[inline(always)]
-      fn as_snowflake(&self) -> Option<u64> {
-        self.parse().ok()
+      fn as_snowflake(&self) -> u64 {
+        self.parse().expect("invalid snowflake")
       }
     }
   )+}

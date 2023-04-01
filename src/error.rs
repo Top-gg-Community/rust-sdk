@@ -42,7 +42,6 @@ impl error::Error for InternalError {
 pub enum Error {
   InternalClientError(InternalError),
   InternalServerError,
-  InvalidArgument,
   NotFound,
   Ratelimited { retry_after: u16 },
 }
@@ -53,7 +52,6 @@ impl fmt::Display for Error {
     match self {
       Self::InternalClientError(err) => write!(f, "internal client error: {err}"),
       Self::InternalServerError => write!(f, "internal server error"),
-      Self::InvalidArgument => write!(f, "invalid argument"),
       Self::NotFound => write!(f, "not found"),
       Self::Ratelimited { retry_after } => write!(
         f,

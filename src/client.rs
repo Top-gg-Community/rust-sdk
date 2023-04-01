@@ -3,8 +3,9 @@ use crate::{
   http::{Http, GET, POST},
   snowflake::SnowflakeLike,
   user::{Voted, Voter},
-  Error, Result,
+  Result,
 };
+use core::mem::transmute;
 
 pub struct Client<'a> {
   http: Http<'a>,
@@ -26,7 +27,7 @@ impl<'a> Client<'a> {
   where
     I: SnowflakeLike,
   {
-    let path = format!("/bots/{}", id.as_snowflake().ok_or(Error::InvalidArgument)?);
+    let path = format!("/bots/{}", id.as_snowflake());
 
     self.http.request(GET, &path, None).await
   }
@@ -35,10 +36,7 @@ impl<'a> Client<'a> {
   where
     I: SnowflakeLike,
   {
-    let path = format!(
-      "/bots/{}/stats",
-      id.as_snowflake().ok_or(Error::InvalidArgument)?
-    );
+    let path = format!("/bots/{}/stats", id.as_snowflake());
 
     self.http.request(GET, &path, None).await
   }
@@ -47,14 +45,12 @@ impl<'a> Client<'a> {
   where
     I: SnowflakeLike,
   {
-    if new_stats.server_count == 0 {
-      return Err(Error::InvalidArgument);
-    }
-
-    let path = format!(
-      "/bots/{}/stats",
-      id.as_snowflake().ok_or(Error::InvalidArgument)?
+    assert!(
+      new_stats.server_count != 0,
+      "server count attribute is required"
     );
+
+    let path = format!("/bots/{}/stats", id.as_snowflake());
     let body = unsafe { serde_json::to_string(&new_stats).unwrap_unchecked() };
 
     self.http.request(POST, &path, Some(&body)).await?;
@@ -66,10 +62,7 @@ impl<'a> Client<'a> {
   where
     I: SnowflakeLike,
   {
-    let path = format!(
-      "/bots/{}/votes",
-      id.as_snowflake().ok_or(Error::InvalidArgument)?
-    );
+    let path = format!("/bots/{}/votes", id.as_snowflake());
 
     self.http.request(GET, &path, None).await
   }
@@ -90,20 +83,23 @@ impl<'a> Client<'a> {
   {
     let path = format!(
       "/bots/{}/votes?userId={}",
-      bot_id.as_snowflake().ok_or(Error::InvalidArgument)?,
-      user_id.as_snowflake().ok_or(Error::InvalidArgument)?
+      bot_id.as_snowflake(),
+      user_id.as_snowflake()
     );
 
     Ok(self.http.request::<Voted>(GET, &path, None).await?.voted == 1)
   }
 
+  #[allow(clippy::transmute_int_to_bool)]
   pub async fn is_weekend(&self) -> Result<bool> {
-    Ok(
-      self
-        .http
-        .request::<IsWeekend>(GET, "/weekend", None)
-        .await?
-        .is_weekend,
-    )
+    Ok(unsafe {
+      transmute(
+        self
+          .http
+          .request::<IsWeekend>(GET, "/weekend", None)
+          .await?
+          .is_weekend,
+      )
+    })
   }
 }

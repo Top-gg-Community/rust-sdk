@@ -1,6 +1,6 @@
 use crate::{
   snowflake::{Snowflake, SnowflakeLike},
-  util, Error, Result,
+  util,
 };
 use chrono::{offset::Utc, DateTime};
 use core::cmp::{min, PartialEq};
@@ -96,23 +96,24 @@ impl NewBotStats {
     self
   }
 
-  pub fn shard_count<C>(mut self, new_shard_count: C) -> Result<Self>
+  pub fn shard_count<C>(mut self, new_shard_count: C) -> Self
   where
     C: Into<u64>,
   {
     let new_shard_count = new_shard_count.into();
 
     if let Some(ref new_shards) = self.shards {
-      if (new_shards.len() as u64) != new_shard_count {
-        return Err(Error::InvalidArgument);
-      }
+      assert!(
+        (new_shards.len() as u64) == new_shard_count,
+        "new shard count doesn't match the shards array's length - please use .shards() instead"
+      );
     }
 
     self.shard_count = Some(new_shard_count);
-    Ok(self)
+    self
   }
 
-  pub fn shards<A, I>(mut self, new_shards: A, shard_index: Option<I>) -> Result<Self>
+  pub fn shards<A, I>(mut self, new_shards: A, shard_index: Option<I>) -> Self
   where
     A: IntoIterator,
     A::Item: Into<u64>,
@@ -130,9 +131,10 @@ impl NewBotStats {
     if let Some(shard_index) = shard_index {
       let shard_index = shard_index.into();
 
-      if shard_index >= (new_shards_list.len() as u64) {
-        return Err(Error::InvalidArgument);
-      }
+      assert!(
+        shard_index < (new_shards_list.len() as u64),
+        "shard index out of range"
+      );
 
       self.shard_id = Some(shard_index);
     }
@@ -140,7 +142,7 @@ impl NewBotStats {
     self.shard_count = Some(new_shards_list.len() as _);
     self.shards = Some(new_shards_list);
 
-    Ok(self)
+    self
   }
 }
 
@@ -153,7 +155,7 @@ impl Default for NewBotStats {
 
 #[derive(Deserialize)]
 pub(crate) struct IsWeekend {
-  pub(crate) is_weekend: bool,
+  pub(crate) is_weekend: u8,
 }
 
 pub struct Filter(String);
@@ -198,10 +200,7 @@ impl Filter {
   where
     I: SnowflakeLike,
   {
-    if let Some(snowflake) = new_id.as_snowflake() {
-      self.0.push_str(&format!("id: {snowflake} "));
-    }
-
+    self.0.push_str(&format!("id: {} ", new_id.as_snowflake()));
     self
   }
 
