@@ -1,0 +1,20 @@
+[package]
+name = "topgg"
+version = "0.1.0"
+edition = "2021"
+authors = ["Top.gg <support@top.gg> (https://top.gg)", "null (https://github.com/null8626)"]
+description = "The official Rust wrapper for the Top.gg API"
+readme = "README.md"
+repository = "https://github.com/top-gg/rust-sdk"
+license = "MIT"
+keywords = ["discord", "bots", "top.gg"]
+categories = ["api-bindings", "web-programming::http-client"]
+exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
+
+[dependencies]
+chrono = { version = "0.4", default-features = false, features = ["serde"] }
+serde = { version = "1", default-features = false, features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["net"] }
+tokio-native-tls = "0.3"
+urlencoding = "2"
