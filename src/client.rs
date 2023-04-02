@@ -2,7 +2,7 @@ use crate::{
   bot::{Bot, BotStats, Bots, IsWeekend, NewBotStats, QueryLike},
   http::{Http, GET, POST},
   snowflake::SnowflakeLike,
-  user::{Voted, Voter},
+  user::{User, Voted, Voter},
   Result,
 };
 use core::mem::transmute;
@@ -23,6 +23,15 @@ impl<'a> Client<'a> {
     }
   }
 
+  pub async fn get_user<I>(&self, id: I) -> Result<User>
+  where
+    I: SnowflakeLike,
+  {
+    let path = format!("/users/{}", id.as_snowflake());
+
+    self.http.request(GET, &path, None).await
+  }
+  
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: SnowflakeLike,

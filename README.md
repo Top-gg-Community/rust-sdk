@@ -14,7 +14,26 @@ More things can be read on [the documentation](https://docs.rs/topgg).
 
 ## Examples
 
-- Fetching a single bot from it's Discord ID
+- Fetching a single discord user from it's Discord ID
+
+```rust,no_run
+use topgg::Client;
+
+#[tokio::main]
+async fn main() {
+  let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  
+  let best_user_of_all_time = client.get_user(661200758510977084u64).await.unwrap();
+  
+  assert_eq!(best_user_of_all_time.username, "null");
+  assert_eq!(best_user_of_all_time.discriminator, "8626");
+  assert_eq!(best_user_of_all_time.id, 661200758510977084u64);
+  
+  println!("{:?}", best_user_of_all_time);
+}
+```
+
+- Fetching a single discord bot from it's Discord ID
 
 ```rust,no_run
 use topgg::Client;
@@ -25,14 +44,14 @@ async fn main() {
   
   let bot = client.get_bot(282859044593598464u64).await.unwrap();
   
-  assert_eq!(bot.id, 282859044593598464u64);
   assert_eq!(bot.username, "ProBot ✨");
+  assert_eq!(bot.id, 282859044593598464u64);
   
   println!("{:?}", bot);
 }
 ```
 
-- Querying a disord bot from their username
+- Querying a discord bot from their username
 
 ```rust,no_run
 use topgg::Client;
@@ -47,7 +66,7 @@ async fn main() {
 }
 ```
 
-- Querying a discord with advanced configurations
+- Querying a discord bot with advanced configurations
 
 ```rust,no_run
 use topgg::{Client, Filter, Query};
