@@ -178,7 +178,7 @@ pub struct BotStats {
   pub shard_count: Option<u64>,
 }
 
-/// A struct representing a discord bot's statistics to be posted to the API.
+/// A struct representing a discord bot's statistics [to be posted][`crate::Client::set_bot_stats`] to the API.
 #[derive(Serialize)]
 pub struct NewBotStats {
   pub(crate) server_count: u64,
@@ -346,7 +346,7 @@ pub(crate) struct IsWeekend {
   pub(crate) is_weekend: u8,
 }
 
-/// A struct for filtering the query in [`crate::Client::get_bots`].
+/// A struct for filtering the query in [`get_bots`][`crate::Client::get_bots`].
 pub struct Filter(String);
 
 impl Filter {

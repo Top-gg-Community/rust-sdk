@@ -4,13 +4,13 @@
 //!
 //! ## Getting Started
 //!
-//! Make sure to have a top.gg API token handy, you can have a token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
+//! Make sure to have a [top.gg](https://top.gg) API token handy, you can have an API token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 //!
 //! ```toml
 //! topgg = "0.1"
 //! ```
 //!
-//! More things can be read on [the documentation](https://docs.rs/topgg).
+//! More things can be read on the [documentation](https://docs.rs/topgg).
 //!
 //! ## Examples
 //!
@@ -117,14 +117,21 @@
 //! }
 //! ```
 
-pub mod bot;
 mod client;
 mod error;
+
 pub(crate) mod http;
-pub mod snowflake;
-pub mod user;
 pub(crate) mod util;
+
+/// Bot-related structs.
+pub mod bot;
+
+/// Snowflake utilities.
+pub mod snowflake;
+
+/// User-related structs.
+pub mod user;
 
 pub use bot::{Filter, NewBotStats, Query};
 pub use client::Client;
-pub use error::*;
+pub use error::{Error, InternalError, Result};

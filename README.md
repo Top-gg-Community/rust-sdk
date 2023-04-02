@@ -4,7 +4,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
 
-Make sure to have a top.gg API token handy, you can have a token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
+Make sure to have a [top.gg](https://top.gg) API token handy, you can have an API token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
 topgg = "0.1"

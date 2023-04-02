@@ -1,4 +1,3 @@
-use crate::bot::Bot;
 use core::{
   cmp::{Ordering, PartialEq, PartialOrd},
   fmt,
@@ -100,13 +99,6 @@ impl<'de> Deserialize<'de> for Snowflake {
 /// A trait that represents any data type that can be interpreted as a snowflake.
 pub trait SnowflakeLike {
   fn as_snowflake(&self) -> u64;
-}
-
-impl SnowflakeLike for Bot {
-  #[inline(always)]
-  fn as_snowflake(&self) -> u64 {
-    self.id.0
-  }
 }
 
 macro_rules! impl_snowflake_tryfrom(

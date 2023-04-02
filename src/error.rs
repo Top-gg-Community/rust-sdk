@@ -59,7 +59,10 @@ pub enum Error {
   NotFound,
 
   /// The client is being ratelimited from sending more HTTP requests.
-  Ratelimit { retry_after: u16 },
+  Ratelimit {
+    /// The amount of seconds before the ratelimit is lifted.
+    retry_after: u16,
+  },
 }
 
 impl fmt::Display for Error {
@@ -88,5 +91,5 @@ impl error::Error for Error {
   }
 }
 
-/// The [`Result`] type primarily used in this SDK.
+/// The [`Result`][`core::result::Result`] type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;
