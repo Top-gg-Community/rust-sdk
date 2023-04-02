@@ -77,7 +77,7 @@ impl<'a> Http<'a> {
     match status_code {
       401 => panic!("unauthorized"),
       404 => Err(Error::NotFound),
-      429 => Err(Error::Ratelimited {
+      429 => Err(Error::Ratelimit {
         retry_after: serde_json::from_str::<Ratelimit>(&response)
           .map_err(|_| Error::InternalServerError)?
           .retry_after,

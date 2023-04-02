@@ -24,6 +24,7 @@ impl<'de> Visitor<'de> for SnowflakeVisitor {
   }
 }
 
+/// Represents a discord snowflake/ID.
 #[derive(Copy, Clone, Debug)]
 pub struct Snowflake(u64);
 
@@ -36,6 +37,7 @@ impl Deref for Snowflake {
   }
 }
 
+/// Coerces this snowflake to a [`u64`].
 #[allow(clippy::from_over_into)]
 impl Into<u64> for Snowflake {
   #[inline(always)]
@@ -95,6 +97,7 @@ impl<'de> Deserialize<'de> for Snowflake {
   }
 }
 
+/// A trait that represents any data type that can be interpreted as a snowflake.
 pub trait SnowflakeLike {
   fn as_snowflake(&self) -> u64;
 }

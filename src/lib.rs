@@ -42,31 +42,17 @@
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
 //!   
-//!   let bot = client.get_bot(282859044593598464u64).await.unwrap();
+//!   let best_bot_ever_made = client.get_bot(264811613708746752u64).await.unwrap();
 //!   
-//!   assert_eq!(bot.username, "ProBot ✨");
-//!   assert_eq!(bot.id, 282859044593598464u64);
+//!   assert_eq!(best_bot_ever_made.username, "Luca");
+//!   assert_eq!(best_bot_ever_made.discriminator, "1375");
+//!   assert_eq!(best_bot_ever_made.id, 264811613708746752u64);
 //!   
-//!   println!("{:?}", bot);
+//!   println!("{:?}", best_bot_ever_made);
 //! }
 //! ```
 //!
-//! - Querying a discord bot from their username
-//!
-//! ```rust,no_run
-//! use topgg::Client;
-//!
-//! #[tokio::main]
-//! async fn main() {
-//!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
-//!   
-//!   for bot in client.get_bots("shiro").await.unwrap() {
-//!     println!("{:?}", bot);
-//!   }
-//! }
-//! ```
-//!
-//! - Querying a discord bot with advanced configurations
+//! - Querying several discord bots
 //!
 //! ```rust,no_run
 //! use topgg::{Client, Filter, Query};
@@ -75,16 +61,58 @@
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
 //!   
+//!   // inputting a string searches a bot that matches that username
+//!   for bot in client.get_bots("shiro").await.unwrap() {
+//!     println!("{:?}", bot);
+//!   }
+//!
+//!   // advanced query with filters
 //!   let filter = Filter::new()
 //!     .username("shiro")
 //!     .certified(true);
-//!   
+//!
 //!   let query = Query::new()
-//!     .limit(100)
+//!     .limit(250)
+//!     .skip(50)
 //!     .filter(filter);
-//!   
+//!
 //!   for bot in client.get_bots(query).await.unwrap() {
 //!     println!("{:?}", bot);
+//!   }
+//! }
+//! ```
+//!
+//! - Posting a listed discord bot's statistics
+//!
+//! ```rust,no_run
+//! use topgg::{Client, NewBotStats};
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+//!   let my_bot_id = 123456789u64;
+//!
+//!   let stats = NewBotStats::new()
+//!     .server_count(1234); // be TRUTHFUL!
+//!
+//!   client.set_bot_stats(my_bot_id, stats).await.unwrap();
+//! }
+//! ```
+//!
+//! - Checking if a user has voted for a listed discord bot
+//!
+//! ```rust,no_run
+//! use topgg::Client;
+//!
+//! #[tokio::main]
+//! async fn main() {
+//!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+//!   
+//!   let best_bot_id = 264811613708746752u64;
+//!   let best_user_id = 661200758510977084u64;
+//!
+//!   if client.has_user_voted(best_bot_id, best_user_id).await.unwrap() {
+//!     println!("this user is based");
 //!   }
 //! }
 //! ```
