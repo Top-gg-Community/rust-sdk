@@ -64,7 +64,7 @@ impl<'a> Http<'a> {
       return Err(Error::InternalServerError);
     }
 
-    // we sould never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
+    // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
     let status_code = unsafe {
       response
         .split_ascii_whitespace()
