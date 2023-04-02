@@ -67,7 +67,7 @@ impl<'a> Client<'a> {
     self.http.request(GET, &path, None).await
   }
 
-  pub async fn search_bot<Q>(&self, query: Q) -> Result<Vec<Bot>>
+  pub async fn get_bots<Q>(&self, query: Q) -> Result<Vec<Bot>>
   where
     Q: QueryLike,
   {
@@ -76,6 +76,7 @@ impl<'a> Client<'a> {
     Ok(self.http.request::<Bots>(GET, &path, None).await?.results)
   }
 
+  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_user_voted<B, U>(&self, bot_id: B, user_id: U) -> Result<bool>
   where
     B: SnowflakeLike,
@@ -87,7 +88,7 @@ impl<'a> Client<'a> {
       user_id.as_snowflake()
     );
 
-    Ok(self.http.request::<Voted>(GET, &path, None).await?.voted == 1)
+    Ok(unsafe { transmute(self.http.request::<Voted>(GET, &path, None).await?.voted) })
   }
 
   #[allow(clippy::transmute_int_to_bool)]

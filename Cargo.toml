@@ -9,12 +9,12 @@ repository = "https://github.com/top-gg/rust-sdk"
 license = "MIT"
 keywords = ["discord", "bots", "top.gg"]
 categories = ["api-bindings", "web-programming::http-client"]
-exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
+exclude = [".gitattributes", ".gitignore", ".github/**", "rustfmt.toml"]
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["serde"] }
 serde = { version = "1", default-features = false, features = ["derive"] }
 serde_json = "1"
-tokio = { version = "1", features = ["net"] }
+tokio = { version = "1", features = ["net", "io-util"] }
 tokio-native-tls = "0.3"
 urlencoding = "2"

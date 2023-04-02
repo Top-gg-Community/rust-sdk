@@ -25,10 +25,11 @@ pub struct Bot {
   pub owners: Vec<Snowflake>,
   pub guilds: Vec<Snowflake>,
   pub invite: Option<String>,
+  pub banner_url: Option<String>,
   pub date: DateTime<Utc>,
   #[serde(rename = "certifiedBot")]
   pub is_certified: bool,
-  pub shards: Vec<u64>,
+  pub shards: Option<Vec<u64>>,
   #[serde(rename = "points")]
   pub votes: u64,
   #[serde(rename = "monthlyPoints")]

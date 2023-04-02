@@ -1,6 +1,6 @@
 use crate::{Error, InternalError, Result};
 use serde::{de::DeserializeOwned, Deserialize};
-use std::io::{Read, Write};
+use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
 use tokio_native_tls::{native_tls, TlsConnector};
 
@@ -28,36 +28,39 @@ impl<'a> Http<'a> {
     path: &'a str,
     body: Option<&'a str>,
   ) -> Result<String> {
-    let connector: TlsConnector = native_tls::TlsConnector::new()
+    let cx: TlsConnector = native_tls::TlsConnector::new()
       .map_err(|err| Error::InternalClientError(InternalError::CreateConnector(err)))?
       .into();
 
-    let stream = TcpStream::connect("top.gg:443")
+    let socket = TcpStream::connect("top.gg:443")
       .await
       .map_err(|err| Error::InternalClientError(InternalError::Connect(err)))?;
 
-    let mut stream = connector
-      .connect("top.gg", stream)
+    let mut socket = cx
+      .connect("top.gg", socket)
       .await
       .map_err(|err| Error::InternalClientError(InternalError::Handshake(err)))?;
 
-    if let Err(err) = write!(
-      stream.get_mut(),
+    let payload = format!(
       "\
       {predicate} /api{path} HTTP/1.0\r\n\
       Authorization: Bearer {}\r\n\
-      Content-Type: application/json\r\n
-      User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\r\n{}\
-      ",
+      Content-Type: application/json\r\n\
+      Host: top.gg\r\n\
+      User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\
+      \r\n{}\
+    ",
       self.token,
       body.unwrap_or("")
-    ) {
+    );
+
+    if let Err(err) = socket.write_all(payload.as_bytes()).await {
       return Err(Error::InternalClientError(InternalError::WriteRequest(err)));
     }
 
     let mut response = String::new();
 
-    if stream.get_mut().read_to_string(&mut response).is_err() {
+    if socket.read_to_string(&mut response).await.is_err() {
       return Err(Error::InternalServerError);
     }
 
@@ -72,7 +75,7 @@ impl<'a> Http<'a> {
     };
 
     match status_code {
-      401 => panic!("Invalid top.gg token provided - got ({})", self.token),
+      401 => panic!("unauthorized"),
       404 => Err(Error::NotFound),
       429 => Err(Error::Ratelimited {
         retry_after: serde_json::from_str::<Ratelimit>(&response)
@@ -97,7 +100,8 @@ impl<'a> Http<'a> {
   where
     D: DeserializeOwned,
   {
-    serde_json::from_str(&self.send(predicate, path, body).await?)
-      .map_err(|_| Error::InternalServerError)
+    let response = self.send(predicate, path, body).await?;
+
+    serde_json::from_str(&response).map_err(|_| Error::InternalServerError)
   }
 }
