@@ -300,9 +300,18 @@ pub trait QueryLike {
 }
 
 impl QueryLike for Query {
+  #[inline(always)]
   fn into_query_string(mut self) -> String {
     self.0.pop();
     self.0
+  }
+}
+
+impl QueryLike for Filter {
+  #[inline(always)]
+  fn into_query_string(mut self) -> String {
+    self.0.pop();
+    format!("?search={}", encode(&self.0))
   }
 }
 
@@ -310,6 +319,7 @@ impl<S> QueryLike for &S
 where
   S: AsRef<str> + ?Sized,
 {
+  #[inline(always)]
   fn into_query_string(self) -> String {
     format!("?search=username%3A%20{}", encode(self.as_ref()))
   }
