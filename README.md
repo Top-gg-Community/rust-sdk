@@ -23,9 +23,9 @@ use topgg::Client;
 async fn main() {
   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   
-  let bot = client.get_bot(282859044593598464).await.unwrap();
+  let bot = client.get_bot(282859044593598464u64).await.unwrap();
   
-  assert_eq!(bot.id, 282859044593598464);
+  assert_eq!(bot.id, 282859044593598464u64);
   assert_eq!(bot.username, "ProBot ✨");
   
   println!("{:?}", bot);
