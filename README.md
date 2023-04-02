@@ -77,7 +77,7 @@ async fn main() {
   
   let filter = Filter::new()
     .username("shiro")
-	.certified(true);
+    .certified(true);
   
   let query = Query::new()
     .limit(100)
