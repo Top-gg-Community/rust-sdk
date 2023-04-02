@@ -537,7 +537,7 @@ impl Default for Filter {
   }
 }
 
-/// A struct for configuring the query in [`crate::Client::get_bots`].
+/// A struct for configuring the query in [`get_bots`][`crate::Client::get_bots`].
 pub struct Query(String);
 
 impl Query {
