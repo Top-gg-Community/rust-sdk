@@ -31,7 +31,7 @@ impl<'a> Client<'a> {
 
     self.http.request(GET, &path, None).await
   }
-  
+
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: SnowflakeLike,

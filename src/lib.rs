@@ -1,24 +1,24 @@
 //! # topgg
-//! 
+//!
 //! The official Rust SDK for the [Top.gg API](https://docs.top.gg).
-//! 
+//!
 //! ## Getting Started
-//! 
+//!
 //! Make sure to have a top.gg API token handy, you can have a token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
-//! 
+//!
 //! ```toml
 //! topgg = "0.1"
 //! ```
-//! 
+//!
 //! More things can be read on [the documentation](https://docs.rs/topgg).
-//! 
+//!
 //! ## Examples
-//! 
+//!
 //! - Fetching a single discord user from it's Discord ID
-//! 
+//!
 //! ```rust,no_run
 //! use topgg::Client;
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
@@ -32,12 +32,12 @@
 //!   println!("{:?}", best_user_of_all_time);
 //! }
 //! ```
-//! 
+//!
 //! - Fetching a single discord bot from it's Discord ID
-//! 
+//!
 //! ```rust,no_run
 //! use topgg::Client;
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
@@ -50,12 +50,12 @@
 //!   println!("{:?}", bot);
 //! }
 //! ```
-//! 
+//!
 //! - Querying a discord bot from their username
-//! 
+//!
 //! ```rust,no_run
 //! use topgg::Client;
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
@@ -65,12 +65,12 @@
 //!   }
 //! }
 //! ```
-//! 
+//!
 //! - Querying a discord bot with advanced configurations
-//! 
+//!
 //! ```rust,no_run
 //! use topgg::{Client, Filter, Query};
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
