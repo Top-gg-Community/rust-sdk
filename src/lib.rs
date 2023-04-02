@@ -117,6 +117,8 @@
 //! }
 //! ```
 
+#![allow(clippy::transmute_int_to_bool)]
+
 mod client;
 mod error;
 

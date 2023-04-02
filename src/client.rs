@@ -358,7 +358,6 @@ impl<'a> Client<'a> {
   ///   }
   /// }
   /// ```
-  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_user_voted<B, U>(&self, bot_id: B, user_id: U) -> Result<bool>
   where
     B: SnowflakeLike,
@@ -402,7 +401,6 @@ impl<'a> Client<'a> {
   ///   }
   /// }
   /// ```
-  #[allow(clippy::transmute_int_to_bool)]
   pub async fn is_weekend(&self) -> Result<bool> {
     Ok(unsafe {
       transmute(
