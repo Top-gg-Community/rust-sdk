@@ -178,7 +178,7 @@ pub struct BotStats {
   pub shard_count: Option<u64>,
 }
 
-/// A struct representing a discord bot's statistics [to be posted][`crate::Client::set_bot_stats`] to the API.
+/// A struct representing a discord bot's statistics [to be posted][`crate::Client::post_bot_stats`] to the API.
 #[derive(Serialize)]
 pub struct NewBotStats {
   pub(crate) server_count: u64,

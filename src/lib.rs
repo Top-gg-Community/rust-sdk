@@ -95,7 +95,7 @@
 //!   let stats = NewBotStats::new()
 //!     .server_count(1234); // be TRUTHFUL!
 //!
-//!   client.set_bot_stats(my_bot_id, stats).await.unwrap();
+//!   client.post_bot_stats(my_bot_id, stats).await.unwrap();
 //! }
 //! ```
 //!

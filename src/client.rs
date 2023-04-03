@@ -45,7 +45,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
@@ -90,7 +90,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
@@ -135,7 +135,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
@@ -176,7 +176,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   /// - The client posts to a discord bot not owned by the owner of the [top.gg](https://top.gg) token. (unauthorized)
   /// - The new stats' required server count property is still empty or zero.
@@ -204,10 +204,10 @@ impl<'a> Client<'a> {
   ///   let stats = NewBotStats::new()
   ///     .server_count(1234); // be TRUTHFUL!
   ///
-  ///   client.set_bot_stats(my_bot_id, stats).await.unwrap();
+  ///   client.post_bot_stats(my_bot_id, stats).await.unwrap();
   /// }
   /// ```
-  pub async fn set_bot_stats<I>(&self, id: I, new_stats: NewBotStats) -> Result<()>
+  pub async fn post_bot_stats<I>(&self, id: I, new_stats: NewBotStats) -> Result<()>
   where
     I: SnowflakeLike,
   {
@@ -229,7 +229,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
@@ -270,7 +270,7 @@ impl<'a> Client<'a> {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
