@@ -9,7 +9,7 @@ repository = "https://github.com/top-gg/rust-sdk"
 license = "MIT"
 keywords = ["discord", "bots", "top.gg"]
 categories = ["api-bindings", "web-programming::http-client"]
-exclude = [".gitattributes", ".gitignore", ".github/**", "rustfmt.toml"]
+exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
 chrono = { version = "0.4", default-features = false, features = ["serde"] }

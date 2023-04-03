@@ -81,9 +81,9 @@ impl User {
   /// async fn main() {
   ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let best_user_of_all_time = client.get_user(661200758510977084u64).await.unwrap();
+  ///   let user = client.get_user(661200758510977084u64).await.unwrap();
   ///   
-  ///   println!("{}", best_user_of_all_time.avatar());
+  ///   println!("{}", user.avatar());
   /// }
   /// ```
   #[inline(always)]

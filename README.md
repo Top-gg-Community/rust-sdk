@@ -23,13 +23,13 @@ use topgg::Client;
 async fn main() {
   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   
-  let best_user_of_all_time = client.get_user(661200758510977084u64).await.unwrap();
+  let user = client.get_user(661200758510977084u64).await.unwrap();
   
-  assert_eq!(best_user_of_all_time.username, "null");
-  assert_eq!(best_user_of_all_time.discriminator, "8626");
-  assert_eq!(best_user_of_all_time.id, 661200758510977084u64);
+  assert_eq!(user.username, "null");
+  assert_eq!(user.discriminator, "8626");
+  assert_eq!(user.id, 661200758510977084u64);
   
-  println!("{:?}", best_user_of_all_time);
+  println!("{:?}", user);
 }
 ```
 
@@ -42,13 +42,13 @@ use topgg::Client;
 async fn main() {
   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   
-  let best_bot_ever_made = client.get_bot(264811613708746752u64).await.unwrap();
+  let bot = client.get_bot(264811613708746752u64).await.unwrap();
   
-  assert_eq!(best_bot_ever_made.username, "Luca");
-  assert_eq!(best_bot_ever_made.discriminator, "1375");
-  assert_eq!(best_bot_ever_made.id, 264811613708746752u64);
+  assert_eq!(bot.username, "Luca");
+  assert_eq!(bot.discriminator, "1375");
+  assert_eq!(bot.id, 264811613708746752u64);
   
-  println!("{:?}", best_bot_ever_made);
+  println!("{:?}", bot);
 }
 ```
 
@@ -108,10 +108,10 @@ use topgg::Client;
 async fn main() {
   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   
-  let best_bot_id = 264811613708746752u64;
-  let best_user_id = 661200758510977084u64;
+  let bot_id = 264811613708746752u64;
+  let user_id = 661200758510977084u64;
 
-  if client.has_user_voted(best_bot_id, best_user_id).await.unwrap() {
+  if client.has_user_voted(bot_id, user_id).await.unwrap() {
     println!("this user is based");
   }
 }

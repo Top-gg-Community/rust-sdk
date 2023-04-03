@@ -91,9 +91,9 @@ impl Bot {
   /// async fn main() {
   ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let best_bot_ever_made = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
-  ///   println!("{}", best_bot_ever_made.avatar());
+  ///   println!("{}", bot.avatar());
   /// }
   /// ```
   #[inline(always)]
@@ -114,9 +114,9 @@ impl Bot {
   /// async fn main() {
   ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let best_bot_ever_made = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
-  ///   println!("{}", best_bot_ever_made.url());
+  ///   println!("{}", bot.url());
   /// }
   /// ```
   #[inline(always)]
@@ -140,9 +140,9 @@ impl Bot {
   /// async fn main() {
   ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let best_bot_ever_made = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
-  ///   println!("{}", best_bot_ever_made.server());
+  ///   println!("{}", bot.server());
   /// }
   /// ```
   pub fn server(&self) -> Option<String> {
