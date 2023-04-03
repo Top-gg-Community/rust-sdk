@@ -112,7 +112,7 @@ async fn main() {
   let user_id = 661200758510977084u64;
 
   if client.has_user_voted(bot_id, user_id).await.unwrap() {
-    println!("this user is based");
+    println!("checks out");
   }
 }
 ```
