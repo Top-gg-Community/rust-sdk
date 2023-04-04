@@ -100,8 +100,10 @@
 //!   let client = Client::new(token);
 //!   let my_bot_id = 123456789u64;
 //!
-//!   let stats = NewBotStats::new()
-//!     .server_count(1234); // be TRUTHFUL!
+//!   let server_count = 1234; // be TRUTHFUL!
+//!   let shard_count = 10;
+//!
+//!   let stats = NewBotStats::count_based(server_count, Some(shard_count));
 //!
 //!   client.post_bot_stats(my_bot_id, stats).await.unwrap();
 //! }
@@ -114,17 +116,17 @@
 //! ```rust,no_run
 //! use std::env;
 //! use topgg::{Autoposter, Client, NewBotStats};
-//! 
+//!
 //! #[tokio::main]
 //! async fn main() {
 //!   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
 //!   let client = Client::new(token);
 //!   let my_bot_id = 123456789u64;
-//! 
+//!
 //!   // make sure to make this autoposter instance live
 //!   // throughout most of the bot's lifetime to keep running!
 //!   let autoposter = client.new_autoposter(my_bot_id, 1800);
-//! 
+//!
 //!   // ... then in some on ready/new guild event ...
 //!   let server_count = 12345;
 //!   let stats = NewBotStats::count_based(server_count, None);
