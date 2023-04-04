@@ -85,11 +85,13 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
@@ -108,11 +110,13 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
@@ -134,11 +138,13 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
@@ -181,14 +187,14 @@ pub struct BotStats {
 /// A struct representing a discord bot's statistics [to be posted][`crate::Client::post_bot_stats`] to the API.
 #[derive(Serialize)]
 pub struct NewBotStats {
-  pub(crate) server_count: u64,
-  shards: Option<Vec<u64>>,
+  server_count: u64,
   shard_count: Option<u64>,
+  shards: Option<Vec<u64>>,
   shard_id: Option<u64>,
 }
 
 impl NewBotStats {
-  /// Creates a new discord bot's statistics struct.
+  /// Creates a NewBotStats struct based on total server (and optionally, shard) count data.
   ///
   /// # Examples
   ///
@@ -197,42 +203,28 @@ impl NewBotStats {
   /// ```rust,no_run
   /// use topgg::NewBotStats;
   ///
-  /// let _stats = NewBotStats::new();
+  /// let _stats = NewBotStats::count_based(12345, Some(10));
   /// ```
-  pub const fn new() -> Self {
+  #[must_use]
+  #[inline(always)]
+  pub fn count_based<A, B>(server_count: A, shard_count: Option<B>) -> Self
+  where
+    A: Into<u64>,
+    B: Into<u64>,
+  {
     Self {
-      server_count: 0,
+      server_count: server_count.into(),
+      shard_count: shard_count.map(|s| s.into()),
       shards: None,
-      shard_count: None,
       shard_id: None,
     }
   }
 
-  /// Sets the server count for this struct - it must NOT be zero.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::NewBotStats;
-  ///
-  /// let _stats = NewBotStats::new()
-  ///   .server_count(1234);
-  /// ```
-  pub fn server_count<S>(mut self, new_server_count: S) -> Self
-  where
-    S: Into<u64>,
-  {
-    self.server_count = new_server_count.into();
-    self
-  }
-
-  /// Sets the shard count for this struct.
+  /// Creates a NewBotStats struct based on server count per shard and optionally the index (to the first array) of shard posting posting this data.
   ///
   /// # Panics
   ///
-  /// Panics if a shards array is already provided through [`NewBotStats::shards`] and it's length doesn't match the `new_shard_count` argument.
+  /// Panics if the shard_index argument is [`Some`] yet it's out of range of the `shards` array.
   ///
   /// # Examples
   ///
@@ -241,103 +233,44 @@ impl NewBotStats {
   /// ```rust,no_run
   /// use topgg::NewBotStats;
   ///
-  /// let _stats = NewBotStats::new()
-  ///   .server_count(1234)
-  ///   .shard_count(69);
+  /// // The shard posting this data has 456 servers.
+  /// let _stats = NewBotStats::shards_based([123, 456, 789], Some(1));
   /// ```
-  pub fn shard_count<C>(mut self, new_shard_count: C) -> Self
-  where
-    C: Into<u64>,
-  {
-    let new_shard_count = new_shard_count.into();
-
-    if let Some(ref new_shards) = self.shards {
-      assert!(
-        (new_shards.len() as u64) == new_shard_count,
-        "new shard count doesn't match the shards array's length - please use .shards() instead"
-      );
-    }
-
-    self.shard_count = Some(new_shard_count);
-    self
-  }
-
-  /// Sets a list of server count per shard for this struct - and optionally an zero-index to the main shard posting the current stats.
-  ///
-  /// Please note that the server count will automatically be set as the sum of every server count in the shards array.
-  ///
-  /// # Panics
-  ///
-  /// Panics if `shard_index` is out of bounds from the shards array.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::NewBotStats;
-  ///
-  /// let _stats = NewBotStats::new()
-  ///   .shards([123, 456, 789], None);
-  /// ```
-  ///
-  /// Or:
-  ///
-  /// ```rust,no_run
-  /// use topgg::NewBotStats;
-  ///
-  /// // the shard posting this has 123 servers in it.
-  /// let _stats = NewBotStats::new()
-  ///   .shards([123, 456, 789], Some(0));
-  /// ```
-  pub fn shards<A, I>(mut self, new_shards: A, shard_index: Option<I>) -> Self
+  #[must_use]
+  pub fn shards_based<A, B>(shards: A, shard_index: Option<B>) -> Self
   where
     A: IntoIterator,
     A::Item: Into<u64>,
-    I: Into<u64>,
+    B: Into<u64>,
   {
-    self.server_count = 0u64;
-    let new_shards = new_shards.into_iter();
-    let mut new_shards_list = Vec::with_capacity(new_shards.size_hint().0);
+    let mut total_server_count = 0u64;
+    let shards = shards.into_iter();
+    let mut shards_list = Vec::with_capacity(shards.size_hint().0);
 
-    for server_count in new_shards.map(|s| s.into()) {
-      self.server_count += server_count;
-      new_shards_list.push(server_count);
+    for server_count in shards.map(|s| s.into()) {
+      total_server_count += server_count;
+      shards_list.push(server_count);
     }
+
+    let mut shard_id: Option<u64> = None;
 
     if let Some(shard_index) = shard_index {
       let shard_index = shard_index.into();
 
       assert!(
-        shard_index < (new_shards_list.len() as u64),
+        shard_index < (shards_list.len() as u64),
         "shard index out of range"
       );
 
-      self.shard_id = Some(shard_index);
+      shard_id.replace(shard_index);
     }
 
-    self.shard_count = Some(new_shards_list.len() as _);
-    self.shards = Some(new_shards_list);
-
-    self
-  }
-}
-
-/// Creates a new discord bot's statistics struct. (Same as [`NewBotStats::new`])
-///
-/// # Examples
-///
-/// Basic usage:
-///
-/// ```rust,no_run
-/// use topgg::NewBotStats;
-///
-/// let _stats = NewBotStats::default();
-/// ```
-impl Default for NewBotStats {
-  #[inline(always)]
-  fn default() -> Self {
-    Self::new()
+    Self {
+      server_count: total_server_count,
+      shard_count: Some(shards_list.len() as _),
+      shards: Some(shards_list),
+      shard_id,
+    }
   }
 }
 

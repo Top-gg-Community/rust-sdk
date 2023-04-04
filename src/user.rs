@@ -75,11 +75,13 @@ impl User {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
   ///   
@@ -122,11 +124,13 @@ impl Voter {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   for based_voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
   ///     println!("{}", based_voter.avatar());

@@ -13,17 +13,17 @@ pub(crate) struct Ratelimit {
   pub(crate) retry_after: u16,
 }
 
-pub(crate) struct Http<'a> {
-  token: &'a str,
+pub(crate) struct Http {
+  token: String,
 }
 
-impl<'a> Http<'a> {
-  pub(crate) const fn new(token: &'a str) -> Self {
+impl Http {
+  pub(crate) const fn new(token: String) -> Self {
     Self { token }
   }
 
-  async fn send(
-    &self,
+  async fn send<'a>(
+    &'a self,
     predicate: &'static str,
     path: &'a str,
     body: Option<&'a str>,
@@ -94,8 +94,8 @@ impl<'a> Http<'a> {
   pub(crate) async fn request<D>(
     &self,
     predicate: &'static str,
-    path: &'a str,
-    body: Option<&'a str>,
+    path: &str,
+    body: Option<&str>,
   ) -> Result<D>
   where
     D: DeserializeOwned,

@@ -7,12 +7,40 @@ use crate::{
 };
 use core::mem::transmute;
 
-/// A struct representing a [top.gg](https://top.gg) API client instance.
-pub struct Client<'a> {
-  http: Http<'a>,
+cfg_if::cfg_if! {
+  if #[cfg(feature = "autoposter")] {
+    use crate::autoposter::Autoposter;
+    use std::sync::Arc;
+
+    type SyncedClient = Arc<InnerClient>;
+  } else {
+    type SyncedClient = InnerClient;
+  }
 }
 
-impl<'a> Client<'a> {
+pub(crate) struct InnerClient {
+  http: Http,
+}
+
+// this is implemented here because autoposter needs to access this function from a different thread
+
+impl InnerClient {
+  pub(crate) async fn post_bot_stats(&self, id: u64, new_stats: &NewBotStats) -> Result<()> {
+    let path = format!("/bots/{id}/stats");
+    let body = unsafe { serde_json::to_string(&new_stats).unwrap_unchecked() };
+
+    self.http.request(POST, &path, Some(&body)).await?;
+
+    Ok(())
+  }
+}
+
+/// A struct representing a [top.gg](https://top.gg) API client instance.
+pub struct Client {
+  inner: SyncedClient,
+}
+
+impl Client {
   /// Creates a brand new client instance from a [top.gg](https://top.gg) token.
   ///
   /// You can get a [top.gg](https://top.gg) token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section)
@@ -22,22 +50,26 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let _client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let _client = Client::new(token);
   /// }
   /// ```
   #[must_use]
   #[inline(always)]
-  pub fn new<T>(token: &'a T) -> Self
-  where
-    T: AsRef<str> + ?Sized,
-  {
-    Self {
-      http: Http::new(token.as_ref()),
-    }
+  pub fn new(token: String) -> Self {
+    let inner = InnerClient {
+      http: Http::new(token),
+    };
+
+    #[cfg(feature = "autoposter")]
+    let inner = Arc::new(inner);
+
+    Self { inner }
   }
 
   /// Fetches a user from a Discord ID if available.
@@ -61,11 +93,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
   ///   
@@ -82,7 +116,7 @@ impl<'a> Client<'a> {
   {
     let path = format!("/users/{}", id.as_snowflake());
 
-    self.http.request(GET, &path, None).await
+    self.inner.http.request(GET, &path, None).await
   }
 
   /// Fetches a listed discord bot from a Discord ID if available.
@@ -106,11 +140,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
@@ -127,7 +163,7 @@ impl<'a> Client<'a> {
   {
     let path = format!("/bots/{}", id.as_snowflake());
 
-    self.http.request(GET, &path, None).await
+    self.inner.http.request(GET, &path, None).await
   }
 
   /// Fetches a listed discord bot's statistics from a Discord ID if available.
@@ -151,11 +187,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let epic_stats = client.get_bot_stats(264811613708746752u64).await.unwrap();
   ///   
@@ -168,7 +206,7 @@ impl<'a> Client<'a> {
   {
     let path = format!("/bots/{}/stats", id.as_snowflake());
 
-    self.http.request(GET, &path, None).await
+    self.inner.http.request(GET, &path, None).await
   }
 
   /// Posts a listed discord bot's statistics.
@@ -179,7 +217,6 @@ impl<'a> Client<'a> {
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   /// - The client posts to a discord bot not owned by the owner of the [top.gg](https://top.gg) token. (unauthorized)
-  /// - The new stats' required server count property is still empty or zero.
   ///
   /// # Errors
   ///
@@ -194,34 +231,72 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::{Client, NewBotStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
+  ///   let server_count = 12345;
   ///
-  ///   let stats = NewBotStats::new()
-  ///     .server_count(1234); // be TRUTHFUL!
+  ///   let stats = NewBotStats::count_based(server_count, None);
   ///
   ///   client.post_bot_stats(my_bot_id, stats).await.unwrap();
   /// }
   /// ```
+  #[inline(always)]
   pub async fn post_bot_stats<I>(&self, id: I, new_stats: NewBotStats) -> Result<()>
   where
     I: SnowflakeLike,
   {
-    assert!(
-      new_stats.server_count != 0,
-      "required server count property is still empty or zero"
-    );
+    self
+      .inner
+      .post_bot_stats(id.as_snowflake(), &new_stats)
+      .await
+  }
 
-    let path = format!("/bots/{}/stats", id.as_snowflake());
-    let body = unsafe { serde_json::to_string(&new_stats).unwrap_unchecked() };
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting bot statistics to the [top.gg](https://top.gg) API.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the following conditions are met:
+  /// - The ID argument is a string but not numeric
+  /// - The delay argument is shorter than 15 minutes (900 seconds)
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use std::env;
+  /// use topgg::{Autoposter, Client, NewBotStats};
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
+  ///   let my_bot_id = 123456789u64;
+  ///
+  ///   // make sure to make this autoposter instance live
+  ///   // throughout most of the bot's lifetime to keep running!
+  ///   let _autoposter = client.new_autoposter(my_bot_id, 1800);
+  /// }
+  /// ```
+  #[cfg(feature = "autoposter")]
+  pub fn new_autoposter<I, D>(&self, id: I, seconds_delay: D) -> Autoposter
+  where
+    I: SnowflakeLike,
+    D: Into<u64>,
+  {
+    let seconds_delay = seconds_delay.into();
 
-    self.http.request(POST, &path, Some(&body)).await?;
+    if seconds_delay < 900 {
+      panic!("the delay mustn't be shorter than 15 minutes (900 seconds)");
+    }
 
-    Ok(())
+    Autoposter::new(&self.inner, id.as_snowflake(), seconds_delay)
   }
 
   /// Fetches a listed discord bot's list of voters from a Discord ID if available.
@@ -245,11 +320,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   for based_voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
   ///     println!("{:?}", based_voter);
@@ -262,7 +339,7 @@ impl<'a> Client<'a> {
   {
     let path = format!("/bots/{}/votes", id.as_snowflake());
 
-    self.http.request(GET, &path, None).await
+    self.inner.http.request(GET, &path, None).await
   }
 
   /// Queries/searches through the [top.gg](https://top.gg) database to look for matching listed discord bots.
@@ -286,11 +363,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::{Client, Filter, Query};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   // inputting a string searches a bot that matches that username
   ///   for bot in client.get_bots("shiro").await.unwrap() {
@@ -318,7 +397,14 @@ impl<'a> Client<'a> {
   {
     let path = format!("/bots{}", query.into_query_string());
 
-    Ok(self.http.request::<Bots>(GET, &path, None).await?.results)
+    Ok(
+      self
+        .inner
+        .http
+        .request::<Bots>(GET, &path, None)
+        .await?
+        .results,
+    )
   }
 
   /// Checks if the specified user has voted for the listed discord bot.
@@ -344,11 +430,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   let bot_id = 264811613708746752u64;
   ///   let user_id = 661200758510977084u64;
@@ -369,7 +457,16 @@ impl<'a> Client<'a> {
       user_id.as_snowflake()
     );
 
-    Ok(unsafe { transmute(self.http.request::<Voted>(GET, &path, None).await?.voted) })
+    Ok(unsafe {
+      transmute(
+        self
+          .inner
+          .http
+          .request::<Voted>(GET, &path, None)
+          .await?
+          .voted,
+      )
+    })
   }
 
   /// Checks if the weekend multiplier is active.
@@ -390,11 +487,13 @@ impl<'a> Client<'a> {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN"));
+  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let client = Client::new(token);
   ///   
   ///   if client.is_weekend().await.unwrap() {
   ///     println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
@@ -405,6 +504,7 @@ impl<'a> Client<'a> {
     Ok(unsafe {
       transmute(
         self
+          .inner
           .http
           .request::<IsWeekend>(GET, "/weekend", None)
           .await?
