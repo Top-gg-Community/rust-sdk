@@ -76,6 +76,7 @@ impl Http {
 
     match status_code {
       401 => panic!("unauthorized"),
+      403 => panic!("no permissions to post statistics to this bot ID"),
       404 => Err(Error::NotFound),
       429 => Err(Error::Ratelimit {
         retry_after: serde_json::from_str::<Ratelimit>(&response)
