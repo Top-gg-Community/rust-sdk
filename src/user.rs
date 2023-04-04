@@ -132,8 +132,8 @@ impl Voter {
   ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
   ///   let client = Client::new(token);
   ///   
-  ///   for based_voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
-  ///     println!("{}", based_voter.avatar());
+  ///   for voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
+  ///     println!("{}", voter.avatar());
   ///   }
   /// }
   /// ```
