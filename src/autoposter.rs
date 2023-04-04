@@ -53,7 +53,7 @@ impl Autoposter {
   ///
   ///   // make sure to make this autoposter instance live
   ///   // throughout most of the bot's lifetime to keep running!
-  ///   let autoposter = client.new_autoposter(my_bot_id, 1800);
+  ///   let mut autoposter = client.new_autoposter(my_bot_id, 1800);
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
