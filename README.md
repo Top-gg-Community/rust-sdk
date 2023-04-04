@@ -100,8 +100,10 @@ async fn main() {
   let client = Client::new(token);
   let my_bot_id = 123456789u64;
 
-  let stats = NewBotStats::new()
-    .server_count(1234); // be TRUTHFUL!
+  let server_count = 1234; // be TRUTHFUL!
+  let shard_count = 10;
+
+  let stats = NewBotStats::count_based(server_count, Some(shard_count));
 
   client.post_bot_stats(my_bot_id, stats).await.unwrap();
 }
