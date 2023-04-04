@@ -6,7 +6,7 @@ use tokio::{
   time::{sleep, Duration},
 };
 
-///	A struct that lets you automate the process of posting bot statistics to the [top.gg](https://top.gg) API.
+/// A struct that lets you automate the process of posting bot statistics to the [top.gg](https://top.gg) API.
 pub struct Autoposter {
   thread: JoinHandle<!>,
   data: Arc<Mutex<Option<NewBotStats>>>,
