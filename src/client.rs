@@ -283,7 +283,12 @@ impl Client {
   ///
   ///   // make sure to make this autoposter instance live
   ///   // throughout most of the bot's lifetime to keep running!
-  ///   let _autoposter = client.new_autoposter(my_bot_id, 1800);
+  ///   let autoposter = client.new_autoposter(my_bot_id, 1800);
+  ///
+  ///   // ... then in some on ready/new guild event ...
+  ///   let server_count = 12345;
+  ///   let stats = NewBotStats::count_based(server_count, None);
+  ///   autoposter.feed(stats).await;
   /// }
   /// ```
   #[cfg(feature = "autoposter")]
