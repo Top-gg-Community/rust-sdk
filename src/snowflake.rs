@@ -15,6 +15,7 @@ impl<'de> Visitor<'de> for SnowflakeVisitor {
     f.write_str("identifier")
   }
 
+  #[inline(always)]
   fn visit_str<E>(self, v: &str) -> Result<Self::Value, E>
   where
     E: Error,
