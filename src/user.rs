@@ -128,9 +128,10 @@ impl Voter {
   /// async fn main() {
   ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
   ///   let client = Client::new(token);
+  ///   let my_bot_id = 123456789u64;
   ///   
-  ///   for voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
-  ///     println!("{}", voter.avatar().unwrap());
+  ///   for voter in client.get_bot_voters(my_bot_id).await.unwrap() {
+  ///     println!("{}", voter.avatar().unwrap_or(String::from("No avatar :(")));
   ///   }
   /// }
   /// ```
