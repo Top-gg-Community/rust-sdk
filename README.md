@@ -88,7 +88,7 @@ async fn main() {
 }
 ```
 
-- Posting a listed discord bot's statistics
+- Posting an owned discord bot's statistics
 
 ```rust,no_run
 use std::env;
@@ -145,10 +145,10 @@ async fn main() {
   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
   let client = Client::new(token);
   
-  let bot_id = 264811613708746752u64;
+  let my_bot_id = 123456789u64;
   let user_id = 661200758510977084u64;
 
-  if client.has_user_voted(bot_id, user_id).await.unwrap() {
+  if client.has_voted(my_bot_id, user_id).await.unwrap() {
     println!("checks out");
   }
 }

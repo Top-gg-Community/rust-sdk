@@ -9,7 +9,7 @@ use core::mem::transmute;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
-    use crate::autoposter::Autoposter;
+    use crate::Autoposter;
     use std::sync::Arc;
 
     type SyncedClient = Arc<InnerClient>;
@@ -173,6 +173,7 @@ impl Client {
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client requests an external discord bot not owned by the owner. (forbidden)
   ///
   /// # Errors
   ///
@@ -209,21 +210,20 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Posts a listed discord bot's statistics.
+  /// Posts an owned discord bot's statistics.
   ///
   /// # Panics
   ///
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
-  /// - The client posts to a discord bot not owned by the owner of the [top.gg](https://top.gg) token. (unauthorized)
+  /// - The client posts statistics to an external discord bot not owned by the owner. (forbidden)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
   /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
   ///
   /// # Examples
@@ -259,7 +259,7 @@ impl Client {
       .await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting bot statistics to the [top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your own bot's statistics to the [top.gg](https://top.gg) API.
   ///
   /// # Panics
   ///
@@ -301,20 +301,20 @@ impl Client {
     Autoposter::new(&self.inner, id.as_snowflake(), seconds_delay)
   }
 
-  /// Fetches a listed discord bot's list of voters from a Discord ID if available.
+  /// Fetches an owned discord bot's last 1000 voters if available.
   ///
   /// # Panics
   ///
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client requests an external discord bot not owned by the owner. (forbidden)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
   /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
   ///
   /// # Examples
@@ -329,9 +329,10 @@ impl Client {
   /// async fn main() {
   ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
   ///   let client = Client::new(token);
+  ///   let my_bot_id = 123456789u64;
   ///   
-  ///   for based_voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
-  ///     println!("{:?}", based_voter);
+  ///   for voter in client.get_bot_voters(my_bot_id).await.unwrap() {
+  ///     println!("{:?}", voter);
   ///   }
   /// }
   /// ```
@@ -409,7 +410,7 @@ impl Client {
     )
   }
 
-  /// Checks if the specified user has voted for the listed discord bot.
+  /// Checks if the specified user has voted for an owned discord bot.
   ///
   /// # Panics
   ///
@@ -423,8 +424,6 @@ impl Client {
   /// Errors if the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
   /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
-  /// - The requested user does not exist ([`NotFound`][`crate::Error::NotFound`])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
   ///
   /// # Examples
@@ -440,15 +439,15 @@ impl Client {
   ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
   ///   let client = Client::new(token);
   ///   
-  ///   let bot_id = 264811613708746752u64;
+  ///   let my_bot_id = 123456789u64;
   ///   let user_id = 661200758510977084u64;
   ///
-  ///   if client.has_user_voted(bot_id, user_id).await.unwrap() {
+  ///   if client.has_voted(my_bot_id, user_id).await.unwrap() {
   ///     println!("checks out");
   ///   }
   /// }
   /// ```
-  pub async fn has_user_voted<B, U>(&self, bot_id: B, user_id: U) -> Result<bool>
+  pub async fn has_voted<B, U>(&self, bot_id: B, user_id: U) -> Result<bool>
   where
     B: SnowflakeLike,
     U: SnowflakeLike,

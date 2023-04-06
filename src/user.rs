@@ -108,14 +108,11 @@ pub struct Voter {
   /// The username of this user.
   pub username: String,
 
-  /// The Discord username of this user.
-  pub discriminator: String,
-
   avatar: Option<String>,
 }
 
 impl Voter {
-  /// Retrieves the discord avatar URL of this user.
+  /// Retrieves the discord avatar URL of this user if available.
   ///
   /// It's format will be either PNG or GIF if animated.
   ///
@@ -133,12 +130,19 @@ impl Voter {
   ///   let client = Client::new(token);
   ///   
   ///   for voter in client.get_bot_voters(264811613708746752u64).await.unwrap() {
-  ///     println!("{}", voter.avatar());
+  ///     println!("{}", voter.avatar().unwrap());
   ///   }
   /// }
   /// ```
   #[inline(always)]
-  pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id.into())
+  pub fn avatar(&self) -> Option<String> {
+    self.avatar.as_ref().map(|hash| {
+      let ext = if hash.starts_with("a_") { "gif" } else { "png" };
+
+      format!(
+        "https://cdn.discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
+        self.id
+      )
+    })
   }
 }
