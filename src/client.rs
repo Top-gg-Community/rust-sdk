@@ -292,6 +292,7 @@ impl Client {
   /// }
   /// ```
   #[cfg(feature = "autoposter")]
+  #[must_use]
   pub fn new_autoposter<I, D>(&self, id: I, seconds_delay: D) -> Autoposter
   where
     I: SnowflakeLike,

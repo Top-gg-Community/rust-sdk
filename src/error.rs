@@ -19,7 +19,6 @@ pub enum InternalError {
 }
 
 impl fmt::Display for InternalError {
-  #[inline(always)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::CreateConnector(_) => write!(f, "can't initiate a TLS connector"),
@@ -66,7 +65,6 @@ pub enum Error {
 }
 
 impl fmt::Display for Error {
-  #[inline(always)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::InternalClientError(err) => write!(f, "internal client error: {err}"),

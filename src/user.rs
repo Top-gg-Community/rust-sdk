@@ -135,7 +135,7 @@ impl Voter {
   ///   }
   /// }
   /// ```
-  #[inline(always)]
+  #[must_use]
   pub fn avatar(&self) -> Option<String> {
     self.avatar.as_ref().map(|hash| {
       let ext = if hash.starts_with("a_") { "gif" } else { "png" };

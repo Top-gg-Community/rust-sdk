@@ -98,6 +98,7 @@ impl Bot {
   ///   println!("{}", bot.avatar());
   /// }
   /// ```
+  #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, &self.discriminator, self.id.into())
@@ -123,6 +124,7 @@ impl Bot {
   ///   println!("{}", bot.url());
   /// }
   /// ```
+  #[must_use]
   #[inline(always)]
   pub fn url(&self) -> String {
     format!(
@@ -151,6 +153,7 @@ impl Bot {
   ///   println!("{}", bot.server());
   /// }
   /// ```
+  #[must_use]
   pub fn server(&self) -> Option<String> {
     self
       .support
@@ -294,6 +297,7 @@ impl Filter {
   ///
   /// let _filter = Filter::new();
   /// ```
+  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::new())
@@ -311,6 +315,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .username("shiro");
   /// ```
+  #[must_use]
   pub fn username<U>(mut self, new_username: &U) -> Self
   where
     U: AsRef<str> + ?Sized,
@@ -333,6 +338,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .discriminator("1536");
   /// ```
+  #[must_use]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,
@@ -355,6 +361,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .prefix("!");
   /// ```
+  #[must_use]
   pub fn prefix<P>(mut self, new_prefix: &P) -> Self
   where
     P: AsRef<str> + ?Sized,
@@ -377,6 +384,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .votes(1000);
   /// ```
+  #[must_use]
   pub fn votes<V>(mut self, new_votes: V) -> Self
   where
     V: Into<u64>,
@@ -397,6 +405,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .monthly_votes(100);
   /// ```
+  #[must_use]
   pub fn monthly_votes<M>(mut self, new_monthly_votes: M) -> Self
   where
     M: Into<u64>,
@@ -419,6 +428,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .certified(true);
   /// ```
+  #[must_use]
   pub fn certified<C>(mut self, is_certified: C) -> Self
   where
     C: Into<bool>,
@@ -441,6 +451,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .vanity("mee6");
   /// ```
+  #[must_use]
   pub fn vanity<V>(mut self, new_vanity: &V) -> Self
   where
     V: AsRef<str> + ?Sized,
@@ -485,6 +496,7 @@ impl Query {
   ///
   /// let _query = Query::new();
   /// ```
+  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::from("?"))
@@ -502,6 +514,7 @@ impl Query {
   /// let _query = Query::new()
   ///   .limit(250);
   /// ```
+  #[must_use]
   pub fn limit<N>(mut self, new_limit: N) -> Self
   where
     N: Into<u16>,
@@ -525,6 +538,7 @@ impl Query {
   ///   .limit(250)
   ///   .skip(100);
   /// ```
+  #[must_use]
   pub fn skip<S>(mut self, skip_by: S) -> Self
   where
     S: Into<u16>,
@@ -553,6 +567,7 @@ impl Query {
   ///   .skip(100)
   ///   .filter(filter);
   /// ```
+  #[must_use]
   pub fn filter(mut self, mut new_filter: Filter) -> Self {
     new_filter.0.pop();
     self
