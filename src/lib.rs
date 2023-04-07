@@ -156,11 +156,10 @@
 
 #![allow(clippy::transmute_int_to_bool)]
 
+mod client;
 mod error;
-
-pub(crate) mod client;
-pub(crate) mod http;
-pub(crate) mod util;
+mod http;
+mod util;
 
 /// Bot-related structs.
 pub mod bot;
