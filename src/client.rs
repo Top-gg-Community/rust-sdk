@@ -83,10 +83,10 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested user does not exist ([`NotFound`][`crate::Error::NotFound`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -130,10 +130,10 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -178,10 +178,10 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -222,9 +222,9 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -319,9 +319,9 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -362,10 +362,10 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][`crate::Error::NotFound`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -428,9 +428,9 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -485,9 +485,9 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][`crate::Error::InternalClientError`])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][`crate::Error::InternalServerError`])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][`crate::Error::Ratelimit`])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///

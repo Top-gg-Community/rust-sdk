@@ -99,7 +99,7 @@ pub(crate) struct Voted {
   pub(crate) voted: u8,
 }
 
-/// A struct representing a user who has voted on a discord bot listed on [top.gg](https://top.gg). (See [`crate::Client::get_bot_voters`])
+/// A struct representing a user who has voted on a discord bot listed on [top.gg](https://top.gg). (See [crate::Client::get_bot_voters`])
 #[derive(Clone, Debug, Deserialize)]
 pub struct Voter {
   /// The Discord ID of this user.
