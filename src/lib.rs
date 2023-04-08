@@ -155,6 +155,7 @@
 //! ```
 
 #![allow(clippy::transmute_int_to_bool)]
+#![doc(html_logo_url = "https://top.gg/favicon.png", html_favicon_url = "https://top.gg/favicon.png")]
 
 mod client;
 mod error;
