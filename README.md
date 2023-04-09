@@ -1,5 +1,10 @@
-# topgg
+# topgg [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url] [![BLAZINGLY FAST!!!][blazingly-fast-image]][blazingly-fast-url]
 
+[crates-io-image]: https://img.shields.io/crates/v/topgg?style=flat-square
+[crates-io-downloads-image]: https://img.shields.io/crates/d/topgg?style=flat-square
+[crates-io-url]: https://crates.io/crates/topgg
+[blazingly-fast-image]: https://img.shields.io/badge/speed-BLAZINGLY%20FAST!!!%20%F0%9F%94%A5%F0%9F%9A%80%F0%9F%92%AA%F0%9F%98%8E-brightgreen.svg?style=flat-square
+[blazingly-fast-url]: https://twitter.com/acdlite/status/974390255393505280
 The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
@@ -7,7 +12,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [top.gg](https://top.gg) API token handy, you can have an API token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
-topgg = "0.1"
+topgg = "1.0"
 ```
 
 More things can be read on the [documentation](https://docs.rs/topgg).
