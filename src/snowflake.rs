@@ -99,6 +99,7 @@ impl<'de> Deserialize<'de> for Snowflake {
 
 /// A trait that represents any data type that can be interpreted as a snowflake.
 pub trait SnowflakeLike {
+  #[doc(hidden)]
   fn as_snowflake(&self) -> u64;
 }
 

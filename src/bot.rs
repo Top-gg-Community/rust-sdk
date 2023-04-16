@@ -586,6 +586,7 @@ impl Default for Query {
 
 /// A trait that represents any data type that can be interpreted as a valid [top.gg](https://top.gg) discord bot query.
 pub trait QueryLike {
+  #[doc(hidden)]
   fn into_query_string(self) -> String;
 }
 
