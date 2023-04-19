@@ -13,7 +13,6 @@ pub struct Autoposter {
 }
 
 impl Autoposter {
-  #[allow(unused_must_use)]
   pub(crate) fn new(client: Arc<InnerClient>, delay: u64) -> Self {
     let current_thread_data = Arc::new(Mutex::new(None));
     let thread_data = Arc::clone(&current_thread_data);
@@ -26,7 +25,7 @@ impl Autoposter {
           let lock = thread_data.lock().await;
 
           if let Some(new_data) = &*lock {
-            client.post_stats(new_data).await;
+            let _ = client.post_stats(new_data).await;
           }
         }
       }),
