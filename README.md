@@ -24,7 +24,7 @@ More things can be read on the [documentation](https://docs.rs/topgg).
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
 
 - **`api`**: Interacting with the top.gg API and accessing the `top.gg/api/*` endpoints. (enabled by default)
-  - **`autoposter`**: Automating the process of periodically posting bot statistics to the Top.gg API.
+  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [top.gg](https://top.gg) API.
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
   - **`actix`**: Wrapper for working with the [`actix-web`](https://crates.io/crates/actix-web) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
@@ -154,7 +154,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b>: Automating the process of posting your discord bot's statistics</summary>
+<summary><b><code>autoposter</code></b>: Automating the process of periodically posting your discord bot's statistics</summary>
 
 In your `Cargo.toml`:
 
