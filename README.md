@@ -111,7 +111,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Posting your own discord bot's statistics</summary>
+<summary><b><code>api</code></b>: Posting your discord bot's statistics</summary>
 
 ```rust,no_run
 use topgg::{Client, NewBotStats};
@@ -133,7 +133,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Checking if a user has voted for your own discord bot</summary>
+<summary><b><code>api</code></b>: Checking if a user has voted for your discord bot</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -154,7 +154,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b>: Posting your own discord bot's statistics (with an autoposter)</summary>
+<summary><b><code>autoposter</code></b>: Automating the process of posting your discord bot's statistics</summary>
 
 In your `Cargo.toml`:
 

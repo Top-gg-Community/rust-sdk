@@ -162,7 +162,7 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Fetches your own discord bot's statistics.
+  /// Fetches your discord bot's statistics.
   ///
   /// # Panics
   ///
@@ -246,7 +246,7 @@ impl Client {
       .await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your own bot's statistics to the [top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your bot's statistics to the [top.gg](https://top.gg) API.
   ///
   /// # Panics
   ///
