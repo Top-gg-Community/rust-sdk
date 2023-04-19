@@ -1,6 +1,6 @@
 use crate::{snowflake, util};
 use chrono::{offset::Utc, DateTime};
-use core::cmp::{min, PartialEq};
+use core::cmp::min;
 use serde::{
   de::{self, Deserializer},
   Deserialize, Serialize,
@@ -148,13 +148,6 @@ impl Bot {
       "https://top.gg/bot/{}",
       self.vanity.as_deref().unwrap_or(&self.id.to_string())
     )
-  }
-}
-
-impl PartialEq for Bot {
-  #[inline(always)]
-  fn eq(&self, other: &Self) -> bool {
-    self.id == other.id
   }
 }
 
