@@ -32,7 +32,7 @@
 //! }
 //! ```
 
-use crate::{Vote, VoteHandler};
+use crate::{VoteHandler, WebhookState};
 use axum::{
   extract::State,
   http::{HeaderMap, StatusCode},
@@ -42,14 +42,9 @@ use axum::{
 };
 use std::sync::Arc;
 
-struct Webhook<T> {
-  state: T,
-  password: String,
-}
-
 async fn handler<T>(
   headers: HeaderMap,
-  State(webhook): State<Arc<Webhook<T>>>,
+  State(webhook): State<Arc<WebhookState<T>>>,
   body: String,
 ) -> Response
 where
@@ -112,5 +107,5 @@ where
 {
   Router::new()
     .route("/", post(handler::<T>))
-    .with_state(Arc::new(Webhook { state, password }))
+    .with_state(Arc::new(WebhookState { state, password }))
 }

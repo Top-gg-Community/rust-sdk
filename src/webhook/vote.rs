@@ -20,7 +20,7 @@ pub struct Vote {
   #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
   pub voter_id: u64,
 
-  /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `true`.
+  /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
   #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
   pub is_test: bool,
 
@@ -101,6 +101,11 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "axum", feature = "warp"))] {
+    pub(crate) struct WebhookState<T> {
+      pub(crate) state: T,
+      pub(crate) password: String,
+    }
+
     /// An async trait for adding an on-vote event handler to your application logic.
     ///
     /// It's described as follows (without `async_trait`'s macro expansion):
