@@ -89,9 +89,9 @@ pub(crate) fn deserialize_support_server<'de, D>(
 where
   D: Deserializer<'de>,
 {
-  let support: &str = de::Deserialize::deserialize(deserializer)?;
+  let s: Option<&str> = de::Deserialize::deserialize(deserializer)?;
 
-  Ok(Some(format!("https://discord.com/invite/{support}")))
+  Ok(s.map(|support| format!("https://discord.com/invite/{support}")))
 }
 
 impl Bot {
