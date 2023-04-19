@@ -26,11 +26,7 @@ pub struct Vote {
 
   /// Whether the weekend multiplier is active or not, meaning a single vote counts as two.
   /// If the dispatched event came from a server being voted, this will always be `false`.
-  #[serde(
-    default = "_false",
-    deserialize_with = "deserialize_is_weekend",
-    rename = "isWeekend"
-  )]
+  #[serde(default = "_false", rename = "isWeekend")]
   pub is_weekend: bool,
 
   /// Query strings found on the vote page, if any.
@@ -50,14 +46,6 @@ where
 
 const fn _false() -> bool {
   false
-}
-
-#[inline(always)]
-fn deserialize_is_weekend<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  Ok(de::Deserialize::deserialize(deserializer).unwrap_or(_false()))
 }
 
 const fn _none<T>() -> Option<T> {
