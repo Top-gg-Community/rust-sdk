@@ -237,18 +237,16 @@ impl NewBotStats {
       shards_list.push(server_count);
     }
 
-    let mut shard_id: Option<u64> = None;
-
-    if let Some(shard_index) = shard_index {
-      let shard_index = shard_index.into();
+    let shard_id = shard_index.map(|index| {
+      let index = index.into();
 
       assert!(
-        shard_index < (shards_list.len() as u64),
+        index < (shards_list.len() as u64),
         "shard index out of range"
       );
 
-      shard_id.replace(shard_index);
-    }
+      index
+    });
 
     Self {
       server_count: total_server_count,
