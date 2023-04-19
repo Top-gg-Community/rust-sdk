@@ -237,7 +237,11 @@ impl NewBotStats {
       shards_list.push(server_count);
     }
 
-    let shard_id = shard_index.map(|index| {
+    Self {
+      server_count: total_server_count,
+      shard_count: Some(shards_list.len() as _),
+      shards: Some(shards_list),
+      shard_id: shard_index.map(|index| {
       let index = index.into();
 
       assert!(
@@ -246,13 +250,7 @@ impl NewBotStats {
       );
 
       index
-    });
-
-    Self {
-      server_count: total_server_count,
-      shard_count: Some(shards_list.len() as _),
-      shards: Some(shards_list),
-      shard_id,
+    }),
     }
   }
 }
