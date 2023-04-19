@@ -458,16 +458,13 @@ impl Client {
   ///   }
   /// }
   /// ```
+  #[inline(always)]
   pub async fn is_weekend(&self) -> Result<bool> {
-    Ok(unsafe {
-      transmute(
-        self
-          .inner
-          .http
-          .request::<IsWeekend>(GET, "/weekend", None)
-          .await?
-          .is_weekend,
-      )
-    })
+    self
+      .inner
+      .http
+      .request::<IsWeekend>(GET, "/weekend", None)
+      .await
+      .map(|res| res.is_weekend)
   }
 }

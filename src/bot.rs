@@ -259,7 +259,7 @@ impl NewStats {
 
 #[derive(Deserialize)]
 pub(crate) struct IsWeekend {
-  pub(crate) is_weekend: u8,
+  pub(crate) is_weekend: bool,
 }
 
 /// A struct for filtering the query in [`get_bots`][crate::Client::get_bots].
