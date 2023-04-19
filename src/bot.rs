@@ -1,14 +1,14 @@
-use crate::{snowflake::Snowflake, util};
+use crate::{snowflake, util};
 use chrono::{offset::Utc, DateTime};
 use core::cmp::{min, PartialEq};
 use serde::{Deserialize, Serialize};
-use urlencoding::encode;
 
 /// A struct representing a Discord Bot listed on [top.gg](https://top.gg).
 #[derive(Clone, Debug, Deserialize)]
 pub struct Bot {
   /// The ID of this discord bot.
-  pub id: Snowflake,
+  #[serde(deserialize_with = "snowflake::deserialize")]
+  pub id: u64,
 
   /// The username of this discord bot.
   pub username: String,
@@ -36,11 +36,11 @@ pub struct Bot {
   /// The link to the github repo of this discord bot.
   pub github: Option<String>,
 
-  /// A list of snowflakes of this discord bot's owners. The main owner is the first snowflake in the array.
-  pub owners: Vec<Snowflake>,
+  /// A list of IDs of this discord bot's owners. The main owner is the first ID in the array.
+  pub owners: Vec<u64>,
 
-  /// A list of snowflakes of the guilds featured on this discord bot's page.
-  pub guilds: Vec<Snowflake>,
+  /// A list of IDs of the guilds featured on this discord bot's page.
+  pub guilds: Vec<u64>,
 
   /// The custom bot invite URL of this discord bot.
   pub invite: Option<String>,
@@ -85,12 +85,11 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
@@ -101,7 +100,7 @@ impl Bot {
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id.into())
+    util::get_avatar(&self.avatar, &self.discriminator, self.id)
   }
 
   /// Retrieves the URL of this discord bot's [top.gg](https://top.gg) page.
@@ -111,12 +110,11 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
@@ -140,12 +138,11 @@ impl Bot {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
@@ -572,7 +569,7 @@ impl Query {
     new_filter.0.pop();
     self
       .0
-      .push_str(&format!("search={}&", encode(&new_filter.0)));
+      .push_str(&format!("search={}&", urlencoding::encode(&new_filter.0)));
     self
   }
 }
@@ -602,7 +599,7 @@ impl QueryLike for Filter {
   #[inline(always)]
   fn into_query_string(mut self) -> String {
     self.0.pop();
-    format!("?search={}", encode(&self.0))
+    format!("?search={}", urlencoding::encode(&self.0))
   }
 }
 
@@ -612,6 +609,9 @@ where
 {
   #[inline(always)]
   fn into_query_string(self) -> String {
-    format!("?search=username%3A%20{}", encode(self.as_ref()))
+    format!(
+      "?search=username%3A%20{}",
+      urlencoding::encode(self.as_ref())
+    )
   }
 }

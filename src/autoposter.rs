@@ -42,12 +42,11 @@ impl Autoposter {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::{Autoposter, Client, NewBotStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
   ///

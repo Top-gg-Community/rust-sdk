@@ -1,4 +1,4 @@
-use crate::{snowflake::Snowflake, util};
+use crate::{snowflake, util};
 use serde::Deserialize;
 
 /// A struct representing a user's social links if available.
@@ -24,7 +24,8 @@ pub struct Socials {
 #[derive(Clone, Debug, Deserialize)]
 pub struct User {
   /// The Discord ID of this user.
-  pub id: Snowflake,
+  #[serde(deserialize_with = "snowflake::deserialize")]
+  pub id: u64,
 
   /// The username of this user.
   pub username: String,
@@ -75,12 +76,11 @@ impl User {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
@@ -90,7 +90,7 @@ impl User {
   /// ```
   #[inline(always)]
   pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id.into())
+    util::get_avatar(&self.avatar, &self.discriminator, self.id)
   }
 }
 
@@ -103,7 +103,8 @@ pub(crate) struct Voted {
 #[derive(Clone, Debug, Deserialize)]
 pub struct Voter {
   /// The Discord ID of this user.
-  pub id: Snowflake,
+  #[serde(deserialize_with = "snowflake::deserialize")]
+  pub id: u64,
 
   /// The username of this user.
   pub username: String,
@@ -121,12 +122,11 @@ impl Voter {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
   ///   

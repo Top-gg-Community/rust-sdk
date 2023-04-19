@@ -1,9 +1,8 @@
 use crate::{
   bot::{Bot, BotStats, Bots, IsWeekend, NewBotStats, QueryLike},
   http::{Http, GET, POST},
-  snowflake::SnowflakeLike,
   user::{User, Voted, Voter},
-  Result,
+  Result, SnowflakeLike,
 };
 use core::mem::transmute;
 
@@ -50,12 +49,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let _client = Client::new(token);
   /// }
   /// ```
@@ -93,12 +91,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
@@ -140,12 +137,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
@@ -166,14 +162,11 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Fetches a listed discord bot's statistics from a Discord ID if available.
+  /// Fetches your own discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
-  /// - The client requests an external discord bot not owned by the owner. (forbidden)
+  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
@@ -188,26 +181,21 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   let epic_stats = client.get_bot_stats(264811613708746752u64).await.unwrap();
+  ///   let stats = client.get_bot_stats().await.unwrap();
   ///   
-  ///   println!("{:?}", epic_stats);
+  ///   println!("{:?}", stats);
   /// }
   /// ```
-  pub async fn get_bot_stats<I>(&self, id: I) -> Result<BotStats>
-  where
-    I: SnowflakeLike,
-  {
-    let path = format!("/bots/{}/stats", id.as_snowflake());
-
-    self.inner.http.request(GET, &path, None).await
+  #[inline(always)]
+  pub async fn get_bot_stats(&self) -> Result<BotStats> {
+    self.inner.http.request(GET, "/bots/stats", None).await
   }
 
   /// Posts an owned discord bot's statistics.
@@ -231,12 +219,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::{Client, NewBotStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
   ///
@@ -272,12 +259,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::{Autoposter, Client, NewBotStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
   ///
@@ -328,12 +314,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   let my_bot_id = 123456789u64;
   ///   
@@ -372,12 +357,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::{Client, Filter, Query};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   // inputting a string searches a bot that matches that username
@@ -421,8 +405,8 @@ impl Client {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The bot ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
-  /// - The user ID argument is a string and it's not a valid snowflake (expected things like `"123456789"`)
+  /// - The bot ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
+  /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
   /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
@@ -437,12 +421,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   let my_bot_id = 123456789u64;
@@ -494,12 +477,11 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use std::env;
   /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
   ///   if client.is_weekend().await.unwrap() {

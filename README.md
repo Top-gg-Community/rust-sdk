@@ -19,17 +19,29 @@ topgg = "1.0"
 
 More things can be read on the [documentation](https://docs.rs/topgg).
 
+## Features
+
+This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
+
+- **`api`**: Interacting with the top.gg API and accessing the `top.gg/api/*` endpoints. (enabled by default)
+  - **`autoposter`**: Automating the process of periodically posting bot statistics to the Top.gg API.
+- **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
+  - **`actix`**: Wrapper for working with the [`actix-web`](https://crates.io/crates/actix-web) web framework.
+  - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
+  - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
+  - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
+
 ## Examples
 
-- Fetching a single discord user from it's Discord ID
+<details>
+<summary><b><code>api</code></b>: Fetching a single discord user from it's Discord ID</summary>
 
 ```rust,no_run
-use std::env;
 use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   
   let user = client.get_user(661200758510977084u64).await.unwrap();
@@ -42,15 +54,16 @@ async fn main() {
 }
 ```
 
-- Fetching a single discord bot from it's Discord ID
+</details>
+<details>
+<summary><b><code>api</code></b>: Fetching a single discord bot from it's Discord ID</summary>
 
 ```rust,no_run
-use std::env;
 use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   
   let bot = client.get_bot(264811613708746752u64).await.unwrap();
@@ -63,15 +76,16 @@ async fn main() {
 }
 ```
 
-- Querying several discord bots
+</details>
+<details>
+<summary><b><code>api</code></b>: Querying several discord bots</summary>
 
 ```rust,no_run
-use std::env;
 use topgg::{Client, Filter, Query};
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   
   // inputting a string searches a bot that matches that username
@@ -95,15 +109,16 @@ async fn main() {
 }
 ```
 
-- Posting an owned discord bot's statistics
+</details>
+<details>
+<summary><b><code>api</code></b>: Posting your own discord bot's statistics</summary>
 
 ```rust,no_run
-use std::env;
 use topgg::{Client, NewBotStats};
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   let my_bot_id = 123456789u64;
 
@@ -116,17 +131,46 @@ async fn main() {
 }
 ```
 
-- Posting a listed discord bot's statistics (with an autoposter)
-
-> **NOTE:** this requires the `autoposter` feature to be enabled.
+</details>
+<details>
+<summary><b><code>api</code></b>: Checking if a user has voted for your own discord bot</summary>
 
 ```rust,no_run
-use std::env;
+use topgg::Client;
+
+#[tokio::main]
+async fn main() {
+  let token = env!("TOPGG_TOKEN").to_owned();
+  let client = Client::new(token);
+  
+  let my_bot_id = 123456789u64;
+  let user_id = 661200758510977084u64;
+
+  if client.has_voted(my_bot_id, user_id).await.unwrap() {
+    println!("checks out");
+  }
+}
+```
+
+</details>
+<details>
+<summary><b><code>autoposter</code></b>: Posting your own discord bot's statistics (with an autoposter)</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+topgg = { version = "1.0", features = ["autoposter"] }
+```
+
+In your code:
+
+```rust,no_run
 use topgg::{Autoposter, Client, NewBotStats};
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
+  let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   let my_bot_id = 123456789u64;
 
@@ -141,22 +185,155 @@ async fn main() {
 }
 ```
 
-- Checking if a user has voted for a listed discord bot
+</details>
+<details>
+<summary><b><code>actix</code></b>: Writing an <a href="https://crates.io/crates/actix-web"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+topgg = { version = "1.0", default-features = false, features = ["actix"] }
+```
+
+In your code:
 
 ```rust,no_run
-use std::env;
-use topgg::Client;
+use actix_web::{post, App, HttpServer, Responder};
+use std::io;
+
+#[post("/dblwebhook")]
+async fn webhook(vote: topgg::IncomingVote) -> impl Responder {
+  match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+    Some(vote) => /* your application logic here... */,
+    _ => /* handle 401 here... */,
+  }
+}
+
+#[tokio::main]
+async fn main() -> io::Result<()> {
+  HttpServer::new(|| {
+    App::new().service(webhook)
+  })
+  .bind(("127.0.0.1", 8080))?
+  .run()
+  .await
+}
+```
+
+</details>
+<details>
+<summary><b><code>axum</code></b>: Writing an <a href="https://crates.io/crates/axum"><code>axum</code></a> webhook for listening to your bot/server's vote events</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+topgg = { version = "1.0", default-features = false, features = ["axum"] }
+```
+
+In your code:
+
+```rust,no_run
+use axum::{Router, Server};
+use std::net::SocketAddr;
+
+struct MyVoteHandler {}
+
+#[async_trait::async_trait]
+impl topgg::VoteHandler for MyVoteHandler {
+  async fn voted(&self, vote: topgg::Vote) {
+    // your application logic here
+  }
+}
 
 #[tokio::main]
 async fn main() {
-  let token = env::var("TOPGG_TOKEN").expect("missing top.gg token");
-  let client = Client::new(token);
+  let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+  let state = MyVoteHandler {};
   
-  let my_bot_id = 123456789u64;
-  let user_id = 661200758510977084u64;
+  let app = Router::new()
+    .nest("/dblwebhook", topgg::axum::webhook(password, state));
+  
+  let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
 
-  if client.has_voted(my_bot_id, user_id).await.unwrap() {
-    println!("checks out");
-  }
+  Server::bind(&addr)
+    .serve(app.into_make_service())
+    .await
+    .unwrap();
 }
 ```
+
+</details>
+<details>
+<summary><b><code>rocket</code></b>: Writing an <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+topgg = { version = "1.0", default-features = false, features = ["rocket"] }
+```
+
+In your code:
+
+```rust,no_run
+#![feature(proc_macro_hygiene, decl_macro)]
+
+#[macro_use]
+extern crate rocket;
+
+use rocket::http::Status;
+
+#[post("/", data = "<vote>")]
+fn webhook(vote: topgg::IncomingVote) -> Status {
+  match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+    Some(vote) => /* your application logic here... */,
+    _ => /* handle 401 here... */,
+  }
+}
+
+fn main() {
+  rocket::ignite()
+    .mount("/dblwebhook", routes![webhook])
+    .launch();
+}
+```
+
+</details>
+<details>
+<summary><b><code>warp</code></b>: Writing an <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+topgg = { version = "1.0", default-features = false, features = ["warp"] }
+```
+
+In your code:
+
+```rust,no_run
+struct MyVoteHandler {}
+
+#[async_trait::async_trait]
+impl topgg::VoteHandler for MyVoteHandler {
+  async fn voted(&self, vote: topgg::Vote) {
+    // your application logic here
+  }
+}
+
+#[tokio::main]
+async fn main() {
+  let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+  let state = MyVoteHandler {};
+  
+  // POST /dblwebhook
+  let webhook = topgg::warp::webhook("dblwebhook", password, state);   
+  let routes = warp::post().and(webhook);
+
+  warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+}
+```
+
+</details>
