@@ -14,9 +14,8 @@ pub struct Autoposter {
 
 impl Autoposter {
   #[allow(unused_must_use)]
-  pub(crate) fn new(client: &Arc<InnerClient>, id: u64, delay: u64) -> Self {
+  pub(crate) fn new(client: Arc<InnerClient>, delay: u64) -> Self {
     let current_thread_data = Arc::new(Mutex::new(None));
-    let thread_client = Arc::clone(client);
     let thread_data = Arc::clone(&current_thread_data);
 
     Self {
@@ -27,7 +26,7 @@ impl Autoposter {
           let lock = thread_data.lock().await;
 
           if let Some(new_data) = &*lock {
-            thread_client.post_bot_stats(id, new_data).await;
+            client.post_stats(new_data).await;
           }
         }
       }),
@@ -48,11 +47,10 @@ impl Autoposter {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   let my_bot_id = 123456789u64;
   ///
   ///   // make sure to make this autoposter instance live
   ///   // throughout most of the bot's lifetime to keep running!
-  ///   let autoposter = client.new_autoposter(my_bot_id, 1800);
+  ///   let autoposter = client.new_autoposter(1800);
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;

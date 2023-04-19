@@ -99,7 +99,7 @@ pub(crate) struct Voted {
   pub(crate) voted: u8,
 }
 
-/// A struct representing a user who has voted on a discord bot listed on [top.gg](https://top.gg). (See [crate::Client::get_bot_voters`])
+/// A struct representing a user who has voted on a discord bot listed on [top.gg](https://top.gg). (See [crate::Client::get_voters`])
 #[derive(Clone, Debug, Deserialize)]
 pub struct Voter {
   /// The Discord ID of this user.
@@ -128,9 +128,8 @@ impl Voter {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   let my_bot_id = 123456789u64;
   ///   
-  ///   for voter in client.get_bot_voters(my_bot_id).await.unwrap() {
+  ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.avatar().unwrap_or(String::from("No avatar :(")));
   ///   }
   /// }

@@ -120,14 +120,13 @@ use topgg::{Client, NewBotStats};
 async fn main() {
   let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
-  let my_bot_id = 123456789u64;
 
   let server_count = 1234; // be TRUTHFUL!
   let shard_count = 10;
 
   let stats = NewBotStats::count_based(server_count, Some(shard_count));
 
-  client.post_bot_stats(my_bot_id, stats).await.unwrap();
+  client.post_stats(stats).await.unwrap();
 }
 ```
 
@@ -142,11 +141,8 @@ use topgg::Client;
 async fn main() {
   let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
-  
-  let my_bot_id = 123456789u64;
-  let user_id = 661200758510977084u64;
 
-  if client.has_voted(my_bot_id, user_id).await.unwrap() {
+  if client.has_voted(661200758510977084u64).await.unwrap() {
     println!("checks out");
   }
 }
@@ -172,11 +168,10 @@ use topgg::{Autoposter, Client, NewBotStats};
 async fn main() {
   let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
-  let my_bot_id = 123456789u64;
 
   // make sure to make this autoposter instance live
   // throughout most of the bot's lifetime to keep running!
-  let autoposter = client.new_autoposter(my_bot_id, 1800);
+  let autoposter = client.new_autoposter(1800);
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;

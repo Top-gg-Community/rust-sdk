@@ -24,11 +24,10 @@ pub(crate) struct InnerClient {
 // this is implemented here because autoposter needs to access this function from a different thread
 
 impl InnerClient {
-  pub(crate) async fn post_bot_stats(&self, id: u64, new_stats: &NewBotStats) -> Result<()> {
-    let path = format!("/bots/{id}/stats");
-    let body = unsafe { serde_json::to_string(&new_stats).unwrap_unchecked() };
+  pub(crate) async fn post_stats(&self, new_stats: &NewBotStats) -> Result<()> {
+    let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
 
-    self.http.request(POST, &path, Some(&body)).await?;
+    self.http.request(POST, "/bots/stats", Some(&body)).await?;
 
     Ok(())
   }
@@ -188,24 +187,21 @@ impl Client {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   let stats = client.get_bot_stats().await.unwrap();
+  ///   let stats = client.get_stats().await.unwrap();
   ///   
   ///   println!("{:?}", stats);
   /// }
   /// ```
   #[inline(always)]
-  pub async fn get_bot_stats(&self) -> Result<BotStats> {
+  pub async fn get_stats(&self) -> Result<BotStats> {
     self.inner.http.request(GET, "/bots/stats", None).await
   }
 
-  /// Posts an owned discord bot's statistics.
+  /// Posts your discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
-  /// - The client posts statistics to an external discord bot not owned by the owner. (forbidden)
+  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
@@ -225,34 +221,25 @@ impl Client {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   let my_bot_id = 123456789u64;
   ///
   ///   let server_count = 1234; // be TRUTHFUL!
   ///   let shard_count = 10;
   ///
   ///   let stats = NewBotStats::count_based(server_count, Some(shard_count));
   ///
-  ///   client.post_bot_stats(my_bot_id, stats).await.unwrap();
+  ///   client.post_stats(stats).await.unwrap();
   /// }
   /// ```
   #[inline(always)]
-  pub async fn post_bot_stats<I>(&self, id: I, new_stats: NewBotStats) -> Result<()>
-  where
-    I: SnowflakeLike,
-  {
-    self
-      .inner
-      .post_bot_stats(id.as_snowflake(), &new_stats)
-      .await
+  pub async fn post_stats(&self, new_stats: NewBotStats) -> Result<()> {
+    self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your bot's statistics to the [top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your discord bot's statistics to the [top.gg](https://top.gg) API.
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The delay argument is shorter than 15 minutes (900 seconds)
+  /// Panics if the delay argument is shorter than 15 minutes (900 seconds)
   ///
   /// # Examples
   ///
@@ -265,11 +252,10 @@ impl Client {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   let my_bot_id = 123456789u64;
   ///
   ///   // make sure to make this autoposter instance live
   ///   // throughout most of the bot's lifetime to keep running!
-  ///   let autoposter = client.new_autoposter(my_bot_id, 1800);
+  ///   let autoposter = client.new_autoposter(1800);
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
@@ -279,9 +265,8 @@ impl Client {
   /// ```
   #[cfg(feature = "autoposter")]
   #[must_use]
-  pub fn new_autoposter<I, D>(&self, id: I, seconds_delay: D) -> Autoposter
+  pub fn new_autoposter<D>(&self, seconds_delay: D) -> Autoposter
   where
-    I: SnowflakeLike,
     D: Into<u64>,
   {
     let seconds_delay = seconds_delay.into();
@@ -290,17 +275,14 @@ impl Client {
       panic!("the delay mustn't be shorter than 15 minutes (900 seconds)");
     }
 
-    Autoposter::new(&self.inner, id.as_snowflake(), seconds_delay)
+    Autoposter::new(Arc::clone(&self.inner), seconds_delay)
   }
 
-  /// Fetches an owned discord bot's last 1000 voters if available.
+  /// Fetches your discord bot's last 1000 voters.
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
-  /// - The client requests an external discord bot not owned by the owner. (forbidden)
+  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
@@ -320,20 +302,15 @@ impl Client {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   let my_bot_id = 123456789u64;
   ///   
-  ///   for voter in client.get_bot_voters(my_bot_id).await.unwrap() {
+  ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{:?}", voter);
   ///   }
   /// }
   /// ```
-  pub async fn get_bot_voters<I>(&self, id: I) -> Result<Vec<Voter>>
-  where
-    I: SnowflakeLike,
-  {
-    let path = format!("/bots/{}/votes", id.as_snowflake());
-
-    self.inner.http.request(GET, &path, None).await
+  #[inline(always)]
+  pub async fn get_voters(&self) -> Result<Vec<Voter>> {
+    self.inner.http.request(GET, "/bots/votes", None).await
   }
 
   /// Queries/searches through the [top.gg](https://top.gg) database to look for matching listed discord bots.
@@ -400,7 +377,7 @@ impl Client {
     )
   }
 
-  /// Checks if the specified user has voted for an owned discord bot.
+  /// Checks if the specified user has voted for your discord bot.
   ///
   /// # Panics
   ///
@@ -427,25 +404,17 @@ impl Client {
   /// async fn main() {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
-  ///   
-  ///   let my_bot_id = 123456789u64;
-  ///   let user_id = 661200758510977084u64;
   ///
-  ///   if client.has_voted(my_bot_id, user_id).await.unwrap() {
+  ///   if client.has_voted(661200758510977084u64).await.unwrap() {
   ///     println!("checks out");
   ///   }
   /// }
   /// ```
-  pub async fn has_voted<B, U>(&self, bot_id: B, user_id: U) -> Result<bool>
+  pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
-    B: SnowflakeLike,
-    U: SnowflakeLike,
+    I: SnowflakeLike,
   {
-    let path = format!(
-      "/bots/{}/votes?userId={}",
-      bot_id.as_snowflake(),
-      user_id.as_snowflake()
-    );
+    let path = format!("/bots/votes?userId={}", user_id.as_snowflake());
 
     Ok(unsafe {
       transmute(
