@@ -9,6 +9,22 @@ where
   s.parse::<u64>().map_err(D::Error::custom)
 }
 
+pub(crate) fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<u64>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let s: Vec<&str> = Deserialize::deserialize(deserializer)?;
+  let out = Vec::with_capacity(s.len());
+
+  Ok(s.into_iter().fold(out, |mut acc, next| {
+    if let Ok(next) = next.parse::<u64>() {
+      acc.push(next);
+    }
+
+    acc
+  }))
+}
+
 /// A trait that represents any data type that can be interpreted as a snowflake/ID.
 pub trait SnowflakeLike {
   #[doc(hidden)]

@@ -1,7 +1,10 @@
 use crate::{snowflake, util};
 use chrono::{offset::Utc, DateTime};
 use core::cmp::{min, PartialEq};
-use serde::{Deserialize, Serialize};
+use serde::{
+  de::{self, Deserializer},
+  Deserialize, Serialize,
+};
 
 /// A struct representing a Discord Bot listed on [top.gg](https://top.gg).
 #[derive(Clone, Debug, Deserialize)]
@@ -37,9 +40,11 @@ pub struct Bot {
   pub github: Option<String>,
 
   /// A list of IDs of this discord bot's owners. The main owner is the first ID in the array.
+  #[serde(deserialize_with = "snowflake::deserialize_vec")]
   pub owners: Vec<u64>,
 
   /// A list of IDs of the guilds featured on this discord bot's page.
+  #[serde(deserialize_with = "snowflake::deserialize_vec")]
   pub guilds: Vec<u64>,
 
   /// The custom bot invite URL of this discord bot.
@@ -70,9 +75,23 @@ pub struct Bot {
   #[serde(rename = "monthlyPoints")]
   pub monthly_votes: u64,
 
+  /// The support server invite URL of this discord bot if available.
+  #[serde(default, deserialize_with = "deserialize_support_server")]
+  pub support: Option<String>,
+
   avatar: Option<String>,
-  support: Option<String>,
   vanity: Option<String>,
+}
+
+pub(crate) fn deserialize_support_server<'de, D>(
+  deserializer: D,
+) -> Result<Option<String>, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  let support: &str = de::Deserialize::deserialize(deserializer)?;
+
+  Ok(Some(format!("https://discord.com/invite/{support}")))
 }
 
 impl Bot {
@@ -129,33 +148,6 @@ impl Bot {
       "https://top.gg/bot/{}",
       self.vanity.as_deref().unwrap_or(&self.id.to_string())
     )
-  }
-
-  /// Retrieves the support server invite URL of this discord bot if available.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
-  ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
-  ///   
-  ///   println!("{}", bot.server());
-  /// }
-  /// ```
-  #[must_use]
-  pub fn server(&self) -> Option<String> {
-    self
-      .support
-      .as_ref()
-      .map(|support| format!("https://discord.com/invite/{support}"))
   }
 }
 
