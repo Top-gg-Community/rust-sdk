@@ -11,7 +11,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
 
-Make sure to have a [top.gg](https://top.gg) API token handy, you can have an API token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
+Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
 topgg = "1.0"
@@ -23,8 +23,8 @@ More things can be read on the [documentation](https://docs.rs/topgg).
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
 
-- **`api`**: Interacting with the top.gg API and accessing the `top.gg/api/*` endpoints. (enabled by default)
-  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [top.gg](https://top.gg) API.
+- **`api`**: Interacting with the [Top.gg](https://top.gg) API and accessing the `top.gg/api/*` endpoints. (enabled by default)
+  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg](https://top.gg) API.
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
   - **`actix`**: Wrapper for working with the [`actix-web`](https://crates.io/crates/actix-web) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
@@ -34,7 +34,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 ## Examples
 
 <details>
-<summary><b><code>api</code></b>: Fetching a single discord user from it's Discord ID</summary>
+<summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -56,7 +56,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Fetching a single discord bot from it's Discord ID</summary>
+<summary><b><code>api</code></b>: Fetching a single Discord bot from it's Discord ID</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -78,7 +78,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Querying several discord bots</summary>
+<summary><b><code>api</code></b>: Querying several Discord bots</summary>
 
 ```rust,no_run
 use topgg::{Client, Filter, Query};
@@ -111,7 +111,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Posting your discord bot's statistics</summary>
+<summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run
 use topgg::{Client, NewBotStats};
@@ -132,7 +132,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Checking if a user has voted for your discord bot</summary>
+<summary><b><code>api</code></b>: Checking if a user has voted for your Discord bot</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -150,7 +150,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b>: Automating the process of periodically posting your discord bot's statistics</summary>
+<summary><b><code>autoposter</code></b>: Automating the process of periodically posting your Discord bot's statistics</summary>
 
 In your `Cargo.toml`:
 

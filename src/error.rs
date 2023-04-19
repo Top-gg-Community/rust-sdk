@@ -2,19 +2,19 @@ use core::{fmt, result};
 use std::{error, io};
 use tokio_native_tls::native_tls;
 
-/// A struct representing an unexpected internal error coming from the client itself, preventing it from sending a request to the [top.gg](https://top.gg) API.
+/// A struct representing an unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
 #[derive(Debug)]
 pub enum InternalError {
   /// The client couldn't create a TLS connector.
   CreateConnector(native_tls::Error),
 
-  /// The client connect to [top.gg](https://top.gg)'s servers.
+  /// The client connect to [Top.gg](https://top.gg)'s servers.
   Connect(io::Error),
 
-  /// The client couldn't establish a handshake with [top.gg](https://top.gg)'s servers.
+  /// The client couldn't establish a handshake with [Top.gg](https://top.gg)'s servers.
   Handshake(native_tls::Error),
 
-  /// The client couldn't write a HTTP request to [top.gg](https://top.gg)'s servers.
+  /// The client couldn't write a HTTP request to [Top.gg](https://top.gg)'s servers.
   WriteRequest(io::Error),
 }
 
@@ -48,10 +48,10 @@ impl error::Error for InternalError {
 /// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
-  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [top.gg](https://top.gg) API.
+  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
   InternalClientError(InternalError),
 
-  /// An unexpected error coming from [top.gg](https://top.gg)'s servers themselves.
+  /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
   InternalServerError,
 
   /// The requested resource does not exist. (404)

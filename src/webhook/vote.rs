@@ -5,7 +5,7 @@ use serde::{
 };
 use std::collections::HashMap;
 
-/// A struct representing a dispatched [top.gg](https://top.gg) bot/server vote event.
+/// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
   /// The ID of the bot/server that received a vote.

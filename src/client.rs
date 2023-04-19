@@ -33,15 +33,15 @@ impl InnerClient {
   }
 }
 
-/// A struct representing a [top.gg](https://top.gg) API client instance.
+/// A struct representing a [Top.gg](https://top.gg) API client instance.
 pub struct Client {
   inner: SyncedClient,
 }
 
 impl Client {
-  /// Creates a brand new client instance from a [top.gg](https://top.gg) token.
+  /// Creates a brand new client instance from a [Top.gg](https://top.gg) token.
   ///
-  /// You can get a [top.gg](https://top.gg) token if you own a listed discord bot on [top.gg](https://top.gg) (open the edit page, see in `Webhooks` section)
+  /// You can get a [Top.gg](https://top.gg) token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section)
   ///
   /// # Examples
   ///
@@ -75,13 +75,13 @@ impl Client {
   ///
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
@@ -115,20 +115,20 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Fetches a listed discord bot from a Discord ID if available.
+  /// Fetches a listed Discord bot from a Discord ID if available.
   ///
   /// # Panics
   ///
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -161,18 +161,18 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Fetches your discord bot's statistics.
+  /// Fetches your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -197,17 +197,17 @@ impl Client {
     self.inner.http.request(GET, "/bots/stats", None).await
   }
 
-  /// Posts your discord bot's statistics.
+  /// Posts your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -235,7 +235,7 @@ impl Client {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your discord bot's statistics to the [top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API.
   ///
   /// # Panics
   ///
@@ -278,17 +278,17 @@ impl Client {
     Autoposter::new(Arc::clone(&self.inner), seconds_delay)
   }
 
-  /// Fetches your discord bot's last 1000 voters.
+  /// Fetches your Discord bot's last 1000 voters.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -313,20 +313,20 @@ impl Client {
     self.inner.http.request(GET, "/bots/votes", None).await
   }
 
-  /// Queries/searches through the [top.gg](https://top.gg) database to look for matching listed discord bots.
+  /// Queries/searches through the [Top.gg](https://top.gg) database to look for matching listed Discord bots.
   ///
   /// # Panics
   ///
   /// Panics if the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested discord bot is not listed on [top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -377,20 +377,20 @@ impl Client {
     )
   }
 
-  /// Checks if the specified user has voted for your discord bot.
+  /// Checks if the specified user has voted for your Discord bot.
   ///
   /// # Panics
   ///
   /// Panics if the following conditions are met:
   /// - The bot ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
   /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
-  /// - The client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -432,13 +432,13 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples

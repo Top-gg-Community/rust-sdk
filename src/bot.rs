@@ -6,76 +6,76 @@ use serde::{
   Deserialize, Serialize,
 };
 
-/// A struct representing a Discord Bot listed on [top.gg](https://top.gg).
+/// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
 #[derive(Clone, Debug, Deserialize)]
 pub struct Bot {
-  /// The ID of this discord bot.
+  /// The ID of this Discord bot.
   #[serde(deserialize_with = "snowflake::deserialize")]
   pub id: u64,
 
-  /// The username of this discord bot.
+  /// The username of this Discord bot.
   pub username: String,
 
-  /// The discriminator of this discord bot.
+  /// The discriminator of this Discord bot.
   pub discriminator: String,
 
-  /// The prefix of this discord bot.
+  /// The prefix of this Discord bot.
   pub prefix: String,
 
-  /// The short description of this discord bot.
+  /// The short description of this Discord bot.
   #[serde(rename = "shortdesc")]
   pub short_description: String,
 
-  /// The long description of this discord bot. It can contain HTML and/or Markdown.
+  /// The long description of this Discord bot. It can contain HTML and/or Markdown.
   #[serde(rename = "longdesc")]
   pub long_description: Option<String>,
 
-  /// The tags of this discord bot.
+  /// The tags of this Discord bot.
   pub tags: Vec<String>,
 
-  /// The website URL of this discord bot.
+  /// The website URL of this Discord bot.
   pub website: Option<String>,
 
-  /// The link to the github repo of this discord bot.
+  /// The link to the github repo of this Discord bot.
   pub github: Option<String>,
 
-  /// A list of IDs of this discord bot's owners. The main owner is the first ID in the array.
+  /// A list of IDs of this Discord bot's owners. The main owner is the first ID in the array.
   #[serde(deserialize_with = "snowflake::deserialize_vec")]
   pub owners: Vec<u64>,
 
-  /// A list of IDs of the guilds featured on this discord bot's page.
+  /// A list of IDs of the guilds featured on this Discord bot's page.
   #[serde(deserialize_with = "snowflake::deserialize_vec")]
   pub guilds: Vec<u64>,
 
-  /// The custom bot invite URL of this discord bot.
+  /// The custom bot invite URL of this Discord bot.
   pub invite: Option<String>,
 
-  /// The URL for this discord bot's banner image.
+  /// The URL for this Discord bot's banner image.
   #[serde(rename = "bannerUrl")]
   pub banner_url: Option<String>,
 
-  /// The date when this discord bot was approved on [top.gg](https://top.gg).
+  /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
   pub date: DateTime<Utc>,
 
-  /// Whether this discord bot is [top.gg](https://top.gg) certified or not.
+  /// Whether this Discord bot is [Top.gg](https://top.gg) certified or not.
   #[serde(rename = "certifiedBot")]
   pub is_certified: bool,
 
-  /// A list of this discord bot's shards.
+  /// A list of this Discord bot's shards.
   pub shards: Option<Vec<u64>>,
 
-  /// The amount of shards this discord bot has according to posted stats.
+  /// The amount of shards this Discord bot has according to posted stats.
   pub shard_count: Option<u64>,
 
-  /// The amount of upvotes this discord bot has.
+  /// The amount of upvotes this Discord bot has.
   #[serde(rename = "points")]
   pub votes: u64,
 
-  /// The amount of upvotes this discord bot has this month.
+  /// The amount of upvotes this Discord bot has this month.
   #[serde(rename = "monthlyPoints")]
   pub monthly_votes: u64,
 
-  /// The support server invite URL of this discord bot if available.
+  /// The support server invite URL of this Discord bot if available.
   #[serde(default, deserialize_with = "deserialize_support_server")]
   pub support: Option<String>,
 
@@ -91,7 +91,7 @@ where
 {
   let s: Option<&str> = de::Deserialize::deserialize(deserializer)?;
 
-  Ok(s.map(|support| format!("https://discord.com/invite/{support}")))
+  Ok(s.map(|support| format!("https://Discord.com/invite/{support}")))
 }
 
 impl Bot {
@@ -122,7 +122,7 @@ impl Bot {
     util::get_avatar(&self.avatar, &self.discriminator, self.id)
   }
 
-  /// Retrieves the URL of this discord bot's [top.gg](https://top.gg) page.
+  /// Retrieves the URL of this Discord bot's [Top.gg](https://top.gg) page.
   ///
   /// # Examples
   ///
@@ -156,7 +156,7 @@ pub(crate) struct Bots {
   pub(crate) results: Vec<Bot>,
 }
 
-/// A struct representing a discord bot's statistics returned from the API.
+/// A struct representing a Discord bot's statistics returned from the API.
 #[derive(Clone, Debug, Deserialize)]
 pub struct BotStats {
   /// The bot's server count if available.
@@ -169,7 +169,7 @@ pub struct BotStats {
   pub shard_count: Option<u64>,
 }
 
-/// A struct representing a discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
+/// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
 #[derive(Serialize)]
 pub struct NewBotStats {
   server_count: u64,
@@ -283,7 +283,7 @@ impl Filter {
     Self(String::new())
   }
 
-  /// Filters only discord bots that matches this username.
+  /// Filters only Discord bots that matches this username.
   ///
   /// # Examples
   ///
@@ -306,7 +306,7 @@ impl Filter {
     self
   }
 
-  /// Filters only discord bots that matches this discriminator.
+  /// Filters only Discord bots that matches this discriminator.
   ///
   /// # Examples
   ///
@@ -329,7 +329,7 @@ impl Filter {
     self
   }
 
-  /// Filters only discord bots that matches this prefix.
+  /// Filters only Discord bots that matches this prefix.
   ///
   /// # Examples
   ///
@@ -352,7 +352,7 @@ impl Filter {
     self
   }
 
-  /// Filters only discord bots that has this vote count.
+  /// Filters only Discord bots that has this vote count.
   ///
   /// # Examples
   ///
@@ -373,7 +373,7 @@ impl Filter {
     self
   }
 
-  /// Filters only discord bots that has this monthly vote count.
+  /// Filters only Discord bots that has this monthly vote count.
   ///
   /// # Examples
   ///
@@ -396,7 +396,7 @@ impl Filter {
     self
   }
 
-  /// Filters only [top.gg](https://top.gg) certified discord bots or not.
+  /// Filters only [Top.gg](https://top.gg) certified Discord bots or not.
   ///
   /// # Examples
   ///
@@ -419,7 +419,7 @@ impl Filter {
     self
   }
 
-  /// Filters only discord bots that has this [top.gg](https://top.gg) vanity URL.
+  /// Filters only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
   ///
   /// # Examples
   ///
@@ -564,7 +564,7 @@ impl Default for Query {
   }
 }
 
-/// A trait that represents any data type that can be interpreted as a valid [top.gg](https://top.gg) discord bot query.
+/// A trait that represents any data type that can be interpreted as a valid [Top.gg](https://top.gg) Discord bot query.
 pub trait QueryLike {
   #[doc(hidden)]
   fn into_query_string(self) -> String;

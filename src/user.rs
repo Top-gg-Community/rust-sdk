@@ -20,7 +20,7 @@ pub struct Socials {
   pub youtube: Option<String>,
 }
 
-/// A struct representing a user logged into [top.gg](https://top.gg).
+/// A struct representing a user logged into [Top.gg](https://top.gg).
 #[derive(Clone, Debug, Deserialize)]
 pub struct User {
   /// The Discord ID of this user.
@@ -43,23 +43,23 @@ pub struct User {
   #[serde(rename = "social")]
   pub socials: Option<Socials>,
 
-  /// Whether this user is a [top.gg](https://top.gg) supporter or not.
+  /// Whether this user is a [Top.gg](https://top.gg) supporter or not.
   #[serde(rename = "supporter")]
   pub is_supporter: bool,
 
-  /// Whether this user is a [top.gg](https://top.gg) certified developer or not.
+  /// Whether this user is a [Top.gg](https://top.gg) certified developer or not.
   #[serde(rename = "isCertifiedDev")]
   pub is_certified_dev: bool,
 
-  /// Whether this user is a [top.gg](https://top.gg) moderator or not.
+  /// Whether this user is a [Top.gg](https://top.gg) moderator or not.
   #[serde(rename = "mod")]
   pub is_moderator: bool,
 
-  /// Whether this user is a [top.gg](https://top.gg) website moderator or not.
+  /// Whether this user is a [Top.gg](https://top.gg) website moderator or not.
   #[serde(rename = "webMod")]
   pub is_web_moderator: bool,
 
-  /// Whether this user is a [top.gg](https://top.gg) website administrator or not.
+  /// Whether this user is a [Top.gg](https://top.gg) website administrator or not.
   #[serde(rename = "admin")]
   pub is_admin: bool,
 
@@ -67,7 +67,7 @@ pub struct User {
 }
 
 impl User {
-  /// Retrieves the discord avatar URL of this user.
+  /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
   ///
@@ -99,7 +99,7 @@ pub(crate) struct Voted {
   pub(crate) voted: u8,
 }
 
-/// A struct representing a user who has voted on a discord bot listed on [top.gg](https://top.gg). (See [crate::Client::get_voters`])
+/// A struct representing a user who has voted on a Discord bot listed on [Top.gg](https://top.gg). (See [crate::Client::get_voters`])
 #[derive(Clone, Debug, Deserialize)]
 pub struct Voter {
   /// The Discord ID of this user.
@@ -113,7 +113,7 @@ pub struct Voter {
 }
 
 impl Voter {
-  /// Retrieves the discord avatar URL of this user if available.
+  /// Retrieves the Discord avatar URL of this user if available.
   ///
   /// It's format will be either PNG or GIF if animated.
   ///
@@ -140,7 +140,7 @@ impl Voter {
       let ext = if hash.starts_with("a_") { "gif" } else { "png" };
 
       format!(
-        "https://cdn.discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
+        "https://cdn.Discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
         self.id
       )
     })
