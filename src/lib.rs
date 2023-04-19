@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
     pub mod user;
 
     #[doc(inline)]
-    pub use bot::{Filter, NewBotStats, Query};
+    pub use bot::{Filter, NewStats, Query};
     pub use client::Client;
     pub use error::{Error, InternalError, Result};
     pub use snowflake::SnowflakeLike; // for doc purposes

@@ -158,7 +158,7 @@ pub(crate) struct Bots {
 
 /// A struct representing a Discord bot's statistics returned from the API.
 #[derive(Clone, Debug, Deserialize)]
-pub struct BotStats {
+pub struct Stats {
   /// The bot's server count if available.
   pub server_count: Option<u64>,
 
@@ -171,24 +171,24 @@ pub struct BotStats {
 
 /// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
 #[derive(Serialize)]
-pub struct NewBotStats {
+pub struct NewStats {
   server_count: u64,
   shard_count: Option<u64>,
   shards: Option<Vec<u64>>,
   shard_id: Option<u64>,
 }
 
-impl NewBotStats {
-  /// Creates a NewBotStats struct based on total server (and optionally, shard) count data.
+impl NewStats {
+  /// Creates a [`NewStats`] struct based on total server (and optionally, shard) count data.
   ///
   /// # Examples
   ///
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::NewBotStats;
+  /// use topgg::NewStats;
   ///
-  /// let _stats = NewBotStats::count_based(12345, Some(10));
+  /// let _stats = NewStats::count_based(12345, Some(10));
   /// ```
   #[must_use]
   #[inline(always)]
@@ -205,7 +205,7 @@ impl NewBotStats {
     }
   }
 
-  /// Creates a NewBotStats struct based on server count per shard and optionally the index (to the first array) of shard posting posting this data.
+  /// Creates a [`NewStats`] struct based on server count per shard and optionally the index (to the first array) of shard posting posting this data.
   ///
   /// # Panics
   ///
@@ -216,10 +216,10 @@ impl NewBotStats {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::NewBotStats;
+  /// use topgg::NewStats;
   ///
   /// // The shard posting this data has 456 servers.
-  /// let _stats = NewBotStats::shards_based([123, 456, 789], Some(1));
+  /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
   /// ```
   #[must_use]
   pub fn shards_based<A, B>(shards: A, shard_index: Option<B>) -> Self

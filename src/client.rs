@@ -1,5 +1,5 @@
 use crate::{
-  bot::{Bot, BotStats, Bots, IsWeekend, NewBotStats, QueryLike},
+  bot::{Bot, Bots, IsWeekend, NewStats, QueryLike, Stats},
   http::{Http, GET, POST},
   user::{User, Voted, Voter},
   Result, SnowflakeLike,
@@ -24,7 +24,7 @@ pub(crate) struct InnerClient {
 // this is implemented here because autoposter needs to access this function from a different thread
 
 impl InnerClient {
-  pub(crate) async fn post_stats(&self, new_stats: &NewBotStats) -> Result<()> {
+  pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
     let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
 
     self.http.request(POST, "/bots/stats", Some(&body)).await?;
@@ -193,7 +193,7 @@ impl Client {
   /// }
   /// ```
   #[inline(always)]
-  pub async fn get_stats(&self) -> Result<BotStats> {
+  pub async fn get_stats(&self) -> Result<Stats> {
     self.inner.http.request(GET, "/bots/stats", None).await
   }
 
@@ -215,7 +215,7 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, NewBotStats};
+  /// use topgg::{Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -225,13 +225,13 @@ impl Client {
   ///   let server_count = 1234; // be TRUTHFUL!
   ///   let shard_count = 10;
   ///
-  ///   let stats = NewBotStats::count_based(server_count, Some(shard_count));
+  ///   let stats = NewStats::count_based(server_count, Some(shard_count));
   ///
   ///   client.post_stats(stats).await.unwrap();
   /// }
   /// ```
   #[inline(always)]
-  pub async fn post_stats(&self, new_stats: NewBotStats) -> Result<()> {
+  pub async fn post_stats(&self, new_stats: NewStats) -> Result<()> {
     self.inner.post_stats(&new_stats).await
   }
 
@@ -246,7 +246,7 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Autoposter, Client, NewBotStats};
+  /// use topgg::{Autoposter, Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -259,7 +259,7 @@ impl Client {
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
-  ///   let stats = NewBotStats::count_based(server_count, None);
+  ///   let stats = NewStats::count_based(server_count, None);
   ///   autoposter.feed(stats).await;
   /// }
   /// ```

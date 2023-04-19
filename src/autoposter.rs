@@ -1,4 +1,4 @@
-use crate::{client::InnerClient, NewBotStats};
+use crate::{client::InnerClient, NewStats};
 use std::sync::Arc;
 use tokio::{
   sync::Mutex,
@@ -9,7 +9,7 @@ use tokio::{
 /// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API.
 pub struct Autoposter {
   thread: JoinHandle<()>,
-  data: Arc<Mutex<Option<NewBotStats>>>,
+  data: Arc<Mutex<Option<NewStats>>>,
 }
 
 impl Autoposter {
@@ -40,7 +40,7 @@ impl Autoposter {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Autoposter, Client, NewBotStats};
+  /// use topgg::{Autoposter, Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -53,11 +53,11 @@ impl Autoposter {
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
-  ///   let stats = NewBotStats::count_based(server_count, None);
+  ///   let stats = NewStats::count_based(server_count, None);
   ///   autoposter.feed(stats).await;
   /// }
   /// ```
-  pub async fn feed(&self, new_stats: NewBotStats) {
+  pub async fn feed(&self, new_stats: NewStats) {
     let mut lock = self.data.lock().await;
 
     (*lock).replace(new_stats);

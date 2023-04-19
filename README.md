@@ -114,7 +114,7 @@ async fn main() {
 <summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run
-use topgg::{Client, NewBotStats};
+use topgg::{Client, NewStats};
 
 #[tokio::main]
 async fn main() {
@@ -124,7 +124,7 @@ async fn main() {
   let server_count = 1234; // be TRUTHFUL!
   let shard_count = 10;
 
-  let stats = NewBotStats::count_based(server_count, Some(shard_count));
+  let stats = NewStats::count_based(server_count, Some(shard_count));
 
   client.post_stats(stats).await.unwrap();
 }
@@ -162,7 +162,7 @@ topgg = { version = "1.0", features = ["autoposter"] }
 In your code:
 
 ```rust,no_run
-use topgg::{Autoposter, Client, NewBotStats};
+use topgg::{Autoposter, Client, NewStats};
 
 #[tokio::main]
 async fn main() {
@@ -175,7 +175,7 @@ async fn main() {
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
-  let stats = NewBotStats::count_based(server_count, None);
+  let stats = NewStats::count_based(server_count, None);
   autoposter.feed(stats).await;
 }
 ```
