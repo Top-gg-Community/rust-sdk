@@ -69,7 +69,7 @@ impl Client {
     Self { inner }
   }
 
-  /// Fetches a user from a Discord ID if available.
+  /// Fetches a user from a Discord ID.
   ///
   /// # Panics
   ///
@@ -115,7 +115,7 @@ impl Client {
     self.inner.http.request(GET, &path, None).await
   }
 
-  /// Fetches a listed Discord bot from a Discord ID if available.
+  /// Fetches a listed Discord bot from a Discord ID.
   ///
   /// # Panics
   ///

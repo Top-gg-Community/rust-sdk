@@ -1,22 +1,22 @@
 use crate::{snowflake, util};
 use serde::Deserialize;
 
-/// A struct representing a user's social links if available.
+/// A struct representing a user's social links.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Socials {
-  /// A URL to this user's GitHub account if available.
+  /// A URL to this user's GitHub account.
   pub github: Option<String>,
 
-  /// A URL to this user's Instagram account if available.
+  /// A URL to this user's Instagram account.
   pub instagram: Option<String>,
 
-  /// A URL to this user's Reddit account if available.
+  /// A URL to this user's Reddit account.
   pub reddit: Option<String>,
 
-  /// A URL to this user's Twitter account if available.
+  /// A URL to this user's Twitter account.
   pub twitter: Option<String>,
 
-  /// A URL to this user's YouTube channel if available.
+  /// A URL to this user's YouTube channel.
   pub youtube: Option<String>,
 }
 
@@ -33,13 +33,13 @@ pub struct User {
   /// The Discord discriminator of this user.
   pub discriminator: String,
 
-  /// The user's bio if available.
+  /// The user's bio.
   pub bio: Option<String>,
 
-  /// A URL to this user's profile banner image if available.
+  /// A URL to this user's profile banner image.
   pub banner: Option<String>,
 
-  /// A struct of this user's social links if available.
+  /// A struct of this user's social links.
   #[serde(rename = "social")]
   pub socials: Option<Socials>,
 
@@ -113,7 +113,7 @@ pub struct Voter {
 }
 
 impl Voter {
-  /// Retrieves the Discord avatar URL of this user if available.
+  /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
   ///

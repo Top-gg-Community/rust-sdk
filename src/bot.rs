@@ -36,7 +36,7 @@ pub struct Bot {
   /// The website URL of this Discord bot.
   pub website: Option<String>,
 
-  /// The link to the github repo of this Discord bot.
+  /// The link to this Discord bot's GitHub repository.
   pub github: Option<String>,
 
   /// A list of IDs of this Discord bot's owners. The main owner is the first ID in the array.
@@ -75,7 +75,7 @@ pub struct Bot {
   #[serde(rename = "monthlyPoints")]
   pub monthly_votes: u64,
 
-  /// The support server invite URL of this Discord bot if available.
+  /// The support server invite URL of this Discord bot.
   #[serde(default, deserialize_with = "deserialize_support_server")]
   pub support: Option<String>,
 
@@ -91,7 +91,7 @@ where
 {
   let s: Option<&str> = de::Deserialize::deserialize(deserializer)?;
 
-  Ok(s.map(|support| format!("https://Discord.com/invite/{support}")))
+  Ok(s.map(|support| format!("https://discord.com/invite/{support}")))
 }
 
 impl Bot {
@@ -159,13 +159,13 @@ pub(crate) struct Bots {
 /// A struct representing a Discord bot's statistics returned from the API.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Stats {
-  /// The bot's server count if available.
+  /// The bot's server count.
   pub server_count: Option<u64>,
 
-  /// The bot's server count per shard if available.
+  /// The bot's server count per shard.
   pub shards: Option<Vec<u64>>,
 
-  /// The bot's shard count if available.
+  /// The bot's shard count.
   pub shard_count: Option<u64>,
 }
 
