@@ -17,8 +17,6 @@ Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an AP
 topgg = "1.0"
 ```
 
-More things can be read on the [documentation](https://docs.rs/topgg).
-
 ## Features
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
@@ -32,6 +30,8 @@ This library provides several feature flags that can be enabled/disabled in `Car
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
 
 ## Examples
+
+More things can be read on the [documentation](https://docs.rs/topgg).
 
 <details>
 <summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>
