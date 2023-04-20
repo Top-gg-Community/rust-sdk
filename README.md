@@ -261,7 +261,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>rocket</code></b>: Writing an <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>rocket</code></b>: Writing a <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -297,7 +297,7 @@ fn main() {
 
 </details>
 <details>
-<summary><b><code>warp</code></b>: Writing an <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>warp</code></b>: Writing a <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
