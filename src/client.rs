@@ -382,7 +382,6 @@ impl Client {
   /// # Panics
   ///
   /// Panics if the following conditions are met:
-  /// - The bot ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
   /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
   /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
@@ -410,6 +409,7 @@ impl Client {
   ///   }
   /// }
   /// ```
+  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: SnowflakeLike,

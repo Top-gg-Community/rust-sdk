@@ -1,4 +1,3 @@
-#![allow(clippy::transmute_int_to_bool)]
 #![doc = include_str!("../README.md")]
 #![doc(
   html_logo_url = "https://top.gg/favicon.png",
