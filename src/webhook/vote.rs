@@ -52,24 +52,22 @@ where
 {
   let s: Result<&str, D::Error> = de::Deserialize::deserialize(deserializer);
 
-  Ok(match s {
-    Ok(s) => {
+  Ok(
+    s.map(|s| {
       let mut output = HashMap::new();
 
       for mut it in s.split('&').map(|pair| pair.split('=')) {
         if let (Some(k), Some(v)) = (it.next(), it.next()) {
-          match urlencoding::decode(v) {
-            Ok(v) => output.insert(k.to_owned(), v.into_owned()),
-            _ => continue,
-          };
+          if let Ok(v) = urlencoding::decode(v) {
+            output.insert(k.to_owned(), v.into_owned());
+          }
         }
       }
 
-      Some(output)
-    }
-
-    _ => None,
-  })
+      output
+    })
+    .ok(),
+  )
 }
 
 cfg_if::cfg_if! {

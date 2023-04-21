@@ -27,9 +27,11 @@ impl InnerClient {
   pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
     let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
 
-    self.http.request(POST, "/bots/stats", Some(&body)).await?;
-
-    Ok(())
+    self
+      .http
+      .send(POST, "/bots/stats", Some(&body))
+      .await
+      .map(|_| ())
   }
 }
 
@@ -367,14 +369,12 @@ impl Client {
   {
     let path = format!("/bots{}", query.into_query_string());
 
-    Ok(
-      self
-        .inner
-        .http
-        .request::<Bots>(GET, &path, None)
-        .await?
-        .results,
-    )
+    self
+      .inner
+      .http
+      .request::<Bots>(GET, &path, None)
+      .await
+      .map(|res| res.results)
   }
 
   /// Checks if the specified user has voted for your Discord bot.
@@ -416,16 +416,12 @@ impl Client {
   {
     let path = format!("/bots/votes?userId={}", user_id.as_snowflake());
 
-    Ok(unsafe {
-      transmute(
-        self
-          .inner
-          .http
-          .request::<Voted>(GET, &path, None)
-          .await?
-          .voted,
-      )
-    })
+    self
+      .inner
+      .http
+      .request::<Voted>(GET, &path, None)
+      .await
+      .map(|res| unsafe { transmute(res.voted) })
   }
 
   /// Checks if the weekend multiplier is active.

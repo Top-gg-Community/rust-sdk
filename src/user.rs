@@ -140,7 +140,7 @@ impl Voter {
       let ext = if hash.starts_with("a_") { "gif" } else { "png" };
 
       format!(
-        "https://cdn.Discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
+        "https://cdn.discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
         self.id
       )
     })

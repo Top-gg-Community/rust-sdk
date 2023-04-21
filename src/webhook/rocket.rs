@@ -13,10 +13,10 @@ impl FromDataSimple for IncomingVote {
     let headers = request.headers();
 
     if let Some(authorization) = headers.get_one("Authorization") {
-      let content_length = match headers.get_one("Content-Length") {
-        Some(s) => s.parse().unwrap_or(0),
-        None => 0,
-      };
+      let content_length = headers
+        .get_one("Content-Length")
+        .and_then(|s| s.parse())
+        .unwrap_or_default();
 
       let mut body: Vec<u8> = Vec::with_capacity(content_length);
       let _ = data.stream_to(&mut body);

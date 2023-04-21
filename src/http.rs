@@ -22,7 +22,7 @@ impl Http {
     Self { token }
   }
 
-  async fn send<'a>(
+  pub(crate) async fn send<'a>(
     &'a self,
     predicate: &'static str,
     path: &'a str,
@@ -51,7 +51,7 @@ impl Http {
       \r\n{}\
     ",
       self.token,
-      body.unwrap_or("")
+      body.unwrap_or_default()
     );
 
     if let Err(err) = socket.write_all(payload.as_bytes()).await {
@@ -100,8 +100,9 @@ impl Http {
   where
     D: DeserializeOwned,
   {
-    let response = self.send(predicate, path, body).await?;
-
-    serde_json::from_str(&response).map_err(|_| Error::InternalServerError)
+    self
+      .send(predicate, path, body)
+      .await
+      .and_then(|response| serde_json::from_str(&response).map_err(|_| Error::InternalServerError))
   }
 }
