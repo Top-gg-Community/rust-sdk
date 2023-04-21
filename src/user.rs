@@ -48,7 +48,7 @@ pub struct User {
   pub is_supporter: bool,
 
   /// Whether this user is a [Top.gg](https://top.gg) certified developer or not.
-  #[serde(rename = "isCertifiedDev")]
+  #[serde(rename = "certifiedDev")]
   pub is_certified_dev: bool,
 
   /// Whether this user is a [Top.gg](https://top.gg) moderator or not.
