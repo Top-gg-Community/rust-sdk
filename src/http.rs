@@ -13,17 +13,17 @@ pub(crate) struct Ratelimit {
   pub(crate) retry_after: u16,
 }
 
-pub(crate) struct Http<'a> {
-  token: &'a str,
+pub(crate) struct Http {
+  token: String,
 }
 
-impl<'a> Http<'a> {
-  pub(crate) const fn new(token: &'a str) -> Self {
+impl Http {
+  pub(crate) const fn new(token: String) -> Self {
     Self { token }
   }
 
-  async fn send(
-    &self,
+  pub(crate) async fn send<'a>(
+    &'a self,
     predicate: &'static str,
     path: &'a str,
     body: Option<&'a str>,
@@ -51,7 +51,7 @@ impl<'a> Http<'a> {
       \r\n{}\
     ",
       self.token,
-      body.unwrap_or("")
+      body.unwrap_or_default()
     );
 
     if let Err(err) = socket.write_all(payload.as_bytes()).await {
@@ -64,7 +64,7 @@ impl<'a> Http<'a> {
       return Err(Error::InternalServerError);
     }
 
-    // we sould never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
+    // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
     let status_code = unsafe {
       response
         .split_ascii_whitespace()
@@ -77,7 +77,7 @@ impl<'a> Http<'a> {
     match status_code {
       401 => panic!("unauthorized"),
       404 => Err(Error::NotFound),
-      429 => Err(Error::Ratelimited {
+      429 => Err(Error::Ratelimit {
         retry_after: serde_json::from_str::<Ratelimit>(&response)
           .map_err(|_| Error::InternalServerError)?
           .retry_after,
@@ -94,14 +94,15 @@ impl<'a> Http<'a> {
   pub(crate) async fn request<D>(
     &self,
     predicate: &'static str,
-    path: &'a str,
-    body: Option<&'a str>,
+    path: &str,
+    body: Option<&str>,
   ) -> Result<D>
   where
     D: DeserializeOwned,
   {
-    let response = self.send(predicate, path, body).await?;
-
-    serde_json::from_str(&response).map_err(|_| Error::InternalServerError)
+    self
+      .send(predicate, path, body)
+      .await
+      .and_then(|response| serde_json::from_str(&response).map_err(|_| Error::InternalServerError))
   }
 }

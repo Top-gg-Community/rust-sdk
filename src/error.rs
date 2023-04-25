@@ -2,16 +2,23 @@ use core::{fmt, result};
 use std::{error, io};
 use tokio_native_tls::native_tls;
 
+/// A struct representing an unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
 #[derive(Debug)]
 pub enum InternalError {
+  /// The client couldn't create a TLS connector.
   CreateConnector(native_tls::Error),
+
+  /// The client connect to [Top.gg](https://top.gg)'s servers.
   Connect(io::Error),
+
+  /// The client couldn't establish a handshake with [Top.gg](https://top.gg)'s servers.
   Handshake(native_tls::Error),
+
+  /// The client couldn't write a HTTP request to [Top.gg](https://top.gg)'s servers.
   WriteRequest(io::Error),
 }
 
 impl fmt::Display for InternalError {
-  #[inline(always)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::CreateConnector(_) => write!(f, "can't initiate a TLS connector"),
@@ -38,22 +45,32 @@ impl error::Error for InternalError {
   }
 }
 
+/// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
+  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
   InternalClientError(InternalError),
+
+  /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
   InternalServerError,
+
+  /// The requested resource does not exist. (404)
   NotFound,
-  Ratelimited { retry_after: u16 },
+
+  /// The client is being ratelimited from sending more HTTP requests.
+  Ratelimit {
+    /// The amount of seconds before the ratelimit is lifted.
+    retry_after: u16,
+  },
 }
 
 impl fmt::Display for Error {
-  #[inline(always)]
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::InternalClientError(err) => write!(f, "internal client error: {err}"),
       Self::InternalServerError => write!(f, "internal server error"),
       Self::NotFound => write!(f, "not found"),
-      Self::Ratelimited { retry_after } => write!(
+      Self::Ratelimit { retry_after } => write!(
         f,
         "this client is ratelimited, try again in {} seconds",
         retry_after / 60
@@ -72,4 +89,5 @@ impl error::Error for Error {
   }
 }
 
+/// The [`Result`][core::result::Result] type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;

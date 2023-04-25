@@ -1,20 +1,39 @@
 [package]
 name = "topgg"
-version = "0.1.0"
+version = "1.0.0"
 edition = "2021"
-authors = ["Top.gg <support@top.gg> (https://top.gg)", "null (https://github.com/null8626)"]
+authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
 readme = "README.md"
 repository = "https://github.com/top-gg/rust-sdk"
 license = "MIT"
 keywords = ["discord", "bots", "top.gg"]
 categories = ["api-bindings", "web-programming::http-client"]
-exclude = [".gitattributes", ".gitignore", ".github/**", "rustfmt.toml"]
+exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
-chrono = { version = "0.4", default-features = false, features = ["serde"] }
+cfg-if = "1.0"
 serde = { version = "1", default-features = false, features = ["derive"] }
-serde_json = "1"
-tokio = { version = "1", features = ["net", "io-util"] }
-tokio-native-tls = "0.3"
 urlencoding = "2"
+
+chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
+tokio = { version = "1", optional = true, features = ["net", "io-util"] }
+tokio-native-tls = { version = "0.3", optional = true }
+serde_json = { version = "1", optional = true }
+
+rocket = { version = "0.4", default-features = false, optional = true }
+axum = { version = "0.6", default-features = false, optional = true, features = ["http1", "tokio"] }
+async-trait = { version = "0.1", optional = true }
+warp = { version = "0.3", default-features = false, optional = true }
+actix-web = { version = "4", default-features = false, optional = true }
+
+[features]
+default = ["api"]
+api = ["chrono", "serde_json", "tokio", "tokio-native-tls"]
+autoposter = ["api", "tokio/rt", "tokio/sync", "tokio/time"]
+
+webhook = []
+rocket = ["webhook", "serde_json", "dep:rocket"]
+axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
+warp = ["webhook", "async-trait", "dep:warp"]
+actix = ["webhook", "actix-web"]
