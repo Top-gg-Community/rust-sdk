@@ -18,7 +18,7 @@ cfg_if::cfg_if! {
 
     /// User-related structs.
     pub mod user;
-    
+
     #[doc(inline)]
     pub use bot::{Filter, NewStats, Query};
     pub use client::Client;
@@ -30,7 +30,7 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
     mod autoposter;
-    
+
     #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
     pub use autoposter::Autoposter;
   }
@@ -39,7 +39,7 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "webhook")] {
     mod webhook;
-    
+
     pub use webhook::*;
   }
 }
