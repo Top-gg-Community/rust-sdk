@@ -43,7 +43,7 @@ impl Http {
 
     let payload = format!(
       "\
-      {predicate} /api{path} HTTP/1.0\r\n\
+      {predicate} /api{path} HTTP/1.1\r\n\
       Authorization: Bearer {}\r\n\
       Content-Type: application/json\r\n\
       Host: top.gg\r\n\
