@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.0.3"
+version = "1.0.4"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
@@ -12,7 +12,7 @@ categories = ["api-bindings", "web-programming::http-client"]
 exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
-cfg-if = "1.0"
+cfg-if = "1"
 serde = { version = "1", default-features = false, features = ["derive"] }
 urlencoding = "2"
 

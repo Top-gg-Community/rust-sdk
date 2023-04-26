@@ -14,7 +14,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
-topgg = "1.0"
+topgg = "1"
 ```
 
 ## Features
@@ -156,7 +156,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.0", features = ["autoposter"] }
+topgg = { version = "1", features = ["autoposter"] }
 ```
 
 In your code:
@@ -188,7 +188,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.0", default-features = false, features = ["actix"] }
+topgg = { version = "1", default-features = false, features = ["actix"] }
 ```
 
 In your code:
@@ -224,7 +224,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.0", default-features = false, features = ["axum"] }
+topgg = { version = "1", default-features = false, features = ["axum"] }
 ```
 
 In your code:
@@ -267,7 +267,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.0", default-features = false, features = ["rocket"] }
+topgg = { version = "1", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -303,7 +303,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.0", default-features = false, features = ["warp"] }
+topgg = { version = "1", default-features = false, features = ["warp"] }
 ```
 
 In your code:
