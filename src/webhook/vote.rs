@@ -6,6 +6,7 @@ use serde::{
 use std::collections::HashMap;
 
 /// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
+#[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
   /// The ID of the bot/server that received a vote.
@@ -73,6 +74,7 @@ where
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "actix", feature = "rocket"))] {
     /// A struct that represents an unauthenticated request containing a [`Vote`] data.
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "actix", feature = "rocket"))))]
     pub struct IncomingVote {
       pub(crate) authorization: String,
       pub(crate) vote: Vote,
@@ -113,6 +115,7 @@ cfg_if::cfg_if! {
     ///   async fn voted(&self, vote: Vote);
     /// }
     /// ```
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "axum", feature = "warp"))))]
     #[async_trait::async_trait]
     pub trait VoteHandler: Send + Sync + 'static {
       async fn voted(&self, vote: Vote);

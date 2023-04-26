@@ -3,6 +3,7 @@
   html_logo_url = "https://top.gg/favicon.png",
   html_favicon_url = "https://top.gg/favicon.png"
 )]
+#![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod snowflake;
 
@@ -30,6 +31,8 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
     mod autoposter;
+
+    #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
     pub use autoposter::Autoposter;
   }
 }
@@ -37,6 +40,7 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "webhook")] {
     mod webhook;
+
     pub use webhook::*;
   }
 }

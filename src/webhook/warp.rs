@@ -58,6 +58,7 @@ use warp::{body, header, http::StatusCode, path, Filter};
 ///   warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
 /// }
 /// ```
+#[cfg_attr(docsrs, doc(cfg(feature = "warp")))]
 pub fn webhook<T>(endpoint: &'static str, password: String, state: T) -> impl Filter
 where
   T: VoteHandler,

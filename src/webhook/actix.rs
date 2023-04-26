@@ -7,6 +7,7 @@ use actix_web::{
 };
 use core::{future::Future, pin::Pin};
 
+#[cfg_attr(docsrs, doc(cfg(feature = "actix")))]
 impl FromRequest for IncomingVote {
   type Error = Error;
   type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
