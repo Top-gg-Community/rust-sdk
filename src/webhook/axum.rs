@@ -101,6 +101,7 @@ where
 ///     .unwrap();
 /// }
 /// ```
+#[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
 pub fn webhook<T>(password: String, state: T) -> Router
 where
   T: VoteHandler,

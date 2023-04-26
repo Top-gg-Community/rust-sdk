@@ -6,6 +6,7 @@ use rocket::{
   Outcome,
 };
 
+#[cfg_attr(docsrs, doc(cfg(feature = "rocket")))]
 impl FromDataSimple for IncomingVote {
   type Error = ();
 
