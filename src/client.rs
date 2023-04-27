@@ -355,8 +355,8 @@ impl Client {
   ///     .certified(true);
   ///
   ///   let query = Query::new()
-  ///     .limit(250)
-  ///     .skip(50)
+  ///     .limit(250u16)
+  ///     .skip(50u16)
   ///     .filter(filter);
   ///
   ///   for bot in client.get_bots(query).await.unwrap() {

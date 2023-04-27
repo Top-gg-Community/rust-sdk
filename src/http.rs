@@ -43,8 +43,9 @@ impl Http {
 
     let payload = format!(
       "\
-      {predicate} /api{path} HTTP/1.0\r\n\
+      {predicate} /api{path} HTTP/1.1\r\n\
       Authorization: Bearer {}\r\n\
+      Connection: close\r\n\
       Content-Type: application/json\r\n\
       Host: top.gg\r\n\
       User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\
@@ -100,9 +101,12 @@ impl Http {
   where
     D: DeserializeOwned,
   {
-    self
-      .send(predicate, path, body)
-      .await
-      .and_then(|response| serde_json::from_str(&response).map_err(|_| Error::InternalServerError))
+    self.send(predicate, path, body).await.and_then(|response| {
+      serde_json::from_str(&response).map_err(|err| {
+        println!("json:\n{response}\n\nerr:\n{:?}\n\n", err);
+
+        Error::InternalServerError
+      })
+    })
   }
 }

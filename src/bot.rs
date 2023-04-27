@@ -1,13 +1,13 @@
 use crate::{snowflake, util};
 use chrono::{offset::Utc, DateTime};
-use core::cmp::min;
-use serde::{
-  de::{self, Deserializer},
-  Deserialize, Serialize,
+use core::{
+  cmp::min,
+  fmt::{self, Debug, Formatter},
 };
+use serde::{de::Deserializer, Deserialize, Serialize};
 
 /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Bot {
   /// The ID of this Discord bot.
   #[serde(deserialize_with = "snowflake::deserialize")]
@@ -27,16 +27,23 @@ pub struct Bot {
   pub short_description: String,
 
   /// The long description of this Discord bot. It can contain HTML and/or Markdown.
-  #[serde(rename = "longdesc")]
+  #[serde(
+    default,
+    deserialize_with = "util::deserialize_optional_string",
+    rename = "longdesc"
+  )]
   pub long_description: Option<String>,
 
   /// The tags of this Discord bot.
+  #[serde(default, deserialize_with = "util::deserialize_default")]
   pub tags: Vec<String>,
 
   /// The website URL of this Discord bot.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub website: Option<String>,
 
   /// The link to this Discord bot's GitHub repository.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub github: Option<String>,
 
   /// A list of IDs of this Discord bot's owners. The main owner is the first ID in the array.
@@ -44,14 +51,15 @@ pub struct Bot {
   pub owners: Vec<u64>,
 
   /// A list of IDs of the guilds featured on this Discord bot's page.
-  #[serde(deserialize_with = "snowflake::deserialize_vec")]
+  #[serde(default, deserialize_with = "snowflake::deserialize_vec")]
   pub guilds: Vec<u64>,
 
-  /// The custom bot invite URL of this Discord bot.
-  pub invite: Option<String>,
-
   /// The URL for this Discord bot's banner image.
-  #[serde(rename = "bannerUrl")]
+  #[serde(
+    default,
+    deserialize_with = "util::deserialize_optional_string",
+    rename = "bannerUrl"
+  )]
   pub banner_url: Option<String>,
 
   /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
@@ -62,10 +70,8 @@ pub struct Bot {
   pub is_certified: bool,
 
   /// A list of this Discord bot's shards.
-  pub shards: Option<Vec<u64>>,
-
-  /// The amount of shards this Discord bot has according to posted stats.
-  pub shard_count: Option<u64>,
+  #[serde(default, deserialize_with = "util::deserialize_default")]
+  pub shards: Vec<u64>,
 
   /// The amount of upvotes this Discord bot has.
   #[serde(rename = "points")]
@@ -79,19 +85,29 @@ pub struct Bot {
   #[serde(default, deserialize_with = "deserialize_support_server")]
   pub support: Option<String>,
 
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   avatar: Option<String>,
+
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  invite: Option<String>,
+
+  shard_count: Option<u64>,
+
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   vanity: Option<String>,
 }
 
+#[inline(always)]
 pub(crate) fn deserialize_support_server<'de, D>(
   deserializer: D,
 ) -> Result<Option<String>, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: Option<&str> = de::Deserialize::deserialize(deserializer)?;
-
-  Ok(s.map(|support| format!("https://discord.com/invite/{support}")))
+  Ok(
+    unsafe { util::deserialize_optional_string(deserializer).unwrap_unchecked() }
+      .map(|support| format!("https://discord.com/invite/{support}")),
+  )
 }
 
 impl Bot {
@@ -120,6 +136,61 @@ impl Bot {
   #[inline(always)]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, &self.discriminator, self.id)
+  }
+
+  /// The invite URL of this Discord bot.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   
+  ///   println!("{}", bot.invite());
+  /// }
+  /// ```
+  #[must_use]
+  pub fn invite(&self) -> String {
+    match self.invite.as_ref() {
+      Some(inv) => inv.to_owned(),
+      _ => format!(
+        "https://discord.com/oauth2/authorize?scope=bot&client_id={}",
+        self.id
+      ),
+    }
+  }
+
+  /// The amount of shards this Discord bot has according to posted stats.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   
+  ///   println!("{}", bot.shard_count());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn shard_count(&self) -> u64 {
+    self.shard_count.unwrap_or(self.shards.len() as _)
   }
 
   /// Retrieves the URL of this Discord bot's [Top.gg](https://top.gg) page.
@@ -151,22 +222,116 @@ impl Bot {
   }
 }
 
+impl Debug for Bot {
+  fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    fmt
+      .debug_struct("Bot")
+      .field("id", &self.id)
+      .field("username", &self.username)
+      .field("discriminator", &self.discriminator)
+      .field("prefix", &self.prefix)
+      .field("short_description", &self.short_description)
+      .field("long_description", &self.long_description)
+      .field("tags", &self.tags)
+      .field("website", &self.website)
+      .field("github", &self.github)
+      .field("owners", &self.owners)
+      .field("guilds", &self.guilds)
+      .field("banner_url", &self.banner_url)
+      .field("date", &self.date)
+      .field("is_certified", &self.is_certified)
+      .field("shards", &self.shards)
+      .field("votes", &self.votes)
+      .field("monthly_votes", &self.monthly_votes)
+      .field("support", &self.support)
+      .field("avatar", &self.avatar())
+      .field("invite", &self.invite())
+      .field("shard_count", &self.shard_count())
+      .field("url", &self.url())
+      .finish()
+  }
+}
+
 #[derive(Deserialize)]
 pub(crate) struct Bots {
   pub(crate) results: Vec<Bot>,
 }
 
 /// A struct representing a Discord bot's statistics returned from the API.
-#[derive(Clone, Debug, Deserialize)]
+#[derive(Clone, Deserialize)]
 pub struct Stats {
-  /// The bot's server count.
-  pub server_count: Option<u64>,
-
   /// The bot's server count per shard.
-  pub shards: Option<Vec<u64>>,
+  #[serde(default, deserialize_with = "util::deserialize_default")]
+  pub shards: Vec<u64>,
 
-  /// The bot's shard count.
-  pub shard_count: Option<u64>,
+  shard_count: Option<u64>,
+  server_count: Option<u64>,
+}
+
+impl Stats {
+  /// The amount of shards this Discord bot has according to posted stats.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let stats = client.get_stats().await.unwrap();
+  ///   
+  ///   println!("{:?}", stats.shard_count());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn shard_count(&self) -> u64 {
+    self.shard_count.unwrap_or(self.shards.len() as _)
+  }
+
+  /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let stats = client.get_stats().await.unwrap();
+  ///   
+  ///   println!("{:?}", stats.server_count());
+  /// }
+  /// ```
+  #[must_use]
+  pub fn server_count(&self) -> Option<u64> {
+    self.server_count.or(if self.shards.is_empty() {
+      None
+    } else {
+      Some(self.shards.iter().copied().sum())
+    })
+  }
+}
+
+impl Debug for Stats {
+  fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    fmt
+      .debug_struct("Stats")
+      .field("shards", &self.shards)
+      .field("shard_count", &self.shard_count())
+      .field("server_count", &self.server_count())
+      .finish()
+  }
 }
 
 /// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
@@ -492,7 +657,7 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250);
+  ///   .limit(250u16);
   /// ```
   #[must_use]
   pub fn limit<N>(mut self, new_limit: N) -> Self
@@ -515,8 +680,8 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100);
+  ///   .limit(250u16)
+  ///   .skip(100u16);
   /// ```
   #[must_use]
   pub fn skip<S>(mut self, skip_by: S) -> Self
@@ -543,8 +708,8 @@ impl Query {
   ///   .certified(true);
   ///
   /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100)
+  ///   .limit(250u16)
+  ///   .skip(100u16)
   ///   .filter(filter);
   /// ```
   #[must_use]
