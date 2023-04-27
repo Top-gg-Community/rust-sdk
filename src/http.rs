@@ -101,12 +101,9 @@ impl Http {
   where
     D: DeserializeOwned,
   {
-    self.send(predicate, path, body).await.and_then(|response| {
-      serde_json::from_str(&response).map_err(|err| {
-        println!("json:\n{response}\n\nerr:\n{:?}\n\n", err);
-
-        Error::InternalServerError
-      })
-    })
+    self
+      .send(predicate, path, body)
+      .await
+      .and_then(|response| serde_json::from_str(&response).map_err(|_| Error::InternalServerError))
   }
 }

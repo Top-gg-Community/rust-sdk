@@ -7,13 +7,17 @@ pub(crate) fn deserialize_optional_string<'de, D>(
 where
   D: Deserializer<'de>,
 {
-  Ok(Deserialize::deserialize(deserializer).ok().map(|s: &str| {
-    if s.is_empty() {
-      None
-    } else {
-      Some(s.to_owned())
-    }
-  }))
+  Ok(
+    Deserialize::deserialize(deserializer)
+      .ok()
+      .and_then(|s: &str| {
+        if s.is_empty() {
+          None
+        } else {
+          Some(s.to_owned())
+        }
+      }),
+  )
 }
 
 #[inline(always)]
