@@ -55,15 +55,17 @@ impl Http {
       body.unwrap_or_default()
     );
 
-    if let Err(err) = socket.write_all(payload.as_bytes()).await {
-      return Err(Error::InternalClientError(InternalError::WriteRequest(err)));
-    }
+    socket
+      .write_all(payload.as_bytes())
+      .await
+      .map_err(|err| Error::InternalClientError(InternalError::WriteRequest(err)))?;
 
     let mut response = String::new();
 
-    if socket.read_to_string(&mut response).await.is_err() {
-      return Err(Error::InternalServerError);
-    }
+    socket
+      .read_to_string(&mut response)
+      .await
+      .map_err(|_| Error::InternalServerError)?;
 
     // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
     let status_code = unsafe {
@@ -77,6 +79,7 @@ impl Http {
 
     match status_code {
       401 => panic!("unauthorized"),
+      403 => Err(Error::Forbidden),
       404 => Err(Error::NotFound),
       429 => Err(Error::Ratelimit {
         retry_after: serde_json::from_str::<Ratelimit>(&response)
