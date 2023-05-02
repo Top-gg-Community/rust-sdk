@@ -4,7 +4,7 @@ use core::{
   cmp::min,
   fmt::{self, Debug, Formatter},
 };
-use serde::{de::Deserializer, Deserialize, Serialize};
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
 #[derive(Clone, Deserialize)]

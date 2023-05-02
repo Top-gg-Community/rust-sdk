@@ -1,4 +1,4 @@
-use serde::de::{Deserialize, Deserializer, Error};
+use serde::{de::Error, Deserialize, Deserializer};
 
 pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where

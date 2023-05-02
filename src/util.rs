@@ -1,4 +1,4 @@
-use serde::de::{Deserialize, Deserializer};
+use serde::{Deserialize, Deserializer};
 
 #[inline(always)]
 pub(crate) fn deserialize_optional_string<'de, D>(

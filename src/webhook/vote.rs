@@ -1,8 +1,5 @@
 use crate::snowflake;
-use serde::{
-  de::{self, Deserializer},
-  Deserialize,
-};
+use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 
 /// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
@@ -40,7 +37,7 @@ fn deserialize_is_test<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
   D: Deserializer<'de>,
 {
-  de::Deserialize::deserialize(deserializer).map(|s: &str| s == "test")
+  Deserialize::deserialize(deserializer).map(|s: &str| s == "test")
 }
 
 fn deserialize_query_string<'de, D>(
@@ -49,23 +46,19 @@ fn deserialize_query_string<'de, D>(
 where
   D: Deserializer<'de>,
 {
-  Ok(
-    de::Deserialize::deserialize(deserializer)
-      .ok()
-      .map(|s: &str| {
-        let mut output = HashMap::new();
+  Ok(Deserialize::deserialize(deserializer).ok().map(|s: &str| {
+    let mut output = HashMap::new();
 
-        for mut it in s.split('&').map(|pair| pair.split('=')) {
-          if let (Some(k), Some(v)) = (it.next(), it.next()) {
-            if let Ok(v) = urlencoding::decode(v) {
-              output.insert(k.to_owned(), v.into_owned());
-            }
-          }
+    for mut it in s.split('&').map(|pair| pair.split('=')) {
+      if let (Some(k), Some(v)) = (it.next(), it.next()) {
+        if let Ok(v) = urlencoding::decode(v) {
+          output.insert(k.to_owned(), v.into_owned());
         }
+      }
+    }
 
-        output
-      }),
-  )
+    output
+  }))
 }
 
 cfg_if::cfg_if! {
