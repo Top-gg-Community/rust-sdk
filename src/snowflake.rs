@@ -1,28 +1,21 @@
 use serde::{de::Error, Deserialize, Deserializer};
 
+#[inline(always)]
 pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: &str = Deserialize::deserialize(deserializer)?;
-
-  s.parse::<u64>().map_err(D::Error::custom)
+  Deserialize::deserialize(deserializer)
+    .and_then(|s: &str| s.parse::<u64>().map_err(D::Error::custom))
 }
 
+#[inline(always)]
 pub(crate) fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<u64>, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: Vec<&str> = Deserialize::deserialize(deserializer)?;
-  let out = Vec::with_capacity(s.len());
-
-  Ok(s.into_iter().fold(out, |mut acc, next| {
-    if let Ok(next) = next.parse::<u64>() {
-      acc.push(next);
-    }
-
-    acc
-  }))
+  Deserialize::deserialize(deserializer)
+    .map(|s: Vec<&str>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
 }
 
 /// A trait that represents any data type that can be interpreted as a snowflake/ID.

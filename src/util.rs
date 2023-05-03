@@ -38,7 +38,7 @@ pub(crate) fn get_avatar(hash: &Option<String>, discriminator: &str, id: u64) ->
     }
 
     None => format!("https://cdn.discordapp.com/embed/avatars/{}.png", unsafe {
-      discriminator.parse::<u16>().unwrap_unchecked() % 5
+      discriminator.parse::<u16>().unwrap_unchecked() % 5u16
     }),
   }
 }

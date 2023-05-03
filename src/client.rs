@@ -421,9 +421,9 @@ impl Client {
     self
       .inner
       .http
-      .request::<Voted>(GET, &path, None)
+      .request(GET, &path, None)
       .await
-      .map(|res| unsafe { transmute(res.voted) })
+      .map(|res: Voted| unsafe { transmute(res.voted) })
   }
 
   /// Checks if the weekend multiplier is active.
@@ -461,8 +461,8 @@ impl Client {
     self
       .inner
       .http
-      .request::<IsWeekend>(GET, "/weekend", None)
+      .request(GET, "/weekend", None)
       .await
-      .map(|res| res.is_weekend)
+      .map(|res: IsWeekend| res.is_weekend)
   }
 }

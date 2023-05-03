@@ -68,12 +68,12 @@ impl Http {
       .map_err(|_| Error::InternalServerError)?;
 
     // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
-    let status_code = unsafe {
+    let status_code: u16 = unsafe {
       response
         .split_ascii_whitespace()
         .nth(1)
         .unwrap_unchecked()
-        .parse::<u16>()
+        .parse()
         .unwrap_unchecked()
     };
 

@@ -13,7 +13,7 @@ impl FromRequest for IncomingVote {
   type Future = Pin<Box<dyn Future<Output = Result<Self, Self::Error>>>>;
 
   fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-    let json = Json::<Vote>::from_request(req, payload);
+    let json: Vote = Json::from_request(req, payload);
     let req = req.clone();
 
     Box::pin(async move {
