@@ -36,7 +36,7 @@ pub struct User {
   /// The username of this user.
   pub username: String,
 
-  /// The Discord discriminator of this user.
+  #[deprecated(since = "1.1.0")]
   pub discriminator: String,
 
   /// The user's bio.
@@ -99,7 +99,7 @@ impl User {
   /// ```
   #[inline(always)]
   pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id)
+    util::get_avatar(&self.avatar, self.id)
   }
 }
 
@@ -109,7 +109,6 @@ impl Debug for User {
       .debug_struct("User")
       .field("id", &self.id)
       .field("username", &self.username)
-      .field("discriminator", &self.discriminator)
       .field("bio", &self.bio)
       .field("banner", &self.banner)
       .field("socials", &self.socials)
@@ -159,19 +158,12 @@ impl Voter {
   ///   let client = Client::new(token);
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
-  ///     println!("{}", voter.avatar().unwrap_or(String::from("No avatar :(")));
+  ///     println!("{}", voter.avatar());
   ///   }
   /// }
   /// ```
   #[must_use]
-  pub fn avatar(&self) -> Option<String> {
-    self.avatar.as_ref().map(|hash| {
-      let ext = if hash.starts_with("a_") { "gif" } else { "png" };
-
-      format!(
-        "https://cdn.discordapp.com/avatars/{}/{hash}.{ext}?size=1024",
-        self.id
-      )
-    })
+  pub fn avatar(&self) -> String {
+    util::get_avatar(&self.avatar, self.id)
   }
 }

@@ -17,6 +17,7 @@ cfg_if::cfg_if! {
   }
 }
 
+#[derive(Clone)]
 pub(crate) struct InnerClient {
   http: Http,
 }
@@ -36,6 +37,7 @@ impl InnerClient {
 }
 
 /// A struct representing a [Top.gg](https://top.gg) API client instance.
+#[derive(Clone)]
 pub struct Client {
   inner: SyncedClient,
 }
@@ -102,7 +104,6 @@ impl Client {
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
   ///   
   ///   assert_eq!(user.username, "null");
-  ///   assert_eq!(user.discriminator, "8626");
   ///   assert_eq!(user.id, 661200758510977084u64);
   ///   
   ///   println!("{:?}", user);
@@ -148,7 +149,6 @@ impl Client {
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
   ///   assert_eq!(bot.username, "Luca");
-  ///   assert_eq!(bot.discriminator, "1375");
   ///   assert_eq!(bot.id, 264811613708746752u64);
   ///   
   ///   println!("{:?}", bot);

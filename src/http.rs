@@ -13,6 +13,7 @@ pub(crate) struct Ratelimit {
   pub(crate) retry_after: u16,
 }
 
+#[derive(Clone)]
 pub(crate) struct Http {
   token: String,
 }

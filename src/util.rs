@@ -29,7 +29,7 @@ where
   Option::deserialize(deserializer).map(|res| res.unwrap_or_default())
 }
 
-pub(crate) fn get_avatar(hash: &Option<String>, discriminator: &str, id: u64) -> String {
+pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
   match hash {
     Some(hash) => {
       let ext = if hash.starts_with("a_") { "gif" } else { "png" };
@@ -37,8 +37,9 @@ pub(crate) fn get_avatar(hash: &Option<String>, discriminator: &str, id: u64) ->
       format!("https://cdn.discordapp.com/avatars/{id}/{hash}.{ext}?size=1024")
     }
 
-    None => format!("https://cdn.discordapp.com/embed/avatars/{}.png", unsafe {
-      discriminator.parse::<u16>().unwrap_unchecked() % 5u16
-    }),
+    _ => format!(
+      "https://cdn.discordapp.com/embed/avatars/{}.png",
+      (id >> 22) as u16 % 5
+    ),
   }
 }

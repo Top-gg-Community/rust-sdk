@@ -16,7 +16,7 @@ pub struct Bot {
   /// The username of this Discord bot.
   pub username: String,
 
-  /// The discriminator of this Discord bot.
+  #[deprecated(since = "1.1.0")]
   pub discriminator: String,
 
   /// The prefix of this Discord bot.
@@ -135,7 +135,7 @@ impl Bot {
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id)
+    util::get_avatar(&self.avatar, self.id)
   }
 
   /// The invite URL of this Discord bot.
@@ -228,7 +228,6 @@ impl Debug for Bot {
       .debug_struct("Bot")
       .field("id", &self.id)
       .field("username", &self.username)
-      .field("discriminator", &self.discriminator)
       .field("prefix", &self.prefix)
       .field("short_description", &self.short_description)
       .field("long_description", &self.long_description)
@@ -471,19 +470,7 @@ impl Filter {
     self
   }
 
-  /// Filters only Discord bots that matches this discriminator.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .discriminator("1536");
-  /// ```
-  #[must_use]
+  #[deprecated(since = "1.1.0")]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,

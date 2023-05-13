@@ -47,7 +47,6 @@ async fn main() {
   let user = client.get_user(661200758510977084u64).await.unwrap();
   
   assert_eq!(user.username, "null");
-  assert_eq!(user.discriminator, "8626");
   assert_eq!(user.id, 661200758510977084u64);
   
   println!("{:?}", user);
@@ -69,7 +68,6 @@ async fn main() {
   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   
   assert_eq!(bot.username, "Luca");
-  assert_eq!(bot.discriminator, "1375");
   assert_eq!(bot.id, 264811613708746752u64);
   
   println!("{:?}", bot);
