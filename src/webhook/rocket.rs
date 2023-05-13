@@ -10,7 +10,7 @@ use rocket::{
 impl FromDataSimple for IncomingVote {
   type Error = ();
 
-  fn from_data(request: &Request<'_>, data: Data) -> data::Outcome<Self, Self::Error> {
+  fn from_data(request: &Request<'_>, data: Data) -> Outcome<Self, Self::Error> {
     let headers = request.headers();
 
     if let Some(authorization) = headers.get_one("Authorization") {
