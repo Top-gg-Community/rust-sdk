@@ -48,9 +48,6 @@ impl error::Error for InternalError {
 /// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
-  /// The client is not allowed to send a HTTP request to this endpoint.
-  Forbidden,
-
   /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
   InternalClientError(InternalError),
 
@@ -70,7 +67,6 @@ pub enum Error {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::Forbidden => write!(f, "forbidden"),
       Self::InternalClientError(err) => write!(f, "internal client error: {err}"),
       Self::InternalServerError => write!(f, "internal server error"),
       Self::NotFound => write!(f, "not found"),
