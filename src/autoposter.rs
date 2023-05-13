@@ -6,21 +6,21 @@ use tokio::{
   time::{sleep, Duration},
 };
 
-/// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API.
+/// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API in intervals.
 pub struct Autoposter {
   thread: JoinHandle<()>,
   data: Arc<Mutex<Option<NewStats>>>,
 }
 
 impl Autoposter {
-  pub(crate) fn new(client: Arc<InnerClient>, delay: u64) -> Self {
+  pub(crate) fn new(client: Arc<InnerClient>, interval: u64) -> Self {
     let current_thread_data = Arc::new(Mutex::new(None));
     let thread_data = Arc::clone(&current_thread_data);
 
     Self {
       thread: spawn(async move {
         loop {
-          sleep(Duration::from_secs(delay)).await;
+          sleep(Duration::from_secs(interval)).await;
 
           let lock = thread_data.lock().await;
 
@@ -33,7 +33,7 @@ impl Autoposter {
     }
   }
 
-  /// Feeds new bot stats to the autoposter. The autoposter will automatically post it to the [Top.gg](https://top.gg) servers once the delay is complete.
+  /// Feeds new bot stats to the autoposter. The autoposter will automatically post it to the [Top.gg](https://top.gg) servers in intervals.
   ///
   /// # Examples
   ///

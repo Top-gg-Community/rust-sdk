@@ -31,7 +31,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 
 ## Examples
 
-More things can be read on the [documentation](https://docs.rs/topgg).
+More things can be read in the [documentation](https://docs.rs/topgg).
 
 <details>
 <summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>

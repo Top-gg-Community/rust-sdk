@@ -237,11 +237,11 @@ impl Client {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API in intervals.
   ///
   /// # Panics
   ///
-  /// Panics if the delay argument is shorter than 15 minutes (900 seconds)
+  /// Panics if the interval argument is shorter than 15 minutes (900 seconds)
   ///
   /// # Examples
   ///
@@ -268,17 +268,17 @@ impl Client {
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
   #[must_use]
-  pub fn new_autoposter<D>(&self, seconds_delay: D) -> Autoposter
+  pub fn new_autoposter<D>(&self, seconds_interval: D) -> Autoposter
   where
     D: Into<u64>,
   {
-    let seconds_delay = seconds_delay.into();
+    let seconds_interval = seconds_interval.into();
 
-    if seconds_delay < 900 {
-      panic!("the delay mustn't be shorter than 15 minutes (900 seconds)");
+    if seconds_interval < 900 {
+      panic!("the interval mustn't be shorter than 15 minutes (900 seconds)");
     }
 
-    Autoposter::new(Arc::clone(&self.inner), seconds_delay)
+    Autoposter::new(Arc::clone(&self.inner), seconds_interval)
   }
 
   /// Fetches your Discord bot's last 1000 voters.
