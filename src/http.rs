@@ -1,7 +1,6 @@
 use crate::{Error, InternalError, Result};
 use serde::{de::DeserializeOwned, Deserialize};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
 use tokio_native_tls::{native_tls, TlsConnector};
 
 pub(crate) const GET: &str = "GET";
