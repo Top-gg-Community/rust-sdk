@@ -267,7 +267,6 @@ impl Client {
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-  #[must_use]
   pub fn new_autoposter<D>(&self, seconds_interval: D) -> Autoposter
   where
     D: Into<u64>,
