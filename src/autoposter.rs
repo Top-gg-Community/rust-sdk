@@ -7,6 +7,7 @@ use tokio::{
 };
 
 /// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API in intervals.
+#[must_use]
 pub struct Autoposter {
   thread: JoinHandle<()>,
   data: Arc<Mutex<Option<NewStats>>>,

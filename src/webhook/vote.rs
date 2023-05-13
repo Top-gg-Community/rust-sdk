@@ -3,6 +3,7 @@ use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 
 /// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
+#[must_use]
 #[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
@@ -27,9 +28,9 @@ pub struct Vote {
   #[serde(default, rename = "isWeekend")]
   pub is_weekend: bool,
 
-  /// Query strings found on the vote page, if any.
+  /// Query strings found on the vote page.
   #[serde(default, deserialize_with = "deserialize_query_string")]
-  pub query: Option<HashMap<String, String>>,
+  pub query: HashMap<String, String>,
 }
 
 #[inline(always)]
@@ -40,31 +41,35 @@ where
   Deserialize::deserialize(deserializer).map(|s: &str| s == "test")
 }
 
-fn deserialize_query_string<'de, D>(
-  deserializer: D,
-) -> Result<Option<HashMap<String, String>>, D::Error>
+fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
   D: Deserializer<'de>,
 {
-  Ok(Deserialize::deserialize(deserializer).ok().map(|s: &str| {
-    let mut output = HashMap::new();
+  Ok(
+    Deserialize::deserialize(deserializer)
+      .map(|s: &str| {
+        let mut output = HashMap::new();
 
-    for mut it in s.split('&').map(|pair| pair.split('=')) {
-      if let (Some(k), Some(v)) = (it.next(), it.next()) {
-        if let Ok(v) = urlencoding::decode(v) {
-          output.insert(k.to_owned(), v.into_owned());
+        for mut it in s.split('&').map(|pair| pair.split('=')) {
+          if let (Some(k), Some(v)) = (it.next(), it.next()) {
+            if let Ok(v) = urlencoding::decode(v) {
+              output.insert(k.to_owned(), v.into_owned());
+            }
+          }
         }
-      }
-    }
 
-    output
-  }))
+        output
+      })
+      .unwrap_or_default(),
+  )
 }
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "actix", feature = "rocket"))] {
     /// A struct that represents an unauthenticated request containing a [`Vote`] data.
+    #[must_use]
     #[cfg_attr(docsrs, doc(cfg(any(feature = "actix", feature = "rocket"))))]
+    #[derive(Clone)]
     pub struct IncomingVote {
       pub(crate) authorization: String,
       pub(crate) vote: Vote,

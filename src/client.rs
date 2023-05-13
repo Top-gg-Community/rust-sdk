@@ -37,6 +37,7 @@ impl InnerClient {
 }
 
 /// A struct representing a [Top.gg](https://top.gg) API client instance.
+#[must_use]
 #[derive(Clone)]
 pub struct Client {
   inner: SyncedClient,
@@ -60,7 +61,6 @@ impl Client {
   ///   let _client = Client::new(token);
   /// }
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {

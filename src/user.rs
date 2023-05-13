@@ -27,6 +27,7 @@ pub struct Socials {
 }
 
 /// A struct representing a user logged into [Top.gg](https://top.gg).
+#[must_use]
 #[derive(Clone, Deserialize)]
 pub struct User {
   /// The Discord ID of this user.
@@ -97,6 +98,7 @@ impl User {
   ///   println!("{}", user.avatar());
   /// }
   /// ```
+  #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, self.id)
@@ -128,7 +130,8 @@ pub(crate) struct Voted {
 }
 
 /// A struct representing a user who has voted on a Discord bot listed on [Top.gg](https://top.gg). (See [crate::Client::get_voters`])
-#[derive(Clone, Debug, Deserialize)]
+#[must_use]
+#[derive(Clone, Deserialize)]
 pub struct Voter {
   /// The Discord ID of this user.
   #[serde(deserialize_with = "snowflake::deserialize")]
@@ -165,5 +168,16 @@ impl Voter {
   #[must_use]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, self.id)
+  }
+}
+
+impl Debug for Voter {
+  fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    fmt
+      .debug_struct("Voter")
+      .field("id", &self.id)
+      .field("username", &self.username)
+      .field("avatar", &self.avatar())
+      .finish()
   }
 }

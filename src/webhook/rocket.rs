@@ -1,9 +1,8 @@
 use crate::IncomingVote;
 use rocket::{
-  data::{self, Data, FromDataSimple},
+  data::{Data, FromDataSimple, Outcome},
   http::Status,
   request::Request,
-  Outcome,
 };
 
 #[cfg_attr(docsrs, doc(cfg(feature = "rocket")))]

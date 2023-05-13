@@ -7,6 +7,7 @@ use core::{
 use serde::{Deserialize, Deserializer, Serialize};
 
 /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
+#[must_use]
 #[derive(Clone, Deserialize)]
 pub struct Bot {
   /// The ID of this Discord bot.
@@ -257,6 +258,7 @@ pub(crate) struct Bots {
 }
 
 /// A struct representing a Discord bot's statistics returned from the API.
+#[must_use]
 #[derive(Clone, Deserialize)]
 pub struct Stats {
   /// The bot's server count per shard.
@@ -334,6 +336,7 @@ impl Debug for Stats {
 }
 
 /// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
+#[must_use]
 #[derive(Serialize)]
 pub struct NewStats {
   server_count: u64,
@@ -354,7 +357,6 @@ impl NewStats {
   ///
   /// let _stats = NewStats::count_based(12345, Some(10));
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn count_based<A, B>(server_count: A, shard_count: Option<B>) -> Self
   where
@@ -385,7 +387,6 @@ impl NewStats {
   /// // The shard posting this data has 456 servers.
   /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
   /// ```
-  #[must_use]
   pub fn shards_based<A, B>(shards: A, shard_index: Option<B>) -> Self
   where
     A: IntoIterator,
@@ -427,6 +428,8 @@ pub(crate) struct IsWeekend {
 }
 
 /// A struct for filtering the query in [`get_bots`][crate::Client::get_bots].
+#[must_use]
+#[derive(Clone)]
 pub struct Filter(String);
 
 impl Filter {
@@ -441,7 +444,6 @@ impl Filter {
   ///
   /// let _filter = Filter::new();
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::new())
@@ -459,14 +461,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .username("shiro");
   /// ```
-  #[must_use]
   pub fn username<U>(mut self, new_username: &U) -> Self
   where
     U: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("username: {} ", new_username.as_ref()));
+    self.0.push_str(&format!(
+      "username%3A%20{}%20",
+      urlencoding::encode(new_username.as_ref())
+    ));
     self
   }
 
@@ -475,9 +477,10 @@ impl Filter {
   where
     D: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("discriminator: {} ", new_discriminator.as_ref()));
+    self.0.push_str(&format!(
+      "discriminator%3A%20{}%20",
+      new_discriminator.as_ref()
+    ));
     self
   }
 
@@ -493,14 +496,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .prefix("!");
   /// ```
-  #[must_use]
   pub fn prefix<P>(mut self, new_prefix: &P) -> Self
   where
     P: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("prefix: {} ", new_prefix.as_ref()));
+    self.0.push_str(&format!(
+      "prefix%3A%20{}%20",
+      urlencoding::encode(new_prefix.as_ref())
+    ));
     self
   }
 
@@ -516,12 +519,13 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .votes(1000);
   /// ```
-  #[must_use]
   pub fn votes<V>(mut self, new_votes: V) -> Self
   where
     V: Into<u64>,
   {
-    self.0.push_str(&format!("points: {} ", new_votes.into()));
+    self
+      .0
+      .push_str(&format!("points%3A%20{}%20", new_votes.into()));
     self
   }
 
@@ -537,14 +541,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .monthly_votes(100);
   /// ```
-  #[must_use]
   pub fn monthly_votes<M>(mut self, new_monthly_votes: M) -> Self
   where
     M: Into<u64>,
   {
-    self
-      .0
-      .push_str(&format!("monthlyPoints: {} ", new_monthly_votes.into()));
+    self.0.push_str(&format!(
+      "monthlyPoints%3A%20{}%20",
+      new_monthly_votes.into()
+    ));
     self
   }
 
@@ -560,14 +564,13 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .certified(true);
   /// ```
-  #[must_use]
   pub fn certified<C>(mut self, is_certified: C) -> Self
   where
     C: Into<bool>,
   {
     self
       .0
-      .push_str(&format!("certifiedBot: {} ", is_certified.into()));
+      .push_str(&format!("certifiedBot%3A%20{}%20", is_certified.into()));
     self
   }
 
@@ -583,14 +586,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .vanity("mee6");
   /// ```
-  #[must_use]
   pub fn vanity<V>(mut self, new_vanity: &V) -> Self
   where
     V: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("vanity: {} ", new_vanity.as_ref()));
+    self.0.push_str(&format!(
+      "vanity%3A%20{}%20",
+      urlencoding::encode(new_vanity.as_ref())
+    ));
     self
   }
 }
@@ -614,6 +617,8 @@ impl Default for Filter {
 }
 
 /// A struct for configuring the query in [`get_bots`][crate::Client::get_bots].
+#[must_use]
+#[derive(Clone)]
 pub struct Query(String);
 
 impl Query {
@@ -628,7 +633,6 @@ impl Query {
   ///
   /// let _query = Query::new();
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::from("?"))
@@ -646,7 +650,6 @@ impl Query {
   /// let _query = Query::new()
   ///   .limit(250u16);
   /// ```
-  #[must_use]
   pub fn limit<N>(mut self, new_limit: N) -> Self
   where
     N: Into<u16>,
@@ -670,7 +673,6 @@ impl Query {
   ///   .limit(250u16)
   ///   .skip(100u16);
   /// ```
-  #[must_use]
   pub fn skip<S>(mut self, skip_by: S) -> Self
   where
     S: Into<u16>,
@@ -699,12 +701,10 @@ impl Query {
   ///   .skip(100u16)
   ///   .filter(filter);
   /// ```
-  #[must_use]
-  pub fn filter(mut self, mut new_filter: Filter) -> Self {
-    new_filter.0.pop();
+  pub fn filter(mut self, new_filter: Filter) -> Self {
     self
       .0
-      .push_str(&format!("search={}&", urlencoding::encode(&new_filter.0)));
+      .push_str(&format!("search={}&", new_filter.into_query_string()));
     self
   }
 }
@@ -733,8 +733,13 @@ impl QueryLike for Query {
 impl QueryLike for Filter {
   #[inline(always)]
   fn into_query_string(mut self) -> String {
-    self.0.pop();
-    format!("?search={}", urlencoding::encode(&self.0))
+    if self.0.is_empty() {
+      String::new()
+    } else {
+      self.0.truncate(self.0.len() - 3);
+
+      format!("?search={}", self.0)
+    }
   }
 }
 

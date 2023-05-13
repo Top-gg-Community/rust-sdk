@@ -78,25 +78,21 @@ impl Http {
         .unwrap_unchecked()
     };
 
-    match status_code {
-      _ => {
-        if status_code >= 400 {
-          Err(match status_code {
-            401 => panic!("unauthorized"),
-            404 => Error::NotFound,
-            429 => Error::Ratelimit {
-              retry_after: serde_json::from_str::<Ratelimit>(&response)
-                .map_err(|_| Error::InternalServerError)?
-                .retry_after,
-            },
-            _ => Error::InternalServerError,
-          })
-        } else {
-          response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
+    if status_code >= 400 {
+      Err(match status_code {
+        401 => panic!("unauthorized"),
+        404 => Error::NotFound,
+        429 => Error::Ratelimit {
+          retry_after: serde_json::from_str::<Ratelimit>(&response)
+            .map_err(|_| Error::InternalServerError)?
+            .retry_after,
+        },
+        _ => Error::InternalServerError,
+      })
+    } else {
+      response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
 
-          Ok(response)
-        }
-      }
+      Ok(response)
     }
   }
 
