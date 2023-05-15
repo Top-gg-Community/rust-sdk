@@ -1,13 +1,14 @@
 use crate::{snowflake, util};
 use chrono::{offset::Utc, DateTime};
-use core::cmp::min;
-use serde::{
-  de::{self, Deserializer},
-  Deserialize, Serialize,
+use core::{
+  cmp::min,
+  fmt::{self, Debug, Formatter},
 };
+use serde::{Deserialize, Deserializer, Serialize};
 
 /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
-#[derive(Clone, Debug, Deserialize)]
+#[must_use]
+#[derive(Clone, Deserialize)]
 pub struct Bot {
   /// The ID of this Discord bot.
   #[serde(deserialize_with = "snowflake::deserialize")]
@@ -16,7 +17,7 @@ pub struct Bot {
   /// The username of this Discord bot.
   pub username: String,
 
-  /// The discriminator of this Discord bot.
+  #[deprecated(since = "1.1.0")]
   pub discriminator: String,
 
   /// The prefix of this Discord bot.
@@ -27,16 +28,23 @@ pub struct Bot {
   pub short_description: String,
 
   /// The long description of this Discord bot. It can contain HTML and/or Markdown.
-  #[serde(rename = "longdesc")]
+  #[serde(
+    default,
+    deserialize_with = "util::deserialize_optional_string",
+    rename = "longdesc"
+  )]
   pub long_description: Option<String>,
 
   /// The tags of this Discord bot.
+  #[serde(default, deserialize_with = "util::deserialize_default")]
   pub tags: Vec<String>,
 
   /// The website URL of this Discord bot.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub website: Option<String>,
 
   /// The link to this Discord bot's GitHub repository.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub github: Option<String>,
 
   /// A list of IDs of this Discord bot's owners. The main owner is the first ID in the array.
@@ -44,14 +52,15 @@ pub struct Bot {
   pub owners: Vec<u64>,
 
   /// A list of IDs of the guilds featured on this Discord bot's page.
-  #[serde(deserialize_with = "snowflake::deserialize_vec")]
+  #[serde(default, deserialize_with = "snowflake::deserialize_vec")]
   pub guilds: Vec<u64>,
 
-  /// The custom bot invite URL of this Discord bot.
-  pub invite: Option<String>,
-
   /// The URL for this Discord bot's banner image.
-  #[serde(rename = "bannerUrl")]
+  #[serde(
+    default,
+    deserialize_with = "util::deserialize_optional_string",
+    rename = "bannerUrl"
+  )]
   pub banner_url: Option<String>,
 
   /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
@@ -62,10 +71,8 @@ pub struct Bot {
   pub is_certified: bool,
 
   /// A list of this Discord bot's shards.
-  pub shards: Option<Vec<u64>>,
-
-  /// The amount of shards this Discord bot has according to posted stats.
-  pub shard_count: Option<u64>,
+  #[serde(default, deserialize_with = "util::deserialize_default")]
+  pub shards: Vec<u64>,
 
   /// The amount of upvotes this Discord bot has.
   #[serde(rename = "points")]
@@ -79,19 +86,29 @@ pub struct Bot {
   #[serde(default, deserialize_with = "deserialize_support_server")]
   pub support: Option<String>,
 
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   avatar: Option<String>,
+
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  invite: Option<String>,
+
+  shard_count: Option<u64>,
+
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   vanity: Option<String>,
 }
 
+#[inline(always)]
 pub(crate) fn deserialize_support_server<'de, D>(
   deserializer: D,
 ) -> Result<Option<String>, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: Option<&str> = de::Deserialize::deserialize(deserializer)?;
-
-  Ok(s.map(|support| format!("https://discord.com/invite/{support}")))
+  Ok(
+    unsafe { util::deserialize_optional_string(deserializer).unwrap_unchecked() }
+      .map(|support| format!("https://discord.com/invite/{support}")),
+  )
 }
 
 impl Bot {
@@ -119,7 +136,62 @@ impl Bot {
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
-    util::get_avatar(&self.avatar, &self.discriminator, self.id)
+    util::get_avatar(&self.avatar, self.id)
+  }
+
+  /// The invite URL of this Discord bot.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   
+  ///   println!("{}", bot.invite());
+  /// }
+  /// ```
+  #[must_use]
+  pub fn invite(&self) -> String {
+    match self.invite.as_ref() {
+      Some(inv) => inv.to_owned(),
+      _ => format!(
+        "https://discord.com/oauth2/authorize?scope=bot&client_id={}",
+        self.id
+      ),
+    }
+  }
+
+  /// The amount of shards this Discord bot has according to posted stats.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   
+  ///   println!("{}", bot.shard_count());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn shard_count(&self) -> u64 {
+    self.shard_count.unwrap_or(self.shards.len() as _)
   }
 
   /// Retrieves the URL of this Discord bot's [Top.gg](https://top.gg) page.
@@ -151,25 +223,120 @@ impl Bot {
   }
 }
 
+impl Debug for Bot {
+  fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    fmt
+      .debug_struct("Bot")
+      .field("id", &self.id)
+      .field("username", &self.username)
+      .field("prefix", &self.prefix)
+      .field("short_description", &self.short_description)
+      .field("long_description", &self.long_description)
+      .field("tags", &self.tags)
+      .field("website", &self.website)
+      .field("github", &self.github)
+      .field("owners", &self.owners)
+      .field("guilds", &self.guilds)
+      .field("banner_url", &self.banner_url)
+      .field("date", &self.date)
+      .field("is_certified", &self.is_certified)
+      .field("shards", &self.shards)
+      .field("votes", &self.votes)
+      .field("monthly_votes", &self.monthly_votes)
+      .field("support", &self.support)
+      .field("avatar", &self.avatar())
+      .field("invite", &self.invite())
+      .field("shard_count", &self.shard_count())
+      .field("url", &self.url())
+      .finish()
+  }
+}
+
 #[derive(Deserialize)]
 pub(crate) struct Bots {
   pub(crate) results: Vec<Bot>,
 }
 
 /// A struct representing a Discord bot's statistics returned from the API.
-#[derive(Clone, Debug, Deserialize)]
+#[must_use]
+#[derive(Clone, Deserialize)]
 pub struct Stats {
-  /// The bot's server count.
-  pub server_count: Option<u64>,
-
   /// The bot's server count per shard.
-  pub shards: Option<Vec<u64>>,
+  #[serde(default, deserialize_with = "util::deserialize_default")]
+  pub shards: Vec<u64>,
 
-  /// The bot's shard count.
-  pub shard_count: Option<u64>,
+  shard_count: Option<u64>,
+  server_count: Option<u64>,
+}
+
+impl Stats {
+  /// The amount of shards this Discord bot has according to posted stats.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let stats = client.get_stats().await.unwrap();
+  ///   
+  ///   println!("{:?}", stats.shard_count());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn shard_count(&self) -> u64 {
+    self.shard_count.unwrap_or(self.shards.len() as _)
+  }
+
+  /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let stats = client.get_stats().await.unwrap();
+  ///   
+  ///   println!("{:?}", stats.server_count());
+  /// }
+  /// ```
+  #[must_use]
+  pub fn server_count(&self) -> Option<u64> {
+    self.server_count.or(if self.shards.is_empty() {
+      None
+    } else {
+      Some(self.shards.iter().copied().sum())
+    })
+  }
+}
+
+impl Debug for Stats {
+  fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
+    fmt
+      .debug_struct("Stats")
+      .field("shards", &self.shards)
+      .field("shard_count", &self.shard_count())
+      .field("server_count", &self.server_count())
+      .finish()
+  }
 }
 
 /// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
+#[must_use]
 #[derive(Serialize)]
 pub struct NewStats {
   server_count: u64,
@@ -190,7 +357,6 @@ impl NewStats {
   ///
   /// let _stats = NewStats::count_based(12345, Some(10));
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn count_based<A, B>(server_count: A, shard_count: Option<B>) -> Self
   where
@@ -221,7 +387,6 @@ impl NewStats {
   /// // The shard posting this data has 456 servers.
   /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
   /// ```
-  #[must_use]
   pub fn shards_based<A, B>(shards: A, shard_index: Option<B>) -> Self
   where
     A: IntoIterator,
@@ -263,6 +428,8 @@ pub(crate) struct IsWeekend {
 }
 
 /// A struct for filtering the query in [`get_bots`][crate::Client::get_bots].
+#[must_use]
+#[derive(Clone)]
 pub struct Filter(String);
 
 impl Filter {
@@ -277,7 +444,6 @@ impl Filter {
   ///
   /// let _filter = Filter::new();
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::new())
@@ -295,37 +461,26 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .username("shiro");
   /// ```
-  #[must_use]
   pub fn username<U>(mut self, new_username: &U) -> Self
   where
     U: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("username: {} ", new_username.as_ref()));
+    self.0.push_str(&format!(
+      "username%3A%20{}%20",
+      urlencoding::encode(new_username.as_ref())
+    ));
     self
   }
 
-  /// Filters only Discord bots that matches this discriminator.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .discriminator("1536");
-  /// ```
-  #[must_use]
+  #[deprecated(since = "1.1.0")]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("discriminator: {} ", new_discriminator.as_ref()));
+    self.0.push_str(&format!(
+      "discriminator%3A%20{}%20",
+      new_discriminator.as_ref()
+    ));
     self
   }
 
@@ -341,14 +496,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .prefix("!");
   /// ```
-  #[must_use]
   pub fn prefix<P>(mut self, new_prefix: &P) -> Self
   where
     P: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("prefix: {} ", new_prefix.as_ref()));
+    self.0.push_str(&format!(
+      "prefix%3A%20{}%20",
+      urlencoding::encode(new_prefix.as_ref())
+    ));
     self
   }
 
@@ -364,12 +519,13 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .votes(1000);
   /// ```
-  #[must_use]
   pub fn votes<V>(mut self, new_votes: V) -> Self
   where
     V: Into<u64>,
   {
-    self.0.push_str(&format!("points: {} ", new_votes.into()));
+    self
+      .0
+      .push_str(&format!("points%3A%20{}%20", new_votes.into()));
     self
   }
 
@@ -385,14 +541,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .monthly_votes(100);
   /// ```
-  #[must_use]
   pub fn monthly_votes<M>(mut self, new_monthly_votes: M) -> Self
   where
     M: Into<u64>,
   {
-    self
-      .0
-      .push_str(&format!("monthlyPoints: {} ", new_monthly_votes.into()));
+    self.0.push_str(&format!(
+      "monthlyPoints%3A%20{}%20",
+      new_monthly_votes.into()
+    ));
     self
   }
 
@@ -408,14 +564,13 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .certified(true);
   /// ```
-  #[must_use]
   pub fn certified<C>(mut self, is_certified: C) -> Self
   where
     C: Into<bool>,
   {
     self
       .0
-      .push_str(&format!("certifiedBot: {} ", is_certified.into()));
+      .push_str(&format!("certifiedBot%3A%20{}%20", is_certified.into()));
     self
   }
 
@@ -431,14 +586,14 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .vanity("mee6");
   /// ```
-  #[must_use]
   pub fn vanity<V>(mut self, new_vanity: &V) -> Self
   where
     V: AsRef<str> + ?Sized,
   {
-    self
-      .0
-      .push_str(&format!("vanity: {} ", new_vanity.as_ref()));
+    self.0.push_str(&format!(
+      "vanity%3A%20{}%20",
+      urlencoding::encode(new_vanity.as_ref())
+    ));
     self
   }
 }
@@ -462,6 +617,8 @@ impl Default for Filter {
 }
 
 /// A struct for configuring the query in [`get_bots`][crate::Client::get_bots].
+#[must_use]
+#[derive(Clone)]
 pub struct Query(String);
 
 impl Query {
@@ -476,7 +633,6 @@ impl Query {
   ///
   /// let _query = Query::new();
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new() -> Self {
     Self(String::from("?"))
@@ -492,9 +648,8 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250);
+  ///   .limit(250u16);
   /// ```
-  #[must_use]
   pub fn limit<N>(mut self, new_limit: N) -> Self
   where
     N: Into<u16>,
@@ -515,10 +670,9 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100);
+  ///   .limit(250u16)
+  ///   .skip(100u16);
   /// ```
-  #[must_use]
   pub fn skip<S>(mut self, skip_by: S) -> Self
   where
     S: Into<u16>,
@@ -543,16 +697,14 @@ impl Query {
   ///   .certified(true);
   ///
   /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100)
+  ///   .limit(250u16)
+  ///   .skip(100u16)
   ///   .filter(filter);
   /// ```
-  #[must_use]
-  pub fn filter(mut self, mut new_filter: Filter) -> Self {
-    new_filter.0.pop();
+  pub fn filter(mut self, new_filter: Filter) -> Self {
     self
       .0
-      .push_str(&format!("search={}&", urlencoding::encode(&new_filter.0)));
+      .push_str(&format!("search={}&", new_filter.into_query_string()));
     self
   }
 }
@@ -581,8 +733,13 @@ impl QueryLike for Query {
 impl QueryLike for Filter {
   #[inline(always)]
   fn into_query_string(mut self) -> String {
-    self.0.pop();
-    format!("?search={}", urlencoding::encode(&self.0))
+    if self.0.is_empty() {
+      String::new()
+    } else {
+      self.0.truncate(self.0.len() - 3);
+
+      format!("?search={}", self.0)
+    }
   }
 }
 

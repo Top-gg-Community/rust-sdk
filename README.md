@@ -1,4 +1,4 @@
-# topgg [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url] [![license][github-license-image]][github-license-url] [![BLAZINGLY FAST!!!][blazingly-fast-image]][blazingly-fast-url]
+# [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url] [![license][github-license-image]][github-license-url] [![BLAZINGLY FAST!!!][blazingly-fast-image]][blazingly-fast-url]
 
 [crates-io-image]: https://img.shields.io/crates/v/topgg?style=flat-square
 [crates-io-downloads-image]: https://img.shields.io/crates/d/topgg?style=flat-square
@@ -14,7 +14,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
-topgg = "1"
+topgg = "1.1"
 ```
 
 ## Features
@@ -31,7 +31,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 
 ## Examples
 
-More things can be read on the [documentation](https://docs.rs/topgg).
+More things can be read in the [documentation](https://docs.rs/topgg).
 
 <details>
 <summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>
@@ -47,7 +47,6 @@ async fn main() {
   let user = client.get_user(661200758510977084u64).await.unwrap();
   
   assert_eq!(user.username, "null");
-  assert_eq!(user.discriminator, "8626");
   assert_eq!(user.id, 661200758510977084u64);
   
   println!("{:?}", user);
@@ -69,7 +68,6 @@ async fn main() {
   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   
   assert_eq!(bot.username, "Luca");
-  assert_eq!(bot.discriminator, "1375");
   assert_eq!(bot.id, 264811613708746752u64);
   
   println!("{:?}", bot);
@@ -99,8 +97,8 @@ async fn main() {
     .certified(true);
 
   let query = Query::new()
-    .limit(250)
-    .skip(50)
+    .limit(250u16)
+    .skip(50u16)
     .filter(filter);
 
   for bot in client.get_bots(query).await.unwrap() {
@@ -156,7 +154,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1", features = ["autoposter"] }
+topgg = { version = "1.1", features = ["autoposter"] }
 ```
 
 In your code:
@@ -188,7 +186,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1", default-features = false, features = ["actix"] }
+topgg = { version = "1.1", default-features = false, features = ["actix"] }
 ```
 
 In your code:
@@ -224,7 +222,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1", default-features = false, features = ["axum"] }
+topgg = { version = "1.1", default-features = false, features = ["axum"] }
 ```
 
 In your code:
@@ -267,7 +265,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1", default-features = false, features = ["rocket"] }
+topgg = { version = "1.1", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -303,7 +301,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1", default-features = false, features = ["warp"] }
+topgg = { version = "1.1", default-features = false, features = ["warp"] }
 ```
 
 In your code:

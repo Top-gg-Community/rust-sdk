@@ -1,7 +1,6 @@
 use crate::{Error, InternalError, Result};
 use serde::{de::DeserializeOwned, Deserialize};
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
+use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
 use tokio_native_tls::{native_tls, TlsConnector};
 
 pub(crate) const GET: &str = "GET";
@@ -13,6 +12,7 @@ pub(crate) struct Ratelimit {
   pub(crate) retry_after: u16,
 }
 
+#[derive(Clone)]
 pub(crate) struct Http {
   token: String,
 }
@@ -43,8 +43,9 @@ impl Http {
 
     let payload = format!(
       "\
-      {predicate} /api{path} HTTP/1.0\r\n\
+      {predicate} /api{path} HTTP/1.1\r\n\
       Authorization: Bearer {}\r\n\
+      Connection: close\r\n\
       Content-Type: application/json\r\n\
       Host: top.gg\r\n\
       User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\
@@ -54,40 +55,43 @@ impl Http {
       body.unwrap_or_default()
     );
 
-    if let Err(err) = socket.write_all(payload.as_bytes()).await {
-      return Err(Error::InternalClientError(InternalError::WriteRequest(err)));
-    }
+    socket
+      .write_all(payload.as_bytes())
+      .await
+      .map_err(|err| Error::InternalClientError(InternalError::WriteRequest(err)))?;
 
     let mut response = String::new();
 
-    if socket.read_to_string(&mut response).await.is_err() {
-      return Err(Error::InternalServerError);
-    }
+    socket
+      .read_to_string(&mut response)
+      .await
+      .map_err(|_| Error::InternalServerError)?;
 
     // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
-    let status_code = unsafe {
+    let status_code: u16 = unsafe {
       response
         .split_ascii_whitespace()
         .nth(1)
         .unwrap_unchecked()
-        .parse::<u16>()
+        .parse()
         .unwrap_unchecked()
     };
 
-    match status_code {
-      401 => panic!("unauthorized"),
-      404 => Err(Error::NotFound),
-      429 => Err(Error::Ratelimit {
-        retry_after: serde_json::from_str::<Ratelimit>(&response)
-          .map_err(|_| Error::InternalServerError)?
-          .retry_after,
-      }),
-      500.. => Err(Error::InternalServerError),
-      _ => {
-        response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
+    if status_code >= 400 {
+      Err(match status_code {
+        401 => panic!("unauthorized"),
+        404 => Error::NotFound,
+        429 => Error::Ratelimit {
+          retry_after: serde_json::from_str::<Ratelimit>(&response)
+            .map_err(|_| Error::InternalServerError)?
+            .retry_after,
+        },
+        _ => Error::InternalServerError,
+      })
+    } else {
+      response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
 
-        Ok(response)
-      }
+      Ok(response)
     }
   }
 

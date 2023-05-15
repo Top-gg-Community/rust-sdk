@@ -65,7 +65,7 @@ where
   (StatusCode::UNAUTHORIZED, ()).into_response()
 }
 
-/// Creates a new `axum` [`Router`] for adding an on-vote event handler to your application logic.
+/// Creates a new [`axum`] [`Router`] for adding an on-vote event handler to your application logic.
 /// `state` here is your webhook handler.
 ///
 /// # Examples

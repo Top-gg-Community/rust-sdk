@@ -17,6 +17,7 @@ cfg_if::cfg_if! {
   }
 }
 
+#[derive(Clone)]
 pub(crate) struct InnerClient {
   http: Http,
 }
@@ -36,6 +37,8 @@ impl InnerClient {
 }
 
 /// A struct representing a [Top.gg](https://top.gg) API client instance.
+#[must_use]
+#[derive(Clone)]
 pub struct Client {
   inner: SyncedClient,
 }
@@ -58,7 +61,6 @@ impl Client {
   ///   let _client = Client::new(token);
   /// }
   /// ```
-  #[must_use]
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {
@@ -102,7 +104,6 @@ impl Client {
   ///   let user = client.get_user(661200758510977084u64).await.unwrap();
   ///   
   ///   assert_eq!(user.username, "null");
-  ///   assert_eq!(user.discriminator, "8626");
   ///   assert_eq!(user.id, 661200758510977084u64);
   ///   
   ///   println!("{:?}", user);
@@ -148,7 +149,6 @@ impl Client {
   ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
   ///   
   ///   assert_eq!(bot.username, "Luca");
-  ///   assert_eq!(bot.discriminator, "1375");
   ///   assert_eq!(bot.id, 264811613708746752u64);
   ///   
   ///   println!("{:?}", bot);
@@ -237,11 +237,11 @@ impl Client {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API in intervals.
   ///
   /// # Panics
   ///
-  /// Panics if the delay argument is shorter than 15 minutes (900 seconds)
+  /// Panics if the interval argument is shorter than 15 minutes (900 seconds)
   ///
   /// # Examples
   ///
@@ -267,18 +267,17 @@ impl Client {
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-  #[must_use]
-  pub fn new_autoposter<D>(&self, seconds_delay: D) -> Autoposter
+  pub fn new_autoposter<D>(&self, seconds_interval: D) -> Autoposter
   where
     D: Into<u64>,
   {
-    let seconds_delay = seconds_delay.into();
+    let seconds_interval = seconds_interval.into();
 
-    if seconds_delay < 900 {
-      panic!("the delay mustn't be shorter than 15 minutes (900 seconds)");
+    if seconds_interval < 900 {
+      panic!("the interval mustn't be shorter than 15 minutes (900 seconds)");
     }
 
-    Autoposter::new(Arc::clone(&self.inner), seconds_delay)
+    Autoposter::new(Arc::clone(&self.inner), seconds_interval)
   }
 
   /// Fetches your Discord bot's last 1000 voters.
@@ -355,8 +354,8 @@ impl Client {
   ///     .certified(true);
   ///
   ///   let query = Query::new()
-  ///     .limit(250)
-  ///     .skip(50)
+  ///     .limit(250u16)
+  ///     .skip(50u16)
   ///     .filter(filter);
   ///
   ///   for bot in client.get_bots(query).await.unwrap() {
@@ -420,9 +419,9 @@ impl Client {
     self
       .inner
       .http
-      .request::<Voted>(GET, &path, None)
+      .request(GET, &path, None)
       .await
-      .map(|res| unsafe { transmute(res.voted) })
+      .map(|res: Voted| unsafe { transmute(res.voted) })
   }
 
   /// Checks if the weekend multiplier is active.
@@ -460,8 +459,8 @@ impl Client {
     self
       .inner
       .http
-      .request::<IsWeekend>(GET, "/weekend", None)
+      .request(GET, "/weekend", None)
       .await
-      .map(|res| res.is_weekend)
+      .map(|res: IsWeekend| res.is_weekend)
   }
 }

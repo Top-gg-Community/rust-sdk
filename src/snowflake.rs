@@ -1,42 +1,41 @@
-use serde::de::{Deserialize, Deserializer, Error};
+use serde::{de::Error, Deserialize, Deserializer};
 
+#[inline(always)]
 pub(crate) fn deserialize<'de, D>(deserializer: D) -> Result<u64, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: &str = Deserialize::deserialize(deserializer)?;
-
-  s.parse::<u64>().map_err(D::Error::custom)
+  Deserialize::deserialize(deserializer)
+    .and_then(|s: &str| s.parse::<u64>().map_err(D::Error::custom))
 }
 
+#[inline(always)]
 pub(crate) fn deserialize_vec<'de, D>(deserializer: D) -> Result<Vec<u64>, D::Error>
 where
   D: Deserializer<'de>,
 {
-  let s: Vec<&str> = Deserialize::deserialize(deserializer)?;
-  let out = Vec::with_capacity(s.len());
+  Deserialize::deserialize(deserializer)
+    .map(|s: Vec<&str>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
+}
 
-  Ok(s.into_iter().fold(out, |mut acc, next| {
-    if let Ok(next) = next.parse::<u64>() {
-      acc.push(next);
-    }
-
-    acc
-  }))
+mod private {
+  pub trait Sealed {}
 }
 
 /// A trait that represents any data type that can be interpreted as a snowflake/ID.
-pub trait SnowflakeLike {
+pub trait SnowflakeLike: private::Sealed {
   #[doc(hidden)]
   fn as_snowflake(&self) -> u64;
 }
 
-macro_rules! impl_snowflake_tryfrom(
+macro_rules! impl_snowflake_as(
   ($($t:ty),+) => {$(
+    impl private::Sealed for $t {}
+
     impl SnowflakeLike for $t {
       #[inline(always)]
       fn as_snowflake(&self) -> u64 {
-        (*self).try_into().unwrap()
+        *self as _
       }
     }
   )+}
@@ -44,14 +43,16 @@ macro_rules! impl_snowflake_tryfrom(
 
 macro_rules! impl_snowflake_fromstr(
   ($($t:ty),+) => {$(
+    impl private::Sealed for $t {}
+
     impl SnowflakeLike for $t {
       #[inline(always)]
       fn as_snowflake(&self) -> u64 {
-        self.parse().expect("invalid snowflake")
+        self.parse().unwrap()
       }
     }
   )+}
 );
 
-impl_snowflake_tryfrom!(u64, i128, u128, isize, usize);
+impl_snowflake_as!(u64, i128, u128, isize, usize);
 impl_snowflake_fromstr!(str, String);
