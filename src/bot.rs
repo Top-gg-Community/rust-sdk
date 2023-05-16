@@ -64,7 +64,8 @@ pub struct Bot {
   pub banner_url: Option<String>,
 
   /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
-  pub date: DateTime<Utc>,
+  #[serde(rename = "date")]
+  pub approved_at: DateTime<Utc>,
 
   /// Whether this Discord bot is [Top.gg](https://top.gg) certified or not.
   #[serde(rename = "certifiedBot")]
@@ -263,7 +264,7 @@ impl Debug for Bot {
       .field("owners", &self.owners)
       .field("guilds", &self.guilds)
       .field("banner_url", &self.banner_url)
-      .field("date", &self.date)
+      .field("approved_at", &self.approved_at)
       .field("is_certified", &self.is_certified)
       .field("shards", &self.shards)
       .field("votes", &self.votes)
