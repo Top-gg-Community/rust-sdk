@@ -145,6 +145,7 @@ impl Debug for User {
       .field("is_moderator", &self.is_moderator)
       .field("is_web_moderator", &self.is_web_moderator)
       .field("is_admin", &self.is_admin)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .finish()
   }
@@ -229,6 +230,7 @@ impl Debug for Voter {
       .debug_struct("Voter")
       .field("id", &self.id)
       .field("username", &self.username)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .finish()
   }

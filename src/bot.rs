@@ -270,6 +270,7 @@ impl Debug for Bot {
       .field("votes", &self.votes)
       .field("monthly_votes", &self.monthly_votes)
       .field("support", &self.support)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .field("invite", &self.invite())
       .field("shard_count", &self.shard_count())
