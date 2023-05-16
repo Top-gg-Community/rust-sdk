@@ -268,11 +268,10 @@ impl Client {
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
   pub fn new_autoposter<D>(&self, seconds_interval: u64) -> Autoposter {
-    let seconds_interval = seconds_interval.into();
-
-    if seconds_interval < 900 {
-      panic!("the interval mustn't be shorter than 15 minutes (900 seconds)");
-    }
+    assert!(
+      seconds_interval >= 900,
+      "the interval mustn't be shorter than 15 minutes (900 seconds)"
+    );
 
     Autoposter::new(Arc::clone(&self.inner), seconds_interval)
   }
