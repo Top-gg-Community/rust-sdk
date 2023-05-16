@@ -1,4 +1,5 @@
 use crate::{snowflake, util};
+use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug, Formatter};
 use serde::Deserialize;
 
@@ -77,6 +78,31 @@ pub struct User {
 }
 
 impl User {
+  /// Retrieves the creation date of this user.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   let user = client.get_user(661200758510977084).await.unwrap();
+  ///   
+  ///   println!("{}", user.created_at());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn created_at(&self) -> DateTime<Utc> {
+    util::get_creation_date(self.id)
+  }
+
   /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
@@ -93,7 +119,7 @@ impl User {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   let user = client.get_user(661200758510977084u64).await.unwrap();
+  ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
   ///   println!("{}", user.avatar());
   /// }
@@ -144,6 +170,31 @@ pub struct Voter {
 }
 
 impl Voter {
+  /// Retrieves the creation date of this user.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let token = env!("TOPGG_TOKEN").to_owned();
+  ///   let client = Client::new(token);
+  ///   
+  ///   for voter in client.get_voters().await.unwrap() {
+  ///     println!("{}", voter.created_at());
+  ///   }
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn created_at(&self) -> DateTime<Utc> {
+    util::get_creation_date(self.id)
+  }
+
   /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
@@ -166,6 +217,7 @@ impl Voter {
   /// }
   /// ```
   #[must_use]
+  #[inline(always)]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, self.id)
   }

@@ -101,10 +101,10 @@ impl Client {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   let user = client.get_user(661200758510977084u64).await.unwrap();
+  ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
   ///   assert_eq!(user.username, "null");
-  ///   assert_eq!(user.id, 661200758510977084u64);
+  ///   assert_eq!(user.id, 661200758510977084);
   ///   
   ///   println!("{:?}", user);
   /// }
@@ -146,10 +146,10 @@ impl Client {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   assert_eq!(bot.username, "Luca");
-  ///   assert_eq!(bot.id, 264811613708746752u64);
+  ///   assert_eq!(bot.id, 264811613708746752);
   ///   
   ///   println!("{:?}", bot);
   /// }
@@ -267,10 +267,7 @@ impl Client {
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-  pub fn new_autoposter<D>(&self, seconds_interval: D) -> Autoposter
-  where
-    D: Into<u64>,
-  {
+  pub fn new_autoposter<D>(&self, seconds_interval: u64) -> Autoposter {
     let seconds_interval = seconds_interval.into();
 
     if seconds_interval < 900 {
@@ -354,8 +351,8 @@ impl Client {
   ///     .certified(true);
   ///
   ///   let query = Query::new()
-  ///     .limit(250u16)
-  ///     .skip(50u16)
+  ///     .limit(250)
+  ///     .skip(50)
   ///     .filter(filter);
   ///
   ///   for bot in client.get_bots(query).await.unwrap() {
@@ -404,7 +401,7 @@ impl Client {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///
-  ///   if client.has_voted(661200758510977084u64).await.unwrap() {
+  ///   if client.has_voted(661200758510977084).await.unwrap() {
   ///     println!("checks out");
   ///   }
   /// }

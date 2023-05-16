@@ -1,3 +1,7 @@
+use crate::{
+  bot::Bot,
+  user::{User, Voter},
+};
 use serde::{de::Error, Deserialize, Deserializer};
 
 #[inline(always)]
@@ -41,18 +45,38 @@ macro_rules! impl_snowflake_as(
   )+}
 );
 
-macro_rules! impl_snowflake_fromstr(
+macro_rules! impl_snowflake_idstruct(
   ($($t:ty),+) => {$(
     impl private::Sealed for $t {}
+    impl private::Sealed for &$t {}
 
     impl SnowflakeLike for $t {
       #[inline(always)]
       fn as_snowflake(&self) -> u64 {
-        self.parse().unwrap()
+        self.id
+      }
+    }
+
+    impl SnowflakeLike for &$t {
+      #[inline(always)]
+      fn as_snowflake(&self) -> u64 {
+        (*self).id
       }
     }
   )+}
 );
 
-impl_snowflake_as!(u64, i128, u128, isize, usize);
-impl_snowflake_fromstr!(str, String);
+impl<S> private::Sealed for &S where S: AsRef<str> + ?Sized {}
+
+impl<S> SnowflakeLike for &S
+where
+  S: AsRef<str> + ?Sized,
+{
+  #[inline(always)]
+  fn as_snowflake(&self) -> u64 {
+    (*self).as_ref().parse().unwrap()
+  }
+}
+
+impl_snowflake_as!(i64, u64, i128, u128, isize, usize);
+impl_snowflake_idstruct!(Bot, User, Voter);
