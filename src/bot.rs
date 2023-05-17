@@ -406,7 +406,7 @@ impl NewStats {
   /// ```rust,no_run
   /// use topgg::NewStats;
   ///
-  /// // The shard posting this data has 456 servers.
+  /// // the shard posting this data has 456 servers.
   /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
   /// ```
   pub fn shards_based<A>(shards: A, shard_index: Option<u64>) -> Self

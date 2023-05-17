@@ -339,12 +339,12 @@ impl Client {
   ///   let token = env!("TOPGG_TOKEN").to_owned();
   ///   let client = Client::new(token);
   ///   
-  ///   // inputting a string searches a bot that matches that username
+  ///   // inputting a string searches a bot that matches that username.
   ///   for bot in client.get_bots("shiro").await.unwrap() {
   ///     println!("{:?}", bot);
   ///   }
   ///
-  ///   // advanced query with filters
+  ///   // advanced query with filters...
   ///   let filter = Filter::new()
   ///     .username("shiro")
   ///     .certified(true);

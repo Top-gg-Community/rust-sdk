@@ -271,24 +271,37 @@ topgg = { version = "1.1", default-features = false, features = ["rocket"] }
 In your code:
 
 ```rust,no_run
-#![feature(proc_macro_hygiene, decl_macro)]
+#![feature(decl_macro)]
 
-#[macro_use]
-extern crate rocket;
+use rocket::{get, http::Status, post, routes};
+use topgg::IncomingVote;
 
-use rocket::http::Status;
+#[get("/")]
+fn index() -> &'static str {
+  "Hello, world!"
+}
 
-#[post("/", data = "<vote>")]
-fn webhook(vote: topgg::IncomingVote) -> Status {
+#[post("/webhook", data = "<vote>")]
+fn webhook(vote: IncomingVote) -> Status {
   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-    Some(vote) => /* your application logic here... */,
-    _ => /* handle 401 here... */,
+    Some(vote) => {
+      println!("{:?}", vote);
+
+      // 200 and 401 will always be a valid status code
+      // therefore, we can safely unwrap_unchecked this.
+      unsafe { Status::from_code(200).unwrap_unchecked() }
+    }
+    _ => {
+      println!("found an unauthorized attacker.");
+
+      unsafe { Status::from_code(401).unwrap_unchecked() }
+    }
   }
 }
 
 fn main() {
   rocket::ignite()
-    .mount("/dblwebhook", routes![webhook])
+    .mount("/", routes![index, webhook])
     .launch();
 }
 ```

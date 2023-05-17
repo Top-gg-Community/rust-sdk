@@ -38,7 +38,7 @@ fn deserialize_is_test<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
   D: Deserializer<'de>,
 {
-  Deserialize::deserialize(deserializer).map(|s: &str| s == "test")
+  String::deserialize(deserializer).map(|s| s == "test")
 }
 
 fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
@@ -46,8 +46,8 @@ where
   D: Deserializer<'de>,
 {
   Ok(
-    Deserialize::deserialize(deserializer)
-      .map(|s: &str| {
+    String::deserialize(deserializer)
+      .map(|s| {
         let mut output = HashMap::new();
 
         for mut it in s.split('&').map(|pair| pair.split('=')) {

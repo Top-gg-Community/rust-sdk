@@ -11,15 +11,15 @@ where
   D: Deserializer<'de>,
 {
   Ok(
-    Deserialize::deserialize(deserializer)
-      .ok()
-      .and_then(|s: &str| {
+    Deserialize::deserialize(deserializer).ok().and_then(
+      |s: String| {
         if s.is_empty() {
           None
         } else {
-          Some(s.to_owned())
+          Some(s)
         }
-      }),
+      },
+    ),
   )
 }
 
