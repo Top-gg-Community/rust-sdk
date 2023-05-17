@@ -86,12 +86,12 @@ async fn main() {
   let token = env!("TOPGG_TOKEN").to_owned();
   let client = Client::new(token);
   
-  // inputting a string searches a bot that matches that username
+  // inputting a string searches a bot that matches that username.
   for bot in client.get_bots("shiro").await.unwrap() {
     println!("{:?}", bot);
   }
 
-  // advanced query with filters
+  // advanced query with filters...
   let filter = Filter::new()
     .username("shiro")
     .certified(true);
@@ -192,25 +192,37 @@ topgg = { version = "1.1", default-features = false, features = ["actix"] }
 In your code:
 
 ```rust,no_run
-use actix_web::{post, App, HttpServer, Responder};
+use actix_web::{
+  error::{Error, ErrorUnauthorized},
+  get, post,
+  App, HttpServer,
+};
 use std::io;
+use topgg::IncomingVote;
 
-#[post("/dblwebhook")]
-async fn webhook(vote: topgg::IncomingVote) -> impl Responder {
+#[get("/")]
+async fn index() -> &'static str {
+  "Hello, World!"
+}
+
+#[post("/webhook")]
+async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-    Some(vote) => /* your application logic here... */,
-    _ => /* handle 401 here... */,
+    Some(vote) => {
+      println!("{:?}", vote);
+
+      Ok("ok")
+    }
+    _ => Err(ErrorUnauthorized("401")),
   }
 }
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> io::Result<()> {
-  HttpServer::new(|| {
-    App::new().service(webhook)
-  })
-  .bind(("127.0.0.1", 8080))?
-  .run()
-  .await
+  HttpServer::new(|| App::new().service(index).service(webhook))
+    .bind(("127.0.0.1", 8080))?
+    .run()
+    .await
 }
 ```
 
@@ -278,7 +290,7 @@ use topgg::IncomingVote;
 
 #[get("/")]
 fn index() -> &'static str {
-  "Hello, world!"
+  "Hello, World!"
 }
 
 #[post("/webhook", data = "<vote>")]
@@ -288,7 +300,7 @@ fn webhook(vote: IncomingVote) -> Status {
       println!("{:?}", vote);
 
       // 200 and 401 will always be a valid status code
-      // therefore, we can safely unwrap_unchecked this.
+      // therefore we can safely unwrap_unchecked these.
       unsafe { Status::from_code(200).unwrap_unchecked() }
     }
     _ => {
