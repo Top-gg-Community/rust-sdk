@@ -38,7 +38,7 @@ pub struct User {
   /// The username of this user.
   pub username: String,
 
-  #[deprecated(since = "1.1.0")]
+  #[deprecated(since = "1.1.0", message = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
   pub discriminator: String,
 
   /// The user's bio.
