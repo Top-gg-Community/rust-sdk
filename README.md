@@ -314,7 +314,7 @@ fn webhook(vote: IncomingVote) -> Status {
       println!("found an unauthorized attacker.");
 
       unsafe { Status::from_code(401).unwrap_unchecked() }
-    }
+    },
   }
 }
 

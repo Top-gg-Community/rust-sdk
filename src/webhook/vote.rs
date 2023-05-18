@@ -123,7 +123,7 @@ cfg_if::cfg_if! {
       ///
       ///       Ok("ok")
       ///     },
-      ///     _ => Err(ErrorUnauthorized("401"))
+      ///     _ => Err(ErrorUnauthorized("401")),
       ///   }
       /// }
       ///
@@ -163,7 +163,7 @@ cfg_if::cfg_if! {
       ///       println!("found an unauthorized attacker.");
       ///
       ///       unsafe { Status::from_code(401).unwrap_unchecked() }
-      ///     }
+      ///     },
       ///   }
       /// }
       ///
