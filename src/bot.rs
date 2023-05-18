@@ -17,7 +17,7 @@ pub struct Bot {
   /// The username of this Discord bot.
   pub username: String,
 
-  #[deprecated(since = "1.1.0", message = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
+  #[deprecated(since = "1.1.0", note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
   pub discriminator: String,
 
   /// The prefix of this Discord bot.
@@ -485,7 +485,7 @@ impl Filter {
     self
   }
 
-  #[deprecated(since = "1.1.0", message = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
+  #[deprecated(since = "1.1.0", note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,
