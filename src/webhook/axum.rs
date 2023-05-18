@@ -3,16 +3,20 @@
 //! Basic usage:
 //!
 //! ```rust,no_run
-//! use axum::{Router, Server};
-//! use std::net::SocketAddr;
+//! use axum::{routing::get, Router, Server};
+//! use topgg::{Vote, VoteHandler};
 //!
 //! struct MyVoteHandler {}
 //!
-//! #[async_trait::async_trait]
-//! impl topgg::VoteHandler for MyVoteHandler {
-//!   async fn voted(&self, vote: topgg::Vote) {
-//!     // your application logic here
+//! #[axum::async_trait]
+//! impl VoteHandler for MyVoteHandler {
+//!   async fn voted(&self, vote: Vote) {
+//!     println!("{:?}", vote);
 //!   }
+//! }
+//!
+//! async fn index() -> &'static str {
+//!   "Hello, World!"
 //! }
 //!
 //! #[tokio::main]
@@ -21,9 +25,12 @@
 //!   let state = MyVoteHandler {};
 //!   
 //!   let app = Router::new()
-//!     .nest("/dblwebhook", topgg::axum::webhook(password, state));
+//!     .route("/", get(index))
+//!     .nest("/webhook", topgg::axum::webhook(password, state));
 //!   
-//!   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+//!   // this will always be a valid SocketAddr syntax,
+//!   // therefore we can safely unwrap_unchecked this.
+//!   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 //!
 //!   Server::bind(&addr)
 //!     .serve(app.into_make_service())
@@ -73,16 +80,20 @@ where
 /// Basic usage:
 ///
 /// ```rust,no_run
-/// use axum::{Router, Server};
-/// use std::net::SocketAddr;
+/// use axum::{routing::get, Router, Server};
+/// use topgg::{Vote, VoteHandler};
 ///
 /// struct MyVoteHandler {}
 ///
-/// #[async_trait::async_trait]
-/// impl topgg::VoteHandler for MyVoteHandler {
-///   async fn voted(&self, vote: topgg::Vote) {
-///     // your application logic here
+/// #[axum::async_trait]
+/// impl VoteHandler for MyVoteHandler {
+///   async fn voted(&self, vote: Vote) {
+///     println!("{:?}", vote);
 ///   }
+/// }
+///
+/// async fn index() -> &'static str {
+///   "Hello, World!"
 /// }
 ///
 /// #[tokio::main]
@@ -91,9 +102,12 @@ where
 ///   let state = MyVoteHandler {};
 ///   
 ///   let app = Router::new()
-///     .nest("/dblwebhook", topgg::axum::webhook(password, state));
+///     .route("/", get(index))
+///     .nest("/webhook", topgg::axum::webhook(password, state));
 ///   
-///   let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+///   // this will always be a valid SocketAddr syntax,
+///   // therefore we can safely unwrap_unchecked this.
+///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 ///
 ///   Server::bind(&addr)
 ///     .serve(app.into_make_service())
@@ -101,6 +115,7 @@ where
 ///     .unwrap();
 /// }
 /// ```
+#[inline(always)]
 #[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
 pub fn webhook<T>(password: String, state: T) -> Router
 where
