@@ -67,6 +67,83 @@ where
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "actix", feature = "rocket"))] {
     /// A struct that represents an unauthenticated request containing a [`Vote`] data.
+    ///
+    /// # Examples
+    ///
+    /// Basic usage with [`actix-web`](https://actix.rs/):
+    ///
+    /// ```rust,no_run
+    /// use actix_web::{
+    ///   error::{Error, ErrorUnauthorized},
+    ///   get, post,
+    ///   App, HttpServer,
+    /// };
+    /// use std::io;
+    /// use topgg::IncomingVote;
+    ///
+    /// #[get("/")]
+    /// async fn index() -> &'static str {
+    ///   "Hello, World!"
+    /// }
+    ///
+    /// #[post("/webhook")]
+    /// async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
+    ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+    ///     Some(vote) => {
+    ///       println!("{:?}", vote);
+    ///
+    ///       Ok("ok")
+    ///     },
+    ///     _ => Err(ErrorUnauthorized("401"))
+    ///   }
+    /// }
+    ///
+    /// #[actix_web::main]
+    /// async fn main() -> io::Result<()> {
+    ///   HttpServer::new(|| App::new().service(index).service(webhook))
+    ///     .bind("127.0.0.1:8080")?
+    ///     .run()
+    ///     .await
+    /// }
+    /// ```
+    ///
+    /// Basic usage with [`rocket`](https://rocket.rs):
+    ///
+    /// ```rust,no_run
+    /// #![feature(decl_macro)]
+    ///
+    /// use rocket::{get, http::Status, post, routes};
+    /// use topgg::IncomingVote;
+    ///
+    /// #[get("/")]
+    /// fn index() -> &'static str {
+    ///   "Hello, World!"
+    /// }
+    ///
+    /// #[post("/webhook", data = "<vote>")]
+    /// fn webhook(vote: IncomingVote) -> Status {
+    ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+    ///     Some(vote) => {
+    ///       println!("{:?}", vote);
+    ///
+    ///       // 200 and 401 will always be a valid status code,
+    ///       // therefore we can safely unwrap_unchecked these.
+    ///       unsafe { Status::from_code(200).unwrap_unchecked() }
+    ///     },
+    ///     _ => {
+    ///       println!("found an unauthorized attacker.");
+    ///
+    ///       unsafe { Status::from_code(401).unwrap_unchecked() }
+    ///     }
+    ///   }
+    /// }
+    ///
+    /// fn main() {
+    ///   rocket::ignite()
+    ///     .mount("/", routes![index, webhook])
+    ///     .launch();
+    /// }
+    /// ```
     #[must_use]
     #[cfg_attr(docsrs, doc(cfg(any(feature = "actix", feature = "rocket"))))]
     #[derive(Clone)]
@@ -78,6 +155,83 @@ cfg_if::cfg_if! {
     impl IncomingVote {
       /// Authenticates a valid password with this request.
       /// Returns [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
+      ///
+      /// # Examples
+      ///
+      /// Basic usage with [`actix-web`](https://actix.rs/):
+      ///
+      /// ```rust,no_run
+      /// use actix_web::{
+      ///   error::{Error, ErrorUnauthorized},
+      ///   get, post,
+      ///   App, HttpServer,
+      /// };
+      /// use std::io;
+      /// use topgg::IncomingVote;
+      ///
+      /// #[get("/")]
+      /// async fn index() -> &'static str {
+      ///   "Hello, World!"
+      /// }
+      ///
+      /// #[post("/webhook")]
+      /// async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
+      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
+      ///
+      ///       Ok("ok")
+      ///     },
+      ///     _ => Err(ErrorUnauthorized("401"))
+      ///   }
+      /// }
+      ///
+      /// #[actix_web::main]
+      /// async fn main() -> io::Result<()> {
+      ///   HttpServer::new(|| App::new().service(index).service(webhook))
+      ///     .bind("127.0.0.1:8080")?
+      ///     .run()
+      ///     .await
+      /// }
+      /// ```
+      ///
+      /// Basic usage with [`rocket`](https://rocket.rs):
+      ///
+      /// ```rust,no_run
+      /// #![feature(decl_macro)]
+      ///
+      /// use rocket::{get, http::Status, post, routes};
+      /// use topgg::IncomingVote;
+      ///
+      /// #[get("/")]
+      /// fn index() -> &'static str {
+      ///   "Hello, World!"
+      /// }
+      ///
+      /// #[post("/webhook", data = "<vote>")]
+      /// fn webhook(vote: IncomingVote) -> Status {
+      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
+      ///
+      ///       // 200 and 401 will always be a valid status code,
+      ///       // therefore we can safely unwrap_unchecked these.
+      ///       unsafe { Status::from_code(200).unwrap_unchecked() }
+      ///     },
+      ///     _ => {
+      ///       println!("found an unauthorized attacker.");
+      ///
+      ///       unsafe { Status::from_code(401).unwrap_unchecked() }
+      ///     }
+      ///   }
+      /// }
+      ///
+      /// fn main() {
+      ///   rocket::ignite()
+      ///     .mount("/", routes![index, webhook])
+      ///     .launch();
+      /// }
+      /// ```
       #[must_use]
       #[inline(always)]
       pub fn authenticate<S>(self, password: &S) -> Option<Vote>
@@ -108,6 +262,85 @@ cfg_if::cfg_if! {
     /// #[async_trait::async_trait]
     /// pub trait VoteHandler: Send + Sync + 'static {
     ///   async fn voted(&self, vote: Vote);
+    /// }
+    /// ```
+    ///
+    /// # Examples
+    ///
+    /// Basic usage with [`axum`](https://crates.io/crates/axum):
+    ///
+    /// ```rust,no_run
+    /// use axum::{routing::get, Router, Server};
+    /// use topgg::{Vote, VoteHandler};
+    ///
+    /// struct MyVoteHandler {}
+    ///
+    /// #[axum::async_trait]
+    /// impl VoteHandler for MyVoteHandler {
+    ///   async fn voted(&self, vote: Vote) {
+    ///     println!("{:?}", vote);
+    ///   }
+    /// }
+    ///
+    /// async fn index() -> &'static str {
+    ///   "Hello, World!"
+    /// }
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+    ///   let state = MyVoteHandler {};
+    ///
+    ///   let app = Router::new()
+    ///     .route("/", get(index))
+    ///     .nest("/webhook", topgg::axum::webhook(password, state));
+    ///
+    ///   // this will always be a valid SocketAddr syntax,
+    ///   // therefore we can safely unwrap_unchecked this.
+    ///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+    ///
+    ///   Server::bind(&addr)
+    ///     .serve(app.into_make_service())
+    ///     .await
+    ///     .unwrap();
+    /// }
+    /// ```
+    ///
+    /// Basic usage with [`warp`](https://crates.io/crates/warp):
+    ///
+    /// ```rust,no_run
+    /// use std::net::SocketAddr;
+    /// use topgg::{Vote, VoteHandler};
+    /// use warp::Filter;
+    ///
+    /// struct MyVoteHandler {}
+    ///
+    /// #[async_trait::async_trait]
+    /// impl VoteHandler for MyVoteHandler {
+    ///   async fn voted(&self, vote: Vote) {
+    ///     println!("{:?}", vote);
+    ///   }
+    /// }
+    ///
+    /// #[tokio::main]
+    /// async fn main() {
+    ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+    ///   let state = MyVoteHandler {};
+    ///
+    ///   // POST /webhook
+    ///   let webhook = topgg::warp::webhook("webhook", password, state);
+    ///
+    ///   let routes = warp::get()
+    ///     .map(|| "Hello, World!")
+    ///     .or(webhook);
+    ///
+    ///   // this will always be a valid SocketAddr syntax,
+    ///   // therefore we can safely unwrap_unchecked this.
+    ///   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+    ///
+    ///   warp::serve(routes)
+    ///     .run(addr)
+    ///     .await
     /// }
     /// ```
     #[cfg_attr(docsrs, doc(cfg(any(feature = "axum", feature = "warp"))))]

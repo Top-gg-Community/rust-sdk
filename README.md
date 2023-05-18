@@ -24,7 +24,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 - **`api`**: Interacting with the [Top.gg](https://top.gg) API and accessing the `top.gg/api/*` endpoints. (enabled by default)
   - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg](https://top.gg) API.
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
-  - **`actix`**: Wrapper for working with the [`actix-web`](https://crates.io/crates/actix-web) web framework.
+  - **`actix`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
   - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
@@ -180,7 +180,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>actix</code></b>: Writing an <a href="https://crates.io/crates/actix-web"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>actix</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -212,7 +212,7 @@ async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
       println!("{:?}", vote);
 
       Ok("ok")
-    }
+    },
     _ => Err(ErrorUnauthorized("401")),
   }
 }
@@ -220,7 +220,7 @@ async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
 #[actix_web::main]
 async fn main() -> io::Result<()> {
   HttpServer::new(|| App::new().service(index).service(webhook))
-    .bind(("127.0.0.1", 8080))?
+    .bind("127.0.0.1:8080")?
     .run()
     .await
 }
@@ -309,7 +309,7 @@ fn webhook(vote: IncomingVote) -> Status {
       // 200 and 401 will always be a valid status code,
       // therefore we can safely unwrap_unchecked these.
       unsafe { Status::from_code(200).unwrap_unchecked() }
-    }
+    },
     _ => {
       println!("found an unauthorized attacker.");
 

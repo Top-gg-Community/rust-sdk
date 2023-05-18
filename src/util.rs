@@ -49,7 +49,6 @@ pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
 
       format!("https://cdn.discordapp.com/avatars/{id}/{hash}.{ext}?size=1024")
     }
-
     _ => format!(
       "https://cdn.discordapp.com/embed/avatars/{}.png",
       (id >> 22) % 5
