@@ -339,12 +339,16 @@ topgg = { version = "1.1", default-features = false, features = ["warp"] }
 In your code:
 
 ```rust,no_run
+use std::net::SocketAddr;
+use topgg::{Vote, VoteHandler};
+use warp::Filter;
+
 struct MyVoteHandler {}
 
 #[async_trait::async_trait]
-impl topgg::VoteHandler for MyVoteHandler {
-  async fn voted(&self, vote: topgg::Vote) {
-    // your application logic here
+impl VoteHandler for MyVoteHandler {
+  async fn voted(&self, vote: Vote) {
+    println!("{:?}", vote);
   }
 }
 
@@ -352,12 +356,21 @@ impl topgg::VoteHandler for MyVoteHandler {
 async fn main() {
   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
   let state = MyVoteHandler {};
-  
-  // POST /dblwebhook
-  let webhook = topgg::warp::webhook("dblwebhook", password, state);   
-  let routes = warp::post().and(webhook);
 
-  warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+  // POST /webhook
+  let webhook = topgg::warp::webhook("webhook", password, state);
+
+  let routes = warp::get()
+    .map(|| "Hello, World!")
+    .or(webhook);
+
+  // this will always be a valid SocketAddr syntax,
+  // therefore we can safely unwrap_unchecked this.
+  let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+
+  warp::serve(routes)
+    .run(addr)
+    .await
 }
 ```
 
