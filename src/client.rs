@@ -8,6 +8,7 @@ use core::mem::transmute;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
+    use core::time::Duration;
     use crate::Autoposter;
     use std::sync::Arc;
 
@@ -57,14 +58,16 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let _client = Client::new(token);
+  ///   let _client = Client::new(env!("TOPGG_TOKEN"));
   /// }
   /// ```
   #[inline(always)]
-  pub fn new(token: String) -> Self {
+  pub fn new<T>(token: T) -> Self
+  where
+    T: ToString,
+  {
     let inner = InnerClient {
-      http: Http::new(token),
+      http: Http::new(token.to_string()),
     };
 
     #[cfg(feature = "autoposter")]
@@ -98,8 +101,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -143,8 +145,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -186,8 +187,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -221,8 +221,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///
   ///   let server_count = 1234; // be TRUTHFUL!
   ///   let shard_count = 10;
@@ -248,16 +247,16 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use core::time::Duration;
   /// use topgg::{Autoposter, Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///
-  ///   // make sure to make this autoposter instance live
-  ///   // throughout most of the bot's lifetime to keep running!
-  ///   let autoposter = client.new_autoposter(1800);
+  ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+  ///   // the autopost thread will stop once it's dropped.
+  ///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
@@ -267,13 +266,13 @@ impl Client {
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-  pub fn new_autoposter<D>(&self, seconds_interval: u64) -> Autoposter {
+  pub fn new_autoposter(&self, interval: Duration) -> Autoposter {
     assert!(
-      seconds_interval >= 900,
-      "the interval mustn't be shorter than 15 minutes (900 seconds)"
+      interval.as_secs() >= 900,
+      "the interval mustn't be shorter than 15 minutes."
     );
 
-    Autoposter::new(Arc::clone(&self.inner), seconds_interval)
+    Autoposter::new(Arc::clone(&self.inner), interval)
   }
 
   /// Fetches your Discord bot's last 1000 voters.
@@ -298,8 +297,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{:?}", voter);
@@ -336,8 +334,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   // inputting a string searches a bot that matches that username.
   ///   for bot in client.get_bots("shiro").await.unwrap() {
@@ -397,8 +394,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///
   ///   if client.has_voted(661200758510977084).await.unwrap() {
   ///     println!("checks out");
@@ -442,8 +438,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   if client.is_weekend().await.unwrap() {
   ///     println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");

@@ -38,7 +38,10 @@ pub struct User {
   /// The username of this user.
   pub username: String,
 
-  #[deprecated(since = "1.1.0", note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub discriminator: String,
 
   /// The user's bio.
@@ -89,8 +92,7 @@ impl User {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -116,8 +118,7 @@ impl User {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -182,8 +183,7 @@ impl Voter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.created_at());
@@ -209,8 +209,7 @@ impl Voter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.avatar());

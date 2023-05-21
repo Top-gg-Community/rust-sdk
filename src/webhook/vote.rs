@@ -18,9 +18,13 @@ pub struct Vote {
   /// The ID of the user who voted.
   #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
   pub voter_id: u64,
-  
+
   /// Whether this vote's receiver is a server or not (bot otherwise).
-  #[serde(default = "_true", deserialize_with = "deserialize_is_server", rename = "bot")]
+  #[serde(
+    default = "_true",
+    deserialize_with = "deserialize_is_server",
+    rename = "bot"
+  )]
   pub is_server: bool,
 
   /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.

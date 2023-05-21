@@ -17,7 +17,10 @@ pub struct Bot {
   /// The username of this Discord bot.
   pub username: String,
 
-  #[deprecated(since = "1.1.0", note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub discriminator: String,
 
   /// The prefix of this Discord bot.
@@ -124,8 +127,7 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -151,8 +153,7 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -176,8 +177,7 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -206,8 +206,7 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -231,8 +230,7 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
@@ -308,8 +306,7 @@ impl Stats {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -333,8 +330,7 @@ impl Stats {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -485,7 +481,10 @@ impl Filter {
     self
   }
 
-  #[deprecated(since = "1.1.0", note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names.")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,
