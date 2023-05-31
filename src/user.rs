@@ -1,4 +1,5 @@
 use crate::{snowflake, util};
+use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug, Formatter};
 use serde::Deserialize;
 
@@ -37,7 +38,10 @@ pub struct User {
   /// The username of this user.
   pub username: String,
 
-  #[deprecated(since = "1.1.0")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub discriminator: String,
 
   /// The user's bio.
@@ -77,6 +81,30 @@ pub struct User {
 }
 
 impl User {
+  /// Retrieves the creation date of this user.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   
+  ///   let user = client.get_user(661200758510977084).await.unwrap();
+  ///   
+  ///   println!("{}", user.created_at());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn created_at(&self) -> DateTime<Utc> {
+    util::get_creation_date(self.id)
+  }
+
   /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
@@ -90,10 +118,9 @@ impl User {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let user = client.get_user(661200758510977084u64).await.unwrap();
+  ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
   ///   println!("{}", user.avatar());
   /// }
@@ -119,6 +146,7 @@ impl Debug for User {
       .field("is_moderator", &self.is_moderator)
       .field("is_web_moderator", &self.is_web_moderator)
       .field("is_admin", &self.is_admin)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .finish()
   }
@@ -144,6 +172,30 @@ pub struct Voter {
 }
 
 impl Voter {
+  /// Retrieves the creation date of this user.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   
+  ///   for voter in client.get_voters().await.unwrap() {
+  ///     println!("{}", voter.created_at());
+  ///   }
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn created_at(&self) -> DateTime<Utc> {
+    util::get_creation_date(self.id)
+  }
+
   /// Retrieves the Discord avatar URL of this user.
   ///
   /// It's format will be either PNG or GIF if animated.
@@ -157,8 +209,7 @@ impl Voter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.avatar());
@@ -166,6 +217,7 @@ impl Voter {
   /// }
   /// ```
   #[must_use]
+  #[inline(always)]
   pub fn avatar(&self) -> String {
     util::get_avatar(&self.avatar, self.id)
   }
@@ -177,6 +229,7 @@ impl Debug for Voter {
       .debug_struct("Voter")
       .field("id", &self.id)
       .field("username", &self.username)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .finish()
   }

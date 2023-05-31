@@ -22,9 +22,9 @@ impl fmt::Display for InternalError {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
       Self::CreateConnector(_) => write!(f, "can't initiate a TLS connector"),
-      Self::Connect(_) => write!(f, "can't initiate a TCP stream to top.gg"),
-      Self::Handshake(_) => write!(f, "can't initiate a handshake with top.gg"),
-      Self::WriteRequest(_) => write!(f, "can't write a request to top.gg"),
+      Self::Connect(_) => write!(f, "can't initiate a TCP stream to Top.gg"),
+      Self::Handshake(_) => write!(f, "can't initiate a handshake with Top.gg"),
+      Self::WriteRequest(_) => write!(f, "can't write a request to Top.gg"),
     }?;
 
     // look several lines below - it always returns Some()!

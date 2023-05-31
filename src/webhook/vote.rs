@@ -19,6 +19,14 @@ pub struct Vote {
   #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
   pub voter_id: u64,
 
+  /// Whether this vote's receiver is a server or not (bot otherwise).
+  #[serde(
+    default = "_true",
+    deserialize_with = "deserialize_is_server",
+    rename = "bot"
+  )]
+  pub is_server: bool,
+
   /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
   #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
   pub is_test: bool,
@@ -38,7 +46,19 @@ fn deserialize_is_test<'de, D>(deserializer: D) -> Result<bool, D::Error>
 where
   D: Deserializer<'de>,
 {
-  Deserialize::deserialize(deserializer).map(|s: &str| s == "test")
+  String::deserialize(deserializer).map(|s| s == "test")
+}
+
+const fn _true() -> bool {
+  true
+}
+
+#[inline(always)]
+fn deserialize_is_server<'de, D>(deserializer: D) -> Result<bool, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  Ok(String::deserialize(deserializer).is_err())
 }
 
 fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
@@ -46,8 +66,8 @@ where
   D: Deserializer<'de>,
 {
   Ok(
-    Deserialize::deserialize(deserializer)
-      .map(|s: &str| {
+    String::deserialize(deserializer)
+      .map(|s| {
         let mut output = HashMap::new();
 
         for mut it in s.split('&').map(|pair| pair.split('=')) {
@@ -66,7 +86,9 @@ where
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "actix", feature = "rocket"))] {
-    /// A struct that represents an unauthenticated request containing a [`Vote`] data.
+    /// A struct that represents an **unauthenticated** request containing a [`Vote`] data.
+    ///
+    /// To authenticate this structure with a valid password and consume the [`Vote`] data inside of it, see the [`authenticate`][IncomingVote::authenticate] method.
     #[must_use]
     #[cfg_attr(docsrs, doc(cfg(any(feature = "actix", feature = "rocket"))))]
     #[derive(Clone)]
@@ -78,6 +100,83 @@ cfg_if::cfg_if! {
     impl IncomingVote {
       /// Authenticates a valid password with this request.
       /// Returns [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
+      ///
+      /// # Examples
+      ///
+      /// Basic usage with [`actix-web`](https://actix.rs/):
+      ///
+      /// ```rust,no_run
+      /// use actix_web::{
+      ///   error::{Error, ErrorUnauthorized},
+      ///   get, post,
+      ///   App, HttpServer,
+      /// };
+      /// use std::io;
+      /// use topgg::IncomingVote;
+      ///
+      /// #[get("/")]
+      /// async fn index() -> &'static str {
+      ///   "Hello, World!"
+      /// }
+      ///
+      /// #[post("/webhook")]
+      /// async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
+      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
+      ///
+      ///       Ok("ok")
+      ///     },
+      ///     _ => Err(ErrorUnauthorized("401")),
+      ///   }
+      /// }
+      ///
+      /// #[actix_web::main]
+      /// async fn main() -> io::Result<()> {
+      ///   HttpServer::new(|| App::new().service(index).service(webhook))
+      ///     .bind("127.0.0.1:8080")?
+      ///     .run()
+      ///     .await
+      /// }
+      /// ```
+      ///
+      /// Basic usage with [`rocket`](https://rocket.rs):
+      ///
+      /// ```rust,no_run
+      /// #![feature(decl_macro)]
+      ///
+      /// use rocket::{get, http::Status, post, routes};
+      /// use topgg::IncomingVote;
+      ///
+      /// #[get("/")]
+      /// fn index() -> &'static str {
+      ///   "Hello, World!"
+      /// }
+      ///
+      /// #[post("/webhook", data = "<vote>")]
+      /// fn webhook(vote: IncomingVote) -> Status {
+      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
+      ///
+      ///       // 200 and 401 will always be a valid status code,
+      ///       // therefore we can safely unwrap_unchecked these.
+      ///       unsafe { Status::from_code(200).unwrap_unchecked() }
+      ///     },
+      ///     _ => {
+      ///       println!("found an unauthorized attacker.");
+      ///
+      ///       unsafe { Status::from_code(401).unwrap_unchecked() }
+      ///     },
+      ///   }
+      /// }
+      ///
+      /// fn main() {
+      ///   rocket::ignite()
+      ///     .mount("/", routes![index, webhook])
+      ///     .launch();
+      /// }
+      /// ```
       #[must_use]
       #[inline(always)]
       pub fn authenticate<S>(self, password: &S) -> Option<Vote>
@@ -103,7 +202,7 @@ cfg_if::cfg_if! {
 
     /// An async trait for adding an on-vote event handler to your application logic.
     ///
-    /// It's described as follows (without `async_trait`'s macro expansion):
+    /// It's described as follows (without [`async_trait`]'s macro expansion):
     /// ```rust,no_run
     /// #[async_trait::async_trait]
     /// pub trait VoteHandler: Send + Sync + 'static {
@@ -113,6 +212,86 @@ cfg_if::cfg_if! {
     #[cfg_attr(docsrs, doc(cfg(any(feature = "axum", feature = "warp"))))]
     #[async_trait::async_trait]
     pub trait VoteHandler: Send + Sync + 'static {
+      /// Your vote handler's on-vote async callback. The endpoint will always return a 200 (OK) HTTP status code after running this method.
+      ///
+      /// # Examples
+      ///
+      /// Basic usage with [`axum`](https://crates.io/crates/axum):
+      ///
+      /// ```rust,no_run
+      /// use axum::{routing::get, Router, Server};
+      /// use topgg::{Vote, VoteHandler};
+      ///
+      /// struct MyVoteHandler {}
+      ///
+      /// #[axum::async_trait]
+      /// impl VoteHandler for MyVoteHandler {
+      ///   async fn voted(&self, vote: Vote) {
+      ///     println!("{:?}", vote);
+      ///   }
+      /// }
+      ///
+      /// async fn index() -> &'static str {
+      ///   "Hello, World!"
+      /// }
+      ///
+      /// #[tokio::main]
+      /// async fn main() {
+      ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+      ///   let state = MyVoteHandler {};
+      ///
+      ///   let app = Router::new()
+      ///     .route("/", get(index))
+      ///     .nest("/webhook", topgg::axum::webhook(password, state));
+      ///
+      ///   // this will always be a valid SocketAddr syntax,
+      ///   // therefore we can safely unwrap_unchecked this.
+      ///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+      ///
+      ///   Server::bind(&addr)
+      ///     .serve(app.into_make_service())
+      ///     .await
+      ///     .unwrap();
+      /// }
+      /// ```
+      ///
+      /// Basic usage with [`warp`](https://crates.io/crates/warp):
+      ///
+      /// ```rust,no_run
+      /// use std::net::SocketAddr;
+      /// use topgg::{Vote, VoteHandler};
+      /// use warp::Filter;
+      ///
+      /// struct MyVoteHandler {}
+      ///
+      /// #[async_trait::async_trait]
+      /// impl VoteHandler for MyVoteHandler {
+      ///   async fn voted(&self, vote: Vote) {
+      ///     println!("{:?}", vote);
+      ///   }
+      /// }
+      ///
+      /// #[tokio::main]
+      /// async fn main() {
+      ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
+      ///   let state = MyVoteHandler {};
+      ///
+      ///   // POST /webhook
+      ///   let webhook = topgg::warp::webhook("webhook", password, state);
+      ///
+      ///   let routes = warp::get()
+      ///     .map(|| "Hello, World!")
+      ///     .or(webhook);
+      ///
+      ///   // this will always be a valid SocketAddr syntax,
+      ///   // therefore we can safely unwrap_unchecked this.
+      ///   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+      ///
+      ///   warp::serve(routes)
+      ///     .run(addr)
+      ///     .await
+      /// }
+      /// ```
       async fn voted(&self, vote: Vote);
     }
   }

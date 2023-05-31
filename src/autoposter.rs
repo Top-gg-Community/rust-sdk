@@ -1,12 +1,36 @@
 use crate::{client::InnerClient, NewStats};
+use core::time::Duration;
 use std::sync::Arc;
 use tokio::{
   sync::Mutex,
   task::{spawn, JoinHandle},
-  time::{sleep, Duration},
+  time::sleep,
 };
 
 /// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API in intervals.
+///
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```rust,no_run
+/// use core::time::Duration;
+/// use topgg::{Autoposter, Client, NewStats};
+///
+/// #[tokio::main]
+/// async fn main() {
+///   let client = Client::new(env!("TOPGG_TOKEN"));
+///
+///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+///   // the autopost thread will stop once it's dropped.
+///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
+///
+///   // ... then in some on ready/new guild event ...
+///   let server_count = 12345;
+///   let stats = NewStats::count_based(server_count, None);
+///   autoposter.feed(stats).await;
+/// }
+/// ```
 #[must_use]
 pub struct Autoposter {
   thread: JoinHandle<()>,
@@ -14,14 +38,14 @@ pub struct Autoposter {
 }
 
 impl Autoposter {
-  pub(crate) fn new(client: Arc<InnerClient>, interval: u64) -> Self {
+  pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
     let current_thread_data = Arc::new(Mutex::new(None));
     let thread_data = Arc::clone(&current_thread_data);
 
     Self {
       thread: spawn(async move {
         loop {
-          sleep(Duration::from_secs(interval)).await;
+          sleep(interval).await;
 
           let lock = thread_data.lock().await;
 
@@ -41,16 +65,16 @@ impl Autoposter {
   /// Basic usage:
   ///
   /// ```rust,no_run
+  /// use core::time::Duration;
   /// use topgg::{Autoposter, Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///
-  ///   // make sure to make this autoposter instance live
-  ///   // throughout most of the bot's lifetime to keep running!
-  ///   let autoposter = client.new_autoposter(1800);
+  ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+  ///   // the autopost thread will stop once it's dropped.
+  ///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;

@@ -24,7 +24,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 - **`api`**: Interacting with the [Top.gg](https://top.gg) API and accessing the `top.gg/api/*` endpoints. (enabled by default)
   - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg](https://top.gg) API.
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
-  - **`actix`**: Wrapper for working with the [`actix-web`](https://crates.io/crates/actix-web) web framework.
+  - **`actix`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
   - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
@@ -41,13 +41,12 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
   
-  let user = client.get_user(661200758510977084u64).await.unwrap();
+  let user = client.get_user(661200758510977084).await.unwrap();
   
   assert_eq!(user.username, "null");
-  assert_eq!(user.id, 661200758510977084u64);
+  assert_eq!(user.id, 661200758510977084);
   
   println!("{:?}", user);
 }
@@ -62,13 +61,12 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
   
-  let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  let bot = client.get_bot(264811613708746752).await.unwrap();
   
   assert_eq!(bot.username, "Luca");
-  assert_eq!(bot.id, 264811613708746752u64);
+  assert_eq!(bot.id, 264811613708746752);
   
   println!("{:?}", bot);
 }
@@ -83,22 +81,21 @@ use topgg::{Client, Filter, Query};
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
   
-  // inputting a string searches a bot that matches that username
+  // inputting a string searches a bot that matches that username.
   for bot in client.get_bots("shiro").await.unwrap() {
     println!("{:?}", bot);
   }
 
-  // advanced query with filters
+  // advanced query with filters...
   let filter = Filter::new()
     .username("shiro")
     .certified(true);
 
   let query = Query::new()
-    .limit(250u16)
-    .skip(50u16)
+    .limit(250)
+    .skip(50)
     .filter(filter);
 
   for bot in client.get_bots(query).await.unwrap() {
@@ -116,8 +113,7 @@ use topgg::{Client, NewStats};
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
 
   let server_count = 1234; // be TRUTHFUL!
   let shard_count = 10;
@@ -137,10 +133,9 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
 
-  if client.has_voted(661200758510977084u64).await.unwrap() {
+  if client.has_voted(661200758510977084).await.unwrap() {
     println!("checks out");
   }
 }
@@ -160,16 +155,16 @@ topgg = { version = "1.1", features = ["autoposter"] }
 In your code:
 
 ```rust,no_run
+use core::time::Duration;
 use topgg::{Autoposter, Client, NewStats};
 
 #[tokio::main]
 async fn main() {
-  let token = env!("TOPGG_TOKEN").to_owned();
-  let client = Client::new(token);
+  let client = Client::new(env!("TOPGG_TOKEN"));
 
-  // make sure to make this autoposter instance live
-  // throughout most of the bot's lifetime to keep running!
-  let autoposter = client.new_autoposter(1800);
+  // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+  // the autopost thread will stop once it's dropped.
+  let autoposter = client.new_autoposter(Duration::from_secs(1800));
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
@@ -180,7 +175,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>actix</code></b>: Writing an <a href="https://crates.io/crates/actix-web"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>actix</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -192,25 +187,37 @@ topgg = { version = "1.1", default-features = false, features = ["actix"] }
 In your code:
 
 ```rust,no_run
-use actix_web::{post, App, HttpServer, Responder};
+use actix_web::{
+  error::{Error, ErrorUnauthorized},
+  get, post,
+  App, HttpServer,
+};
 use std::io;
+use topgg::IncomingVote;
 
-#[post("/dblwebhook")]
-async fn webhook(vote: topgg::IncomingVote) -> impl Responder {
+#[get("/")]
+async fn index() -> &'static str {
+  "Hello, World!"
+}
+
+#[post("/webhook")]
+async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-    Some(vote) => /* your application logic here... */,
-    _ => /* handle 401 here... */,
+    Some(vote) => {
+      println!("{:?}", vote);
+
+      Ok("ok")
+    },
+    _ => Err(ErrorUnauthorized("401")),
   }
 }
 
-#[tokio::main]
+#[actix_web::main]
 async fn main() -> io::Result<()> {
-  HttpServer::new(|| {
-    App::new().service(webhook)
-  })
-  .bind(("127.0.0.1", 8080))?
-  .run()
-  .await
+  HttpServer::new(|| App::new().service(index).service(webhook))
+    .bind("127.0.0.1:8080")?
+    .run()
+    .await
 }
 ```
 
@@ -228,16 +235,20 @@ topgg = { version = "1.1", default-features = false, features = ["axum"] }
 In your code:
 
 ```rust,no_run
-use axum::{Router, Server};
-use std::net::SocketAddr;
+use axum::{routing::get, Router, Server};
+use topgg::{Vote, VoteHandler};
 
 struct MyVoteHandler {}
 
-#[async_trait::async_trait]
-impl topgg::VoteHandler for MyVoteHandler {
-  async fn voted(&self, vote: topgg::Vote) {
-    // your application logic here
+#[axum::async_trait]
+impl VoteHandler for MyVoteHandler {
+  async fn voted(&self, vote: Vote) {
+    println!("{:?}", vote);
   }
+}
+
+async fn index() -> &'static str {
+  "Hello, World!"
 }
 
 #[tokio::main]
@@ -246,9 +257,12 @@ async fn main() {
   let state = MyVoteHandler {};
   
   let app = Router::new()
-    .nest("/dblwebhook", topgg::axum::webhook(password, state));
+    .route("/", get(index))
+    .nest("/webhook", topgg::axum::webhook(password, state));
   
-  let addr = SocketAddr::from(([127, 0, 0, 1], 3000));
+  // this will always be a valid SocketAddr syntax,
+  // therefore we can safely unwrap_unchecked this.
+  let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 
   Server::bind(&addr)
     .serve(app.into_make_service())
@@ -271,24 +285,37 @@ topgg = { version = "1.1", default-features = false, features = ["rocket"] }
 In your code:
 
 ```rust,no_run
-#![feature(proc_macro_hygiene, decl_macro)]
+#![feature(decl_macro)]
 
-#[macro_use]
-extern crate rocket;
+use rocket::{get, http::Status, post, routes};
+use topgg::IncomingVote;
 
-use rocket::http::Status;
+#[get("/")]
+fn index() -> &'static str {
+  "Hello, World!"
+}
 
-#[post("/", data = "<vote>")]
-fn webhook(vote: topgg::IncomingVote) -> Status {
+#[post("/webhook", data = "<vote>")]
+fn webhook(vote: IncomingVote) -> Status {
   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-    Some(vote) => /* your application logic here... */,
-    _ => /* handle 401 here... */,
+    Some(vote) => {
+      println!("{:?}", vote);
+
+      // 200 and 401 will always be a valid status code,
+      // therefore we can safely unwrap_unchecked these.
+      unsafe { Status::from_code(200).unwrap_unchecked() }
+    },
+    _ => {
+      println!("found an unauthorized attacker.");
+
+      unsafe { Status::from_code(401).unwrap_unchecked() }
+    },
   }
 }
 
 fn main() {
   rocket::ignite()
-    .mount("/dblwebhook", routes![webhook])
+    .mount("/", routes![index, webhook])
     .launch();
 }
 ```
@@ -307,12 +334,16 @@ topgg = { version = "1.1", default-features = false, features = ["warp"] }
 In your code:
 
 ```rust,no_run
+use std::net::SocketAddr;
+use topgg::{Vote, VoteHandler};
+use warp::Filter;
+
 struct MyVoteHandler {}
 
 #[async_trait::async_trait]
-impl topgg::VoteHandler for MyVoteHandler {
-  async fn voted(&self, vote: topgg::Vote) {
-    // your application logic here
+impl VoteHandler for MyVoteHandler {
+  async fn voted(&self, vote: Vote) {
+    println!("{:?}", vote);
   }
 }
 
@@ -320,12 +351,21 @@ impl topgg::VoteHandler for MyVoteHandler {
 async fn main() {
   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
   let state = MyVoteHandler {};
-  
-  // POST /dblwebhook
-  let webhook = topgg::warp::webhook("dblwebhook", password, state);   
-  let routes = warp::post().and(webhook);
 
-  warp::serve(routes).run(([127, 0, 0, 1], 3030)).await;
+  // POST /webhook
+  let webhook = topgg::warp::webhook("webhook", password, state);
+
+  let routes = warp::get()
+    .map(|| "Hello, World!")
+    .or(webhook);
+
+  // this will always be a valid SocketAddr syntax,
+  // therefore we can safely unwrap_unchecked this.
+  let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+
+  warp::serve(routes)
+    .run(addr)
+    .await
 }
 ```
 

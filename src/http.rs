@@ -1,6 +1,9 @@
 use crate::{Error, InternalError, Result};
 use serde::{de::DeserializeOwned, Deserialize};
-use tokio::{io::{AsyncReadExt, AsyncWriteExt}, net::TcpStream};
+use tokio::{
+  io::{AsyncReadExt, AsyncWriteExt},
+  net::TcpStream,
+};
 use tokio_native_tls::{native_tls, TlsConnector};
 
 pub(crate) const GET: &str = "GET";
@@ -41,18 +44,20 @@ impl Http {
       .await
       .map_err(|err| Error::InternalClientError(InternalError::Handshake(err)))?;
 
+    let body = body.unwrap_or_default();
+
     let payload = format!(
       "\
       {predicate} /api{path} HTTP/1.1\r\n\
       Authorization: Bearer {}\r\n\
       Connection: close\r\n\
+      Content-Length: {}\r\n\
       Content-Type: application/json\r\n\
       Host: top.gg\r\n\
-      User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\
-      \r\n{}\
+      User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\r\n{body}\
     ",
       self.token,
-      body.unwrap_or_default()
+      body.len()
     );
 
     socket

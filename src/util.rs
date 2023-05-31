@@ -1,4 +1,7 @@
+use chrono::{naive::NaiveDateTime, DateTime, Utc};
 use serde::{Deserialize, Deserializer};
+
+const DISCORD_EPOCH: u64 = 1420070400000;
 
 #[inline(always)]
 pub(crate) fn deserialize_optional_string<'de, D>(
@@ -8,15 +11,15 @@ where
   D: Deserializer<'de>,
 {
   Ok(
-    Deserialize::deserialize(deserializer)
-      .ok()
-      .and_then(|s: &str| {
+    Deserialize::deserialize(deserializer).ok().and_then(
+      |s: String| {
         if s.is_empty() {
           None
         } else {
-          Some(s.to_owned())
+          Some(s)
         }
-      }),
+      },
+    ),
   )
 }
 
@@ -29,6 +32,16 @@ where
   Option::deserialize(deserializer).map(|res| res.unwrap_or_default())
 }
 
+#[inline(always)]
+pub(crate) fn get_creation_date(id: u64) -> DateTime<Utc> {
+  DateTime::from_utc(
+    unsafe {
+      NaiveDateTime::from_timestamp_millis(((id >> 22) + DISCORD_EPOCH) as _).unwrap_unchecked()
+    },
+    Utc,
+  )
+}
+
 pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
   match hash {
     Some(hash) => {
@@ -36,10 +49,9 @@ pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
 
       format!("https://cdn.discordapp.com/avatars/{id}/{hash}.{ext}?size=1024")
     }
-
     _ => format!(
       "https://cdn.discordapp.com/embed/avatars/{}.png",
-      (id >> 22) as u16 % 5
+      (id >> 22) % 5
     ),
   }
 }

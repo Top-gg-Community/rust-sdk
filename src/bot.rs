@@ -1,5 +1,5 @@
 use crate::{snowflake, util};
-use chrono::{offset::Utc, DateTime};
+use chrono::{DateTime, Utc};
 use core::{
   cmp::min,
   fmt::{self, Debug, Formatter},
@@ -17,7 +17,10 @@ pub struct Bot {
   /// The username of this Discord bot.
   pub username: String,
 
-  #[deprecated(since = "1.1.0")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub discriminator: String,
 
   /// The prefix of this Discord bot.
@@ -64,7 +67,8 @@ pub struct Bot {
   pub banner_url: Option<String>,
 
   /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
-  pub date: DateTime<Utc>,
+  #[serde(rename = "date")]
+  pub approved_at: DateTime<Utc>,
 
   /// Whether this Discord bot is [Top.gg](https://top.gg) certified or not.
   #[serde(rename = "certifiedBot")]
@@ -112,6 +116,30 @@ where
 }
 
 impl Bot {
+  /// Retrieves the creation date of this bot.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///   
+  ///   println!("{}", bot.created_at());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn created_at(&self) -> DateTime<Utc> {
+    util::get_creation_date(self.id)
+  }
+
   /// Retrieves the avatar URL of this bot.
   ///
   /// It's format will be either PNG or GIF if animated.
@@ -125,10 +153,9 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   println!("{}", bot.avatar());
   /// }
@@ -150,10 +177,9 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   println!("{}", bot.invite());
   /// }
@@ -180,10 +206,9 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   println!("{}", bot.shard_count());
   /// }
@@ -205,10 +230,9 @@ impl Bot {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
-  ///   let bot = client.get_bot(264811613708746752u64).await.unwrap();
+  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   println!("{}", bot.url());
   /// }
@@ -238,12 +262,13 @@ impl Debug for Bot {
       .field("owners", &self.owners)
       .field("guilds", &self.guilds)
       .field("banner_url", &self.banner_url)
-      .field("date", &self.date)
+      .field("approved_at", &self.approved_at)
       .field("is_certified", &self.is_certified)
       .field("shards", &self.shards)
       .field("votes", &self.votes)
       .field("monthly_votes", &self.monthly_votes)
       .field("support", &self.support)
+      .field("created_at", &self.created_at())
       .field("avatar", &self.avatar())
       .field("invite", &self.invite())
       .field("shard_count", &self.shard_count())
@@ -281,8 +306,7 @@ impl Stats {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -306,8 +330,7 @@ impl Stats {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let token = env!("TOPGG_TOKEN").to_owned();
-  ///   let client = Client::new(token);
+  ///   let client = Client::new(env!("TOPGG_TOKEN"));
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -337,7 +360,7 @@ impl Debug for Stats {
 
 /// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
 #[must_use]
-#[derive(Serialize)]
+#[derive(Clone, Serialize)]
 pub struct NewStats {
   server_count: u64,
   shard_count: Option<u64>,
@@ -357,15 +380,10 @@ impl NewStats {
   ///
   /// let _stats = NewStats::count_based(12345, Some(10));
   /// ```
-  #[inline(always)]
-  pub fn count_based<A, B>(server_count: A, shard_count: Option<B>) -> Self
-  where
-    A: Into<u64>,
-    B: Into<u64>,
-  {
+  pub const fn count_based(server_count: u64, shard_count: Option<u64>) -> Self {
     Self {
-      server_count: server_count.into(),
-      shard_count: shard_count.map(|s| s.into()),
+      server_count,
+      shard_count,
       shards: None,
       shard_id: None,
     }
@@ -384,40 +402,31 @@ impl NewStats {
   /// ```rust,no_run
   /// use topgg::NewStats;
   ///
-  /// // The shard posting this data has 456 servers.
+  /// // the shard posting this data has 456 servers.
   /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
   /// ```
-  pub fn shards_based<A, B>(shards: A, shard_index: Option<B>) -> Self
+  pub fn shards_based<A>(shards: A, shard_index: Option<u64>) -> Self
   where
-    A: IntoIterator,
-    A::Item: Into<u64>,
-    B: Into<u64>,
+    A: IntoIterator<Item = u64>,
   {
     let mut total_server_count = 0u64;
     let shards = shards.into_iter();
     let mut shards_list = Vec::with_capacity(shards.size_hint().0);
 
-    for server_count in shards.map(|s| s.into()) {
+    for server_count in shards {
       total_server_count += server_count;
       shards_list.push(server_count);
     }
 
-    let shard_id = shard_index.map(|index| {
-      let index = index.into();
-
-      assert!(
-        index < (shards_list.len() as u64),
-        "shard index out of range"
-      );
-
-      index
-    });
+    if let Some(index) = shard_index {
+      assert!(index < shards_list.len() as u64, "shard index out of range");
+    }
 
     Self {
       server_count: total_server_count,
       shard_count: Some(shards_list.len() as _),
       shards: Some(shards_list),
-      shard_id,
+      shard_id: shard_index,
     }
   }
 }
@@ -472,7 +481,10 @@ impl Filter {
     self
   }
 
-  #[deprecated(since = "1.1.0")]
+  #[deprecated(
+    since = "1.1.0",
+    note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
+  )]
   pub fn discriminator<D>(mut self, new_discriminator: &D) -> Self
   where
     D: AsRef<str> + ?Sized,
@@ -517,15 +529,10 @@ impl Filter {
   /// use topgg::Filter;
   ///
   /// let _filter = Filter::new()
-  ///   .votes(1000);
+  ///   .votes(1000u64);
   /// ```
-  pub fn votes<V>(mut self, new_votes: V) -> Self
-  where
-    V: Into<u64>,
-  {
-    self
-      .0
-      .push_str(&format!("points%3A%20{}%20", new_votes.into()));
+  pub fn votes<V>(mut self, new_votes: u64) -> Self {
+    self.0.push_str(&format!("points%3A%20{new_votes}%20"));
     self
   }
 
@@ -541,14 +548,10 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .monthly_votes(100);
   /// ```
-  pub fn monthly_votes<M>(mut self, new_monthly_votes: M) -> Self
-  where
-    M: Into<u64>,
-  {
-    self.0.push_str(&format!(
-      "monthlyPoints%3A%20{}%20",
-      new_monthly_votes.into()
-    ));
+  pub fn monthly_votes(mut self, new_monthly_votes: u64) -> Self {
+    self
+      .0
+      .push_str(&format!("monthlyPoints%3A%20{new_monthly_votes}%20"));
     self
   }
 
@@ -564,13 +567,10 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .certified(true);
   /// ```
-  pub fn certified<C>(mut self, is_certified: C) -> Self
-  where
-    C: Into<bool>,
-  {
+  pub fn certified(mut self, is_certified: bool) -> Self {
     self
       .0
-      .push_str(&format!("certifiedBot%3A%20{}%20", is_certified.into()));
+      .push_str(&format!("certifiedBot%3A%20{is_certified}%20"));
     self
   }
 
@@ -648,15 +648,10 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250u16);
+  ///   .limit(250);
   /// ```
-  pub fn limit<N>(mut self, new_limit: N) -> Self
-  where
-    N: Into<u16>,
-  {
-    self
-      .0
-      .push_str(&format!("limit={}&", min(new_limit.into(), 500)));
+  pub fn limit(mut self, new_limit: u16) -> Self {
+    self.0.push_str(&format!("limit={}&", min(new_limit, 500)));
     self
   }
 
@@ -670,16 +665,11 @@ impl Query {
   /// use topgg::Query;
   ///
   /// let _query = Query::new()
-  ///   .limit(250u16)
-  ///   .skip(100u16);
+  ///   .limit(250)
+  ///   .skip(100);
   /// ```
-  pub fn skip<S>(mut self, skip_by: S) -> Self
-  where
-    S: Into<u16>,
-  {
-    self
-      .0
-      .push_str(&format!("offset={}&", min(skip_by.into(), 499)));
+  pub fn skip<S>(mut self, skip_by: u16) -> Self {
+    self.0.push_str(&format!("offset={}&", min(skip_by, 499)));
     self
   }
 
@@ -697,8 +687,8 @@ impl Query {
   ///   .certified(true);
   ///
   /// let _query = Query::new()
-  ///   .limit(250u16)
-  ///   .skip(100u16)
+  ///   .limit(250)
+  ///   .skip(100)
   ///   .filter(filter);
   /// ```
   pub fn filter(mut self, new_filter: Filter) -> Self {
