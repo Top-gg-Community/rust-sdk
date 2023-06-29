@@ -51,7 +51,7 @@ impl Http {
         .client
         .post(endpoint)
         .bearer_auth(self.token.clone())
-        .body(body.unwrap_or_else(|| "".to_string())),
+        .body(body.unwrap_or_default()),
     };
     let response = ready_request.send().await?;
     let status_code = response.status();
