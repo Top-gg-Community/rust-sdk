@@ -14,11 +14,11 @@ exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
 [dependencies]
 cfg-if = "1"
 serde = { version = "1", features = ["derive"] }
-urlencoding = "2"
+urlencoding = { version = "2", optional = true }
 
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 tokio = { version = "1", optional = true, features = ["net", "io-util"] }
-tokio-native-tls = { version = "0.3", optional = true }
+reqwest = { version = "0.11", optional = true, features = ["json"], default-features = false }
 serde_json = { version = "1", optional = true }
 
 rocket = { version = "0.4", default-features = false, optional = true }
@@ -34,11 +34,11 @@ rustc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["api"]
-api = ["chrono", "serde_json", "tokio", "tokio-native-tls"]
-autoposter = ["api", "tokio/rt", "tokio/sync", "tokio/time"]
+api = ["dep:chrono", "dep:serde_json", "dep:tokio", "dep:reqwest", "dep:urlencoding"]
+autoposter = ["api", "dep:tokio", "tokio?/rt", "tokio?/sync", "tokio?/time"]
 
 webhook = []
-rocket = ["webhook", "serde_json", "dep:rocket"]
-axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
-warp = ["webhook", "async-trait", "dep:warp"]
-actix = ["webhook", "actix-web"]
+rocket = ["webhook", "dep:serde_json", "dep:rocket"]
+axum = ["webhook", "dep:async-trait", "dep:serde_json", "dep:axum"]
+warp = ["webhook", "dep:async-trait", "dep:warp"]
+actix = ["webhook", "dep:actix-web"]

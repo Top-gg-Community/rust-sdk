@@ -23,7 +23,7 @@ cfg_if::cfg_if! {
     #[doc(inline)]
     pub use bot::{Filter, NewStats, Query};
     pub use client::Client;
-    pub use error::{Error, InternalError, Result};
+    pub use error::{Error, Result};
     pub use snowflake::SnowflakeLike; // for doc purposes
   }
 }

@@ -27,11 +27,10 @@ pub(crate) struct InnerClient {
 
 impl InnerClient {
   pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
-    let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
-
+    let body = serde_json::to_string(new_stats)?;
     self
       .http
-      .send(POST, "/bots/stats", Some(&body))
+      .send(POST, "/bots/stats", Some(body))
       .await
       .map(|_| ())
   }
@@ -102,12 +101,12 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
+  ///
   ///   assert_eq!(user.username, "null");
   ///   assert_eq!(user.id, 661200758510977084);
-  ///   
+  ///
   ///   println!("{:?}", user);
   /// }
   /// ```
@@ -146,12 +145,12 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   assert_eq!(bot.username, "Luca");
   ///   assert_eq!(bot.id, 264811613708746752);
-  ///   
+  ///
   ///   println!("{:?}", bot);
   /// }
   /// ```
@@ -188,9 +187,9 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let stats = client.get_stats().await.unwrap();
-  ///   
+  ///
   ///   println!("{:?}", stats);
   /// }
   /// ```
@@ -298,7 +297,7 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{:?}", voter);
   ///   }
@@ -335,7 +334,7 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   // inputting a string searches a bot that matches that username.
   ///   for bot in client.get_bots("shiro").await.unwrap() {
   ///     println!("{:?}", bot);
@@ -439,7 +438,7 @@ impl Client {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   if client.is_weekend().await.unwrap() {
   ///     println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
   ///   }

@@ -1,13 +1,15 @@
-use crate::{Error, InternalError, Result};
+use crate::{Error, Result};
+use reqwest::StatusCode;
 use serde::{de::DeserializeOwned, Deserialize};
-use tokio::{
-  io::{AsyncReadExt, AsyncWriteExt},
-  net::TcpStream,
-};
-use tokio_native_tls::{native_tls, TlsConnector};
 
-pub(crate) const GET: &str = "GET";
-pub(crate) const POST: &str = "POST";
+pub(crate) const GET: Method = Method::Get;
+pub(crate) const POST: Method = Method::Post;
+
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+pub(crate) enum Method {
+  Get,
+  Post,
+}
 
 #[derive(Deserialize)]
 #[serde(rename = "kebab-case")]
@@ -18,100 +20,65 @@ pub(crate) struct Ratelimit {
 #[derive(Clone)]
 pub(crate) struct Http {
   token: String,
+  client: reqwest::Client,
 }
 
 impl Http {
-  pub(crate) const fn new(token: String) -> Self {
-    Self { token }
+  pub(crate) fn new(token: String) -> Self {
+    let client = reqwest::ClientBuilder::new()
+      .user_agent(concat!(
+        env!("CARGO_PKG_NAME"),
+        "(",
+        env!("CARGO_PKG_REPOSITORY"),
+        ")",
+        env!("CARGO_PKG_VERSION")
+      ))
+      .build()
+      .unwrap();
+    Self { token, client }
   }
 
   pub(crate) async fn send<'a>(
     &'a self,
-    predicate: &'static str,
+    predicate: Method,
     path: &'a str,
-    body: Option<&'a str>,
+    body: Option<String>,
   ) -> Result<String> {
-    let cx: TlsConnector = native_tls::TlsConnector::new()
-      .map_err(|err| Error::InternalClientError(InternalError::CreateConnector(err)))?
-      .into();
-
-    let socket = TcpStream::connect("top.gg:443")
-      .await
-      .map_err(|err| Error::InternalClientError(InternalError::Connect(err)))?;
-
-    let mut socket = cx
-      .connect("top.gg", socket)
-      .await
-      .map_err(|err| Error::InternalClientError(InternalError::Handshake(err)))?;
-
-    let body = body.unwrap_or_default();
-
-    let payload = format!(
-      "\
-      {predicate} /api{path} HTTP/1.1\r\n\
-      Authorization: Bearer {}\r\n\
-      Connection: close\r\n\
-      Content-Length: {}\r\n\
-      Content-Type: application/json\r\n\
-      Host: top.gg\r\n\
-      User-Agent: topgg (https://github.com/top-gg/rust-sdk) Rust/\r\n\r\n{body}\
-    ",
-      self.token,
-      body.len()
-    );
-
-    socket
-      .write_all(payload.as_bytes())
-      .await
-      .map_err(|err| Error::InternalClientError(InternalError::WriteRequest(err)))?;
-
-    let mut response = String::new();
-
-    socket
-      .read_to_string(&mut response)
-      .await
-      .map_err(|_| Error::InternalServerError)?;
-
-    // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
-    let status_code: u16 = unsafe {
-      response
-        .split_ascii_whitespace()
-        .nth(1)
-        .unwrap_unchecked()
-        .parse()
-        .unwrap_unchecked()
+    let endpoint = format!("https://top.gg/api{path}");
+    let ready_request = match predicate {
+      Method::Get => self.client.get(endpoint).bearer_auth(&self.token),
+      Method::Post => self
+        .client
+        .post(endpoint)
+        .bearer_auth(self.token.clone())
+        .body(body.unwrap_or_else(|| "".to_string())),
     };
-
-    if status_code >= 400 {
-      Err(match status_code {
-        401 => panic!("unauthorized"),
-        404 => Error::NotFound,
-        429 => Error::Ratelimit {
-          retry_after: serde_json::from_str::<Ratelimit>(&response)
-            .map_err(|_| Error::InternalServerError)?
-            .retry_after,
+    let response = ready_request.send().await?;
+    let status_code = response.status();
+    if !response.status().is_success() {
+      let err = match status_code {
+        StatusCode::UNAUTHORIZED => Error::Unauthorized,
+        StatusCode::NOT_FOUND => Error::NotFound,
+        StatusCode::TOO_MANY_REQUESTS => Error::Ratelimit {
+          retry_after: response.json::<Ratelimit>().await?.retry_after,
         },
         _ => Error::InternalServerError,
-      })
-    } else {
-      response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
-
-      Ok(response)
+      };
+      return Err(err);
     }
+    Ok(response.text().await?)
   }
 
   pub(crate) async fn request<D>(
     &self,
-    predicate: &'static str,
+    predicate: Method,
     path: &str,
-    body: Option<&str>,
+    body: Option<String>,
   ) -> Result<D>
   where
     D: DeserializeOwned,
   {
-    self
-      .send(predicate, path, body)
-      .await
-      .and_then(|response| serde_json::from_str(&response).map_err(|_| Error::InternalServerError))
+    let data = self.send(predicate, path, body).await?;
+    Ok(serde_json::from_str(&data)?)
   }
 }
