@@ -93,9 +93,9 @@ impl User {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", user.created_at());
   /// }
   /// ```
@@ -119,9 +119,9 @@ impl User {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", user.avatar());
   /// }
   /// ```
@@ -184,7 +184,7 @@ impl Voter {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.created_at());
   ///   }
@@ -210,7 +210,7 @@ impl Voter {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.avatar());
   ///   }

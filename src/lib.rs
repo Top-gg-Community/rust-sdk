@@ -4,7 +4,7 @@
   html_favicon_url = "https://top.gg/favicon.png"
 )]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-
+#![forbid(unsafe_code)]
 mod snowflake;
 
 cfg_if::cfg_if! {

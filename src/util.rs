@@ -33,11 +33,11 @@ where
 }
 
 #[inline(always)]
+/// WARNING:
+/// if this timestamp overflows, the [`std::default::Default::default(chrono::NaiveDateTime)`] value will be used
 pub(crate) fn get_creation_date(id: u64) -> DateTime<Utc> {
   DateTime::from_utc(
-    unsafe {
-      NaiveDateTime::from_timestamp_millis(((id >> 22) + DISCORD_EPOCH) as _).unwrap_unchecked()
-    },
+    NaiveDateTime::from_timestamp_millis(((id >> 22) + DISCORD_EPOCH) as _).unwrap_or_default(),
     Utc,
   )
 }

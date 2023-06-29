@@ -110,7 +110,7 @@ where
   D: Deserializer<'de>,
 {
   Ok(
-    unsafe { util::deserialize_optional_string(deserializer).unwrap_unchecked() }
+    util::deserialize_optional_string(deserializer)?
       .map(|support| format!("https://discord.com/invite/{support}")),
   )
 }
@@ -128,9 +128,9 @@ impl Bot {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", bot.created_at());
   /// }
   /// ```
@@ -154,9 +154,9 @@ impl Bot {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", bot.avatar());
   /// }
   /// ```
@@ -178,9 +178,9 @@ impl Bot {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", bot.invite());
   /// }
   /// ```
@@ -207,9 +207,9 @@ impl Bot {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", bot.shard_count());
   /// }
   /// ```
@@ -231,9 +231,9 @@ impl Bot {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
+  ///
   ///   println!("{}", bot.url());
   /// }
   /// ```
@@ -307,9 +307,9 @@ impl Stats {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let stats = client.get_stats().await.unwrap();
-  ///   
+  ///
   ///   println!("{:?}", stats.shard_count());
   /// }
   /// ```
@@ -331,9 +331,9 @@ impl Stats {
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN"));
-  ///   
+  ///
   ///   let stats = client.get_stats().await.unwrap();
-  ///   
+  ///
   ///   println!("{:?}", stats.server_count());
   /// }
   /// ```

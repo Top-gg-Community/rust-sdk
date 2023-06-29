@@ -4,7 +4,6 @@ use crate::{
   user::{User, Voted, Voter},
   Result, SnowflakeLike,
 };
-use core::mem::transmute;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
@@ -86,7 +85,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -130,7 +129,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -172,7 +171,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -207,7 +206,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
@@ -283,7 +282,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
@@ -319,7 +318,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -380,7 +379,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
@@ -412,7 +411,7 @@ impl Client {
       .http
       .request(GET, &path, None)
       .await
-      .map(|res: Voted| unsafe { transmute(res.voted) })
+      .map(|res: Voted| res.voted != 0)
   }
 
   /// Checks if the weekend multiplier is active.
@@ -424,7 +423,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  ///   /// - HTTP or JSON serialization fail
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
