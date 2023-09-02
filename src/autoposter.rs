@@ -20,7 +20,7 @@ struct PendingData {
 ///
 /// ```rust,no_run
 /// use core::time::Duration;
-/// use topgg::{Autoposter, Client, NewStats};
+/// use topgg::{Client, NewStats};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -79,7 +79,7 @@ impl Autoposter {
   ///
   /// ```rust,no_run
   /// use core::time::Duration;
-  /// use topgg::{Autoposter, Client, NewStats};
+  /// use topgg::{Client, NewStats};
   ///
   /// #[tokio::main]
   /// async fn main() {
