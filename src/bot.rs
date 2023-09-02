@@ -524,7 +524,7 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .votes(1000);
   /// ```
-  pub fn votes<V>(mut self, new_votes: usize) -> Self {
+  pub fn votes(mut self, new_votes: usize) -> Self {
     self.0.push_str(&format!("points%3A%20{new_votes}%20"));
     self
   }
