@@ -295,12 +295,12 @@ fn webhook(vote: IncomingVote) -> Status {
     Some(vote) => {
       println!("{:?}", vote);
 
-      Status::from_code(200).unwrap()
+      Status::Ok
     },
     _ => {
       println!("found an unauthorized attacker.");
 
-      Status::from_code(401).unwrap()
+      Status::Unauthorized
     }
   }
 }
