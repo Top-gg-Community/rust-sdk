@@ -157,7 +157,7 @@ use topgg::{Autoposter, Client, NewStats};
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
 
-  // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+  // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
   // the autopost thread will stop once it's dropped.
   let autoposter = client.new_autoposter(Duration::from_secs(1800));
 
@@ -253,7 +253,7 @@ async fn main() {
 
   let app = Router::new().route("/", get(index)).nest(
     "/webhook",
-    topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+    topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
   );
 
   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
@@ -347,7 +347,7 @@ async fn main() {
   let webhook = topgg::warp::webhook(
     "webhook",
     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
-    state.clone(),
+    Arc::clone(&state),
   );
 
   let routes = warp::get().map(|| "Hello, World!").or(webhook);
