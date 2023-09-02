@@ -106,10 +106,8 @@ pub(crate) fn deserialize_support_server<'de, D>(
 where
   D: Deserializer<'de>,
 {
-  Ok(
-    unsafe { util::deserialize_optional_string(deserializer).unwrap_unchecked() }
-      .map(|support| format!("https://discord.com/invite/{support}")),
-  )
+  util::deserialize_optional_string(deserializer)
+    .map(|inner| inner.map(|support| format!("https://discord.com/invite/{support}")))
 }
 
 impl Bot {
