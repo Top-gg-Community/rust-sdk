@@ -672,14 +672,9 @@ impl Query {
   /// ```rust,no_run
   /// use topgg::{Filter, Query};
   ///
-  /// let filter = Filter::new()
-  ///   .username("shiro")
-  ///   .certified(true);
+  /// let filter = Filter::new().username("shiro").certified(true);
   ///
-  /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100)
-  ///   .filter(filter);
+  /// let _query = Query::new().limit(250).skip(100).filter(filter);
   /// ```
   pub fn filter(mut self, new_filter: Filter) -> Self {
     self

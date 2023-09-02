@@ -27,7 +27,9 @@ use tokio::{
 ///
 ///   // ... then in some on ready/new guild event ...
 ///   let server_count = 12345;
-///   autoposter.feed(NewStats::count_based(server_count, None)).await;
+///   autoposter
+///     .feed(NewStats::count_based(server_count, None))
+///     .await;
 /// }
 /// ```
 #[must_use]
@@ -77,7 +79,9 @@ impl Autoposter {
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
-  ///   autoposter.feed(NewStats::count_based(server_count, None)).await;
+  ///   autoposter
+  ///     .feed(NewStats::count_based(server_count, None))
+  ///     .await;
   /// }
   /// ```
   #[inline(always)]

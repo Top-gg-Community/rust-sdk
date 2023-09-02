@@ -23,11 +23,12 @@
 //! #[tokio::main]
 //! async fn main() {
 //!   let state = Arc::new(MyVoteHandler {});
-//!   
-//!   let app = Router::new()
-//!     .route("/", get(index))
-//!     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
-//!   
+//!
+//!   let app = Router::new().route("/", get(index)).nest(
+//!     "/webhook",
+//!     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+//!   );
+//!
 //!   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 //!
 //!   Server::bind(&addr)
@@ -111,11 +112,12 @@ where
 /// #[tokio::main]
 /// async fn main() {
 ///   let state = Arc::new(MyVoteHandler {});
-///   
-///   let app = Router::new()
-///     .route("/", get(index))
-///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
-///   
+///
+///   let app = Router::new().route("/", get(index)).nest(
+///     "/webhook",
+///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+///   );
+///
 ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 ///
 ///   Server::bind(&addr)

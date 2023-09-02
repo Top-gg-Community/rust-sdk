@@ -83,21 +83,16 @@ use topgg::{Client, Filter, Query};
 #[tokio::main]
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  
+
   // inputting a string searches a bot that matches that username.
   for bot in client.get_bots("shiro").await.unwrap() {
     println!("{:?}", bot);
   }
 
   // advanced query with filters...
-  let filter = Filter::new()
-    .username("shiro")
-    .certified(true);
+  let filter = Filter::new().username("shiro").certified(true);
 
-  let query = Query::new()
-    .limit(250)
-    .skip(50)
-    .filter(filter);
+  let query = Query::new().limit(250).skip(50).filter(filter);
 
   for bot in client.get_bots(query).await.unwrap() {
     println!("{:?}", bot);
@@ -117,7 +112,10 @@ async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
 
   let server_count = 12345;
-  client.post_stats(NewStats::count_based(server_count, None)).await.unwrap();
+  client
+    .post_stats(NewStats::count_based(server_count, None))
+    .await
+    .unwrap();
 }
 ```
 
@@ -165,7 +163,9 @@ async fn main() {
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
-  autoposter.feed(NewStats::count_based(server_count, None)).await;
+  autoposter
+    .feed(NewStats::count_based(server_count, None))
+    .await;
 }
 ```
 
@@ -185,8 +185,7 @@ In your code:
 ```rust,no_run
 use actix_web::{
   error::{Error, ErrorUnauthorized},
-  get, post,
-  App, HttpServer,
+  get, post, App, HttpServer,
 };
 use std::io;
 use topgg::IncomingVote;
@@ -203,7 +202,7 @@ async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
       println!("{:?}", vote);
 
       Ok("ok")
-    },
+    }
     _ => Err(ErrorUnauthorized("401")),
   }
 }
@@ -251,11 +250,12 @@ async fn index() -> &'static str {
 #[tokio::main]
 async fn main() {
   let state = Arc::new(MyVoteHandler {});
-  
-  let app = Router::new()
-    .route("/", get(index))
-    .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
-  
+
+  let app = Router::new().route("/", get(index)).nest(
+    "/webhook",
+    topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+  );
+
   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 
   Server::bind(&addr)
@@ -301,7 +301,7 @@ fn webhook(vote: IncomingVote) -> Status {
       println!("found an unauthorized attacker.");
 
       Status::from_code(401).unwrap()
-    },
+    }
   }
 }
 
@@ -344,17 +344,17 @@ async fn main() {
   let state = Arc::new(MyVoteHandler {});
 
   // POST /webhook
-  let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
+  let webhook = topgg::warp::webhook(
+    "webhook",
+    env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
+    state.clone(),
+  );
 
-  let routes = warp::get()
-    .map(|| "Hello, World!")
-    .or(webhook);
+  let routes = warp::get().map(|| "Hello, World!").or(webhook);
 
   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 
-  warp::serve(routes)
-    .run(addr)
-    .await
+  warp::serve(routes).run(addr).await
 }
 ```
 

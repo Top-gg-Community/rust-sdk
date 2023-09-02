@@ -21,17 +21,17 @@
 //!   let state = Arc::new(MyVoteHandler {});
 //!
 //!   // POST /webhook
-//!   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
+//!   let webhook = topgg::warp::webhook(
+//!     "webhook",
+//!     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
+//!     state.clone(),
+//!   );
 //!
-//!   let routes = warp::get()
-//!     .map(|| "Hello, World!")
-//!     .or(webhook);
+//!   let routes = warp::get().map(|| "Hello, World!").or(webhook);
 //!
 //!   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 //!
-//!   warp::serve(routes)
-//!     .run(addr)
-//!     .await
+//!   warp::serve(routes).run(addr).await
 //! }
 //! ```
 
@@ -64,17 +64,17 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///   let state = Arc::new(MyVoteHandler {});
 ///
 ///   // POST /webhook
-///   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
+///   let webhook = topgg::warp::webhook(
+///     "webhook",
+///     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
+///     state.clone(),
+///   );
 ///
-///   let routes = warp::get()
-///     .map(|| "Hello, World!")
-///     .or(webhook);
+///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
 ///
 ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 ///
-///   warp::serve(routes)
-///     .run(addr)
-///     .await
+///   warp::serve(routes).run(addr).await
 /// }
 /// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "warp")))]

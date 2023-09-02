@@ -223,7 +223,10 @@ impl Client {
   ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
   ///   let server_count = 12345;
-  ///   client.post_stats(NewStats::count_based(server_count, None)).await.unwrap();
+  ///   client
+  ///     .post_stats(NewStats::count_based(server_count, None))
+  ///     .await
+  ///     .unwrap();
   /// }
   /// ```
   #[inline(always)]
@@ -337,14 +340,9 @@ impl Client {
   ///   }
   ///
   ///   // advanced query with filters...
-  ///   let filter = Filter::new()
-  ///     .username("shiro")
-  ///     .certified(true);
+  ///   let filter = Filter::new().username("shiro").certified(true);
   ///
-  ///   let query = Query::new()
-  ///     .limit(250)
-  ///     .skip(50)
-  ///     .filter(filter);
+  ///   let query = Query::new().limit(250).skip(50).filter(filter);
   ///
   ///   for bot in client.get_bots(query).await.unwrap() {
   ///     println!("{:?}", bot);

@@ -107,8 +107,7 @@ cfg_if::cfg_if! {
       /// ```rust,no_run
       /// use actix_web::{
       ///   error::{Error, ErrorUnauthorized},
-      ///   get, post,
-      ///   App, HttpServer,
+      ///   get, post, App, HttpServer,
       /// };
       /// use std::io;
       /// use topgg::IncomingVote;
@@ -125,7 +124,7 @@ cfg_if::cfg_if! {
       ///       println!("{:?}", vote);
       ///
       ///       Ok("ok")
-      ///     },
+      ///     }
       ///     _ => Err(ErrorUnauthorized("401")),
       ///   }
       /// }
@@ -164,7 +163,7 @@ cfg_if::cfg_if! {
       ///       println!("found an unauthorized attacker.");
       ///
       ///       Status::from_code(401).unwrap()
-      ///     },
+      ///     }
       ///   }
       /// }
       ///
@@ -229,9 +228,10 @@ cfg_if::cfg_if! {
       /// async fn main() {
       ///   let state = Arc::new(MyVoteHandler {});
       ///
-      ///   let app = Router::new()
-      ///     .route("/", get(index))
-      ///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
+      ///   let app = Router::new().route("/", get(index)).nest(
+      ///     "/webhook",
+      ///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+      ///   );
       ///
       ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
       ///
@@ -263,17 +263,17 @@ cfg_if::cfg_if! {
       ///   let state = Arc::new(MyVoteHandler {});
       ///
       ///   // POST /webhook
-      ///   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
+      ///   let webhook = topgg::warp::webhook(
+      ///     "webhook",
+      ///     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
+      ///     state.clone(),
+      ///   );
       ///
-      ///   let routes = warp::get()
-      ///     .map(|| "Hello, World!")
-      ///     .or(webhook);
+      ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
       ///
       ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
       ///
-      ///   warp::serve(routes)
-      ///     .run(addr)
-      ///     .await
+      ///   warp::serve(routes).run(addr).await
       /// }
       /// ```
       async fn voted(&self, vote: Vote);
