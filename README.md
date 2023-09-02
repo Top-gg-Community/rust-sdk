@@ -11,7 +11,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
 
-Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
+Make sure to have a [Top.gg API](https://docs.top.gg) token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
 topgg = "1.2"
@@ -256,8 +256,7 @@ async fn main() {
     .route("/", get(index))
     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
   
-  // this will always be a valid SocketAddr syntax,
-  // therefore we can safely unwrap_unchecked this.
+  // SAFETY: this will always be a valid SocketAddr syntax.
   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 
   Server::bind(&addr)
@@ -297,8 +296,7 @@ fn webhook(vote: IncomingVote) -> Status {
     Some(vote) => {
       println!("{:?}", vote);
 
-      // 200 and 401 will always be a valid status code,
-      // therefore we can safely unwrap_unchecked these.
+      // SAFETY: 200 and 401 will always be a valid status code.
       unsafe { Status::from_code(200).unwrap_unchecked() }
     },
     _ => {
@@ -354,8 +352,7 @@ async fn main() {
     .map(|| "Hello, World!")
     .or(webhook);
 
-  // this will always be a valid SocketAddr syntax,
-  // therefore we can safely unwrap_unchecked this.
+  // SAFETY: this will always be a valid SocketAddr syntax.
   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 
   warp::serve(routes)

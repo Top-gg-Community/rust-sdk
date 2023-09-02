@@ -34,6 +34,7 @@ where
 
 #[inline(always)]
 pub(crate) fn get_creation_date(id: u64) -> DateTime<Utc> {
+  // SAFETY: Discord IDs are guaranteed to be valid UNIX timestamps.
   unsafe {
     Utc
       .timestamp_millis_opt(((id >> 22) + DISCORD_EPOCH) as _)

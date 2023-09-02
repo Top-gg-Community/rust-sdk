@@ -158,8 +158,7 @@ cfg_if::cfg_if! {
       ///     Some(vote) => {
       ///       println!("{:?}", vote);
       ///
-      ///       // 200 and 401 will always be a valid status code,
-      ///       // therefore we can safely unwrap_unchecked these.
+      ///       // SAFETY: 200 and 401 will always be a valid status code.
       ///       unsafe { Status::from_code(200).unwrap_unchecked() }
       ///     },
       ///     _ => {
@@ -235,8 +234,7 @@ cfg_if::cfg_if! {
       ///     .route("/", get(index))
       ///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
       ///
-      ///   // this will always be a valid SocketAddr syntax,
-      ///   // therefore we can safely unwrap_unchecked this.
+      ///   // SAFETY: this will always be a valid SocketAddr syntax.
       ///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
       ///
       ///   Server::bind(&addr)
@@ -273,8 +271,7 @@ cfg_if::cfg_if! {
       ///     .map(|| "Hello, World!")
       ///     .or(webhook);
       ///
-      ///   // this will always be a valid SocketAddr syntax,
-      ///   // therefore we can safely unwrap_unchecked this.
+      ///   // SAFETY: this will always be a valid SocketAddr syntax.
       ///   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
       ///
       ///   warp::serve(routes)

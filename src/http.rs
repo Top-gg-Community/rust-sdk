@@ -72,7 +72,7 @@ impl Http {
       .await
       .map_err(|_| Error::InternalServerError)?;
 
-    // we should never receive invalid raw HTTP responses - so unwrap_unchecked() is okay to use here
+    // SAFETY: raw HTTP response headers always has a status code.
     let status_code: u16 = unsafe {
       response
         .split_ascii_whitespace()
@@ -94,6 +94,7 @@ impl Http {
         _ => Error::InternalServerError,
       })
     } else {
+      // SAFETY: raw HTTP response headers always has a trailing \r\n\r\n.
       response.drain(unsafe { ..response.find("\r\n\r\n").unwrap_unchecked() + 4 });
 
       Ok(response)

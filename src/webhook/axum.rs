@@ -28,8 +28,7 @@
 //!     .route("/", get(index))
 //!     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 //!   
-//!   // this will always be a valid SocketAddr syntax,
-//!   // therefore we can safely unwrap_unchecked this.
+//!   // SAFETY: this will always be a valid SocketAddr syntax.
 //!   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 //!
 //!   Server::bind(&addr)
@@ -118,8 +117,7 @@ where
 ///     .route("/", get(index))
 ///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 ///   
-///   // this will always be a valid SocketAddr syntax,
-///   // therefore we can safely unwrap_unchecked this.
+///   // SAFETY: this will always be a valid SocketAddr syntax.
 ///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 ///
 ///   Server::bind(&addr)

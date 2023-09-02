@@ -27,8 +27,7 @@
 //!     .map(|| "Hello, World!")
 //!     .or(webhook);
 //!
-//!   // this will always be a valid SocketAddr syntax,
-//!   // therefore we can safely unwrap_unchecked this.
+//!   // SAFETY: this will always be a valid SocketAddr syntax.
 //!   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 //!
 //!   warp::serve(routes)
@@ -72,8 +71,7 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///     .map(|| "Hello, World!")
 ///     .or(webhook);
 ///
-///   // this will always be a valid SocketAddr syntax,
-///   // therefore we can safely unwrap_unchecked this.
+///   // SAFETY: this will always be a valid SocketAddr syntax.
 ///   let addr: SocketAddr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
 ///
 ///   warp::serve(routes)

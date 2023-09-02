@@ -27,7 +27,7 @@ impl fmt::Display for InternalError {
       Self::WriteRequest(_) => write!(f, "can't write a request to Top.gg"),
     }?;
 
-    // look several lines below - it always returns Some()!
+    // SAFETY: look several lines below.
     write!(f, " (original error: {})", unsafe {
       error::Error::source(self).unwrap_unchecked()
     })

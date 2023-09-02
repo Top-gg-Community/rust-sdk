@@ -23,10 +23,11 @@ pub(crate) struct InnerClient {
   http: Http,
 }
 
-// this is implemented here because autoposter needs to access this function from a different thread
+// this is implemented here because autoposter needs to access this function from a different thread.
 
 impl InnerClient {
   pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
+    // SAFETY: no part of the NewStats struct would cause an error in the serialization process.
     let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
 
     self
@@ -395,13 +396,13 @@ impl Client {
   ///   }
   /// }
   /// ```
-  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: SnowflakeLike,
   {
     let path = format!("/bots/votes?userId={}", user_id.as_snowflake());
 
+    // SAFETY: res.voted will always be either 0 or 1.
     self
       .inner
       .http
