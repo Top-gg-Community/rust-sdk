@@ -18,13 +18,11 @@ cfg_if::cfg_if! {
   }
 }
 
-#[derive(Clone)]
 pub(crate) struct InnerClient {
   http: Http,
 }
 
 // this is implemented here because autoposter needs to access this function from a different thread.
-
 impl InnerClient {
   pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
     // SAFETY: no part of the NewStats struct would cause an error in the serialization process.
@@ -40,7 +38,6 @@ impl InnerClient {
 
 /// A struct representing a [Top.gg](https://top.gg) API client instance.
 #[must_use]
-#[derive(Clone)]
 pub struct Client {
   inner: SyncedClient,
 }
@@ -78,13 +75,13 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
+  /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
@@ -122,13 +119,13 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
+  /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
@@ -171,7 +168,7 @@ impl Client {
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
@@ -206,7 +203,7 @@ impl Client {
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -238,7 +235,9 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds)
+  /// Panics if any of the following conditions are met:
+  /// - An autoposter thread is already running
+  /// - The interval argument is shorter than 15 minutes (900 seconds)
   ///
   /// # Examples
   ///
@@ -266,11 +265,15 @@ impl Client {
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
   pub fn new_autoposter(&self, interval: Duration) -> Autoposter {
     assert!(
+      Arc::strong_count(&self.inner) < 2,
+      "An autoposter thread is already running."
+    );
+    assert!(
       interval.as_secs() >= 900,
       "The interval mustn't be shorter than 15 minutes."
     );
 
-    Autoposter::new(self.inner.clone(), interval)
+    Autoposter::new(Arc::clone(&self.inner), interval)
   }
 
   /// Fetches your Discord bot's last 1000 voters.
@@ -281,7 +284,7 @@ impl Client {
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -311,13 +314,13 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
+  /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
   /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
@@ -367,13 +370,13 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the following conditions are met:
+  /// Panics if any of the following conditions are met:
   /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
   /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
@@ -418,7 +421,7 @@ impl Client {
   ///
   /// # Errors
   ///
-  /// Errors if the following conditions are met:
+  /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])

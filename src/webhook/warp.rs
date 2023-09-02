@@ -24,7 +24,7 @@
 //!   let webhook = topgg::warp::webhook(
 //!     "webhook",
 //!     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
-//!     state.clone(),
+//!     Arc::clone(&state),
 //!   );
 //!
 //!   let routes = warp::get().map(|| "Hello, World!").or(webhook);
@@ -67,7 +67,7 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///   let webhook = topgg::warp::webhook(
 ///     "webhook",
 ///     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
-///     state.clone(),
+///     Arc::clone(&state),
 ///   );
 ///
 ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
@@ -93,8 +93,8 @@ where
     .and(header("Authorization"))
     .and(body::json())
     .then(move |auth: String, vote: Vote| {
-      let current_state = state.clone();
-      let current_password = password.clone();
+      let current_state = Arc::clone(&state);
+      let current_password = Arc::clone(&password);
 
       async move {
         if auth == *current_password {

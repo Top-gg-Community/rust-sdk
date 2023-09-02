@@ -26,7 +26,7 @@
 //!
 //!   let app = Router::new().route("/", get(index)).nest(
 //!     "/webhook",
-//!     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+//!     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
 //!   );
 //!
 //!   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
@@ -56,8 +56,8 @@ struct WebhookState<T> {
 impl<T> Clone for WebhookState<T> {
   fn clone(&self) -> Self {
     Self {
-      state: self.state.clone(),
-      password: self.password.clone(),
+      state: Arc::clone(&self.state),
+      password: Arc::clone(&self.password),
     }
   }
 }
@@ -115,7 +115,7 @@ where
 ///
 ///   let app = Router::new().route("/", get(index)).nest(
 ///     "/webhook",
-///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
 ///   );
 ///
 ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();

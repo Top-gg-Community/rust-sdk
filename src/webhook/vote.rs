@@ -230,7 +230,7 @@ cfg_if::cfg_if! {
       ///
       ///   let app = Router::new().route("/", get(index)).nest(
       ///     "/webhook",
-      ///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()),
+      ///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
       ///   );
       ///
       ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
@@ -266,7 +266,7 @@ cfg_if::cfg_if! {
       ///   let webhook = topgg::warp::webhook(
       ///     "webhook",
       ///     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
-      ///     state.clone(),
+      ///     Arc::clone(&state),
       ///   );
       ///
       ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);

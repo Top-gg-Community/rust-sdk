@@ -1,11 +1,16 @@
 use crate::{client::InnerClient, NewStats};
-use core::time::Duration;
+use core::{mem::MaybeUninit, time::Duration};
 use std::sync::Arc;
 use tokio::{
   sync::Mutex,
   task::{spawn, JoinHandle},
   time::sleep,
 };
+
+struct PendingData {
+  ready: bool,
+  stats: NewStats,
+}
 
 /// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API in intervals.
 ///
@@ -35,23 +40,30 @@ use tokio::{
 #[must_use]
 pub struct Autoposter {
   thread: JoinHandle<()>,
-  data: Arc<Mutex<Option<NewStats>>>,
+  data: Arc<Mutex<PendingData>>,
 }
 
 impl Autoposter {
+  #[allow(invalid_value, clippy::uninit_assumed_init)]
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
-    let current_thread_data = Arc::new(Mutex::new(None));
-    let thread_data = current_thread_data.clone();
+    // SAFETY: post_stats will be called ONLY when the ready flag is set to true.
+    let current_thread_data = Arc::new(Mutex::new(PendingData {
+      ready: false,
+      stats: unsafe { MaybeUninit::uninit().assume_init() },
+    }));
+
+    let thread_data = Arc::clone(&current_thread_data);
 
     Self {
       thread: spawn(async move {
         loop {
           sleep(interval).await;
 
-          let lock = thread_data.lock().await;
+          let mut lock = thread_data.lock().await;
 
-          if let Some(new_data) = &*lock {
-            let _ = client.post_stats(new_data).await;
+          if lock.ready {
+            let _ = client.post_stats(&lock.stats).await;
+            lock.ready = false; // flag the PendingData object as out-of-date.
           }
         }
       }),
@@ -84,9 +96,11 @@ impl Autoposter {
   ///     .await;
   /// }
   /// ```
-  #[inline(always)]
   pub async fn feed(&self, new_stats: NewStats) {
-    (*self.data.lock().await).replace(new_stats);
+    let mut lock = self.data.lock().await;
+
+    lock.ready = true; // flag the PendingData object as containing new data.
+    lock.stats = new_stats;
   }
 }
 
