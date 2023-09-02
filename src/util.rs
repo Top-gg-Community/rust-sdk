@@ -1,7 +1,7 @@
-use chrono::{naive::NaiveDateTime, DateTime, Utc};
+use chrono::{DateTime, TimeZone, Utc};
 use serde::{Deserialize, Deserializer};
 
-const DISCORD_EPOCH: u64 = 1420070400000;
+const DISCORD_EPOCH: u64 = 1_420_070_400_000;
 
 #[inline(always)]
 pub(crate) fn deserialize_optional_string<'de, D>(
@@ -34,12 +34,12 @@ where
 
 #[inline(always)]
 pub(crate) fn get_creation_date(id: u64) -> DateTime<Utc> {
-  DateTime::from_utc(
-    unsafe {
-      NaiveDateTime::from_timestamp_millis(((id >> 22) + DISCORD_EPOCH) as _).unwrap_unchecked()
-    },
-    Utc,
-  )
+  unsafe {
+    Utc
+      .timestamp_millis_opt(((id >> 22) + DISCORD_EPOCH) as _)
+      .single()
+      .unwrap_unchecked()
+  }
 }
 
 pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {

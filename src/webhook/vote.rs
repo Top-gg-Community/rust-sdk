@@ -85,12 +85,12 @@ where
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(any(feature = "actix", feature = "rocket"))] {
+  if #[cfg(any(feature = "actix-web", feature = "rocket"))] {
     /// A struct that represents an **unauthenticated** request containing a [`Vote`] data.
     ///
     /// To authenticate this structure with a valid password and consume the [`Vote`] data inside of it, see the [`authenticate`][IncomingVote::authenticate] method.
     #[must_use]
-    #[cfg_attr(docsrs, doc(cfg(any(feature = "actix", feature = "rocket"))))]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "actix-web", feature = "rocket"))))]
     #[derive(Clone)]
     pub struct IncomingVote {
       pub(crate) authorization: String,
@@ -98,8 +98,7 @@ cfg_if::cfg_if! {
     }
 
     impl IncomingVote {
-      /// Authenticates a valid password with this request.
-      /// Returns [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
+      /// Authenticates a valid password with this request. Returns a [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
       ///
       /// # Examples
       ///
@@ -179,11 +178,8 @@ cfg_if::cfg_if! {
       /// ```
       #[must_use]
       #[inline(always)]
-      pub fn authenticate<S>(self, password: &S) -> Option<Vote>
-      where
-        S: AsRef<str> + ?Sized,
-      {
-        if self.authorization == password.as_ref() {
+      pub fn authenticate(self, password: &str) -> Option<Vote> {
+        if self.authorization == password {
           Some(self.vote)
         } else {
           None
@@ -195,11 +191,6 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "axum", feature = "warp"))] {
-    pub(crate) struct WebhookState<T> {
-      pub(crate) state: T,
-      pub(crate) password: String,
-    }
-
     /// An async trait for adding an on-vote event handler to your application logic.
     ///
     /// It's described as follows (without [`async_trait`]'s macro expansion):
@@ -220,6 +211,7 @@ cfg_if::cfg_if! {
       ///
       /// ```rust,no_run
       /// use axum::{routing::get, Router, Server};
+      /// use std::sync::Arc;
       /// use topgg::{Vote, VoteHandler};
       ///
       /// struct MyVoteHandler {}
@@ -237,12 +229,11 @@ cfg_if::cfg_if! {
       ///
       /// #[tokio::main]
       /// async fn main() {
-      ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-      ///   let state = MyVoteHandler {};
+      ///   let state = Arc::new(MyVoteHandler {});
       ///
       ///   let app = Router::new()
       ///     .route("/", get(index))
-      ///     .nest("/webhook", topgg::axum::webhook(password, state));
+      ///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
       ///
       ///   // this will always be a valid SocketAddr syntax,
       ///   // therefore we can safely unwrap_unchecked this.
@@ -258,7 +249,7 @@ cfg_if::cfg_if! {
       /// Basic usage with [`warp`](https://crates.io/crates/warp):
       ///
       /// ```rust,no_run
-      /// use std::net::SocketAddr;
+      /// use std::{net::SocketAddr, sync::Arc};
       /// use topgg::{Vote, VoteHandler};
       /// use warp::Filter;
       ///
@@ -273,11 +264,10 @@ cfg_if::cfg_if! {
       ///
       /// #[tokio::main]
       /// async fn main() {
-      ///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-      ///   let state = MyVoteHandler {};
+      ///   let state = Arc::new(MyVoteHandler {});
       ///
       ///   // POST /webhook
-      ///   let webhook = topgg::warp::webhook("webhook", password, state);
+      ///   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
       ///
       ///   let routes = warp::get()
       ///     .map(|| "Hello, World!")

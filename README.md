@@ -14,7 +14,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg](https://top.gg) API token handy, you can have an API token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section) then add the following to your `Cargo.toml`'s dependencies:
 
 ```toml
-topgg = "1.1"
+topgg = "1.2"
 ```
 
 ## Features
@@ -24,7 +24,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 - **`api`**: Interacting with the [Top.gg](https://top.gg) API and accessing the `top.gg/api/*` endpoints. (enabled by default)
   - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg](https://top.gg) API.
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
-  - **`actix`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
+  - **`actix-web`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
   - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
@@ -41,7 +41,7 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
   
   let user = client.get_user(661200758510977084).await.unwrap();
   
@@ -61,11 +61,12 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
   
   let bot = client.get_bot(264811613708746752).await.unwrap();
   
   assert_eq!(bot.username, "Luca");
+  assert_eq!(bot.discriminator, "1375");
   assert_eq!(bot.id, 264811613708746752);
   
   println!("{:?}", bot);
@@ -81,7 +82,7 @@ use topgg::{Client, Filter, Query};
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
   
   // inputting a string searches a bot that matches that username.
   for bot in client.get_bots("shiro").await.unwrap() {
@@ -109,18 +110,14 @@ async fn main() {
 <summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run
-use topgg::{Client, NewStats};
+use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
 
-  let server_count = 1234; // be TRUTHFUL!
-  let shard_count = 10;
-
-  let stats = NewStats::count_based(server_count, Some(shard_count));
-
-  client.post_stats(stats).await.unwrap();
+  let server_count = 12345;
+  client.post_stats(NewStats::count_based(server_count, None)).await.unwrap();
 }
 ```
 
@@ -133,7 +130,7 @@ use topgg::Client;
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
 
   if client.has_voted(661200758510977084).await.unwrap() {
     println!("checks out");
@@ -149,7 +146,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.1", features = ["autoposter"] }
+topgg = { version = "1.2", features = ["autoposter"] }
 ```
 
 In your code:
@@ -160,7 +157,7 @@ use topgg::{Autoposter, Client, NewStats};
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN"));
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
 
   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
   // the autopost thread will stop once it's dropped.
@@ -168,20 +165,19 @@ async fn main() {
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
-  let stats = NewStats::count_based(server_count, None);
-  autoposter.feed(stats).await;
+  autoposter.feed(NewStats::count_based(server_count, None)).await;
 }
 ```
 
 </details>
 <details>
-<summary><b><code>actix</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>actix-web</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.1", default-features = false, features = ["actix"] }
+topgg = { version = "1.2", default-features = false, features = ["actix-web"] }
 ```
 
 In your code:
@@ -229,13 +225,14 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.1", default-features = false, features = ["axum"] }
+topgg = { version = "1.2", default-features = false, features = ["axum"] }
 ```
 
 In your code:
 
 ```rust,no_run
 use axum::{routing::get, Router, Server};
+use std::sync::Arc;
 use topgg::{Vote, VoteHandler};
 
 struct MyVoteHandler {}
@@ -253,12 +250,11 @@ async fn index() -> &'static str {
 
 #[tokio::main]
 async fn main() {
-  let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-  let state = MyVoteHandler {};
+  let state = Arc::new(MyVoteHandler {});
   
   let app = Router::new()
     .route("/", get(index))
-    .nest("/webhook", topgg::axum::webhook(password, state));
+    .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
   
   // this will always be a valid SocketAddr syntax,
   // therefore we can safely unwrap_unchecked this.
@@ -279,7 +275,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.1", default-features = false, features = ["rocket"] }
+topgg = { version = "1.2", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -328,13 +324,13 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.1", default-features = false, features = ["warp"] }
+topgg = { version = "1.2", default-features = false, features = ["warp"] }
 ```
 
 In your code:
 
 ```rust,no_run
-use std::net::SocketAddr;
+use std::{net::SocketAddr, sync::Arc};
 use topgg::{Vote, VoteHandler};
 use warp::Filter;
 
@@ -349,11 +345,10 @@ impl VoteHandler for MyVoteHandler {
 
 #[tokio::main]
 async fn main() {
-  let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-  let state = MyVoteHandler {};
+  let state = Arc::new(MyVoteHandler {});
 
   // POST /webhook
-  let webhook = topgg::warp::webhook("webhook", password, state);
+  let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
 
   let routes = warp::get()
     .map(|| "Hello, World!")

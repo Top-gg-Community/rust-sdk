@@ -38,7 +38,7 @@ impl Future for IncomingVoteFut {
   }
 }
 
-#[cfg_attr(docsrs, doc(cfg(feature = "actix")))]
+#[cfg_attr(docsrs, doc(cfg(feature = "actix-web")))]
 impl FromRequest for IncomingVote {
   type Error = Error;
   type Future = IncomingVoteFut;

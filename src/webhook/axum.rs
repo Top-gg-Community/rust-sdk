@@ -4,6 +4,7 @@
 //!
 //! ```rust,no_run
 //! use axum::{routing::get, Router, Server};
+//! use std::sync::Arc;
 //! use topgg::{Vote, VoteHandler};
 //!
 //! struct MyVoteHandler {}
@@ -21,12 +22,11 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-//!   let state = MyVoteHandler {};
+//!   let state = Arc::new(MyVoteHandler {});
 //!   
 //!   let app = Router::new()
 //!     .route("/", get(index))
-//!     .nest("/webhook", topgg::axum::webhook(password, state));
+//!     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 //!   
 //!   // this will always be a valid SocketAddr syntax,
 //!   // therefore we can safely unwrap_unchecked this.
@@ -39,7 +39,7 @@
 //! }
 //! ```
 
-use crate::{VoteHandler, WebhookState};
+use crate::VoteHandler;
 use axum::{
   extract::State,
   http::{HeaderMap, StatusCode},
@@ -49,9 +49,23 @@ use axum::{
 };
 use std::sync::Arc;
 
+struct WebhookState<T> {
+  state: Arc<T>,
+  password: Arc<String>,
+}
+
+impl<T> Clone for WebhookState<T> {
+  fn clone(&self) -> Self {
+    Self {
+      state: self.state.clone(),
+      password: self.password.clone(),
+    }
+  }
+}
+
 async fn handler<T>(
   headers: HeaderMap,
-  State(webhook): State<Arc<WebhookState<T>>>,
+  State(webhook): State<WebhookState<T>>,
   body: String,
 ) -> Response
 where
@@ -59,7 +73,7 @@ where
 {
   if let Some(authorization) = headers.get("Authorization") {
     if let Ok(authorization) = authorization.to_str() {
-      if authorization == webhook.password {
+      if authorization == *(webhook.password) {
         if let Ok(vote) = serde_json::from_str(&body) {
           webhook.state.voted(vote).await;
 
@@ -73,7 +87,6 @@ where
 }
 
 /// Creates a new [`axum`] [`Router`] for adding an on-vote event handler to your application logic.
-/// `state` here is your webhook handler.
 ///
 /// # Examples
 ///
@@ -81,6 +94,7 @@ where
 ///
 /// ```rust,no_run
 /// use axum::{routing::get, Router, Server};
+/// use std::sync::Arc;
 /// use topgg::{Vote, VoteHandler};
 ///
 /// struct MyVoteHandler {}
@@ -98,12 +112,11 @@ where
 ///
 /// #[tokio::main]
 /// async fn main() {
-///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-///   let state = MyVoteHandler {};
+///   let state = Arc::new(MyVoteHandler {});
 ///   
 ///   let app = Router::new()
 ///     .route("/", get(index))
-///     .nest("/webhook", topgg::axum::webhook(password, state));
+///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 ///   
 ///   // this will always be a valid SocketAddr syntax,
 ///   // therefore we can safely unwrap_unchecked this.
@@ -117,11 +130,14 @@ where
 /// ```
 #[inline(always)]
 #[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
-pub fn webhook<T>(password: String, state: T) -> Router
+pub fn webhook<T>(password: String, state: Arc<T>) -> Router
 where
   T: VoteHandler,
 {
   Router::new()
     .route("/", post(handler::<T>))
-    .with_state(Arc::new(WebhookState { state, password }))
+    .with_state(WebhookState {
+      state,
+      password: Arc::new(password),
+    })
 }

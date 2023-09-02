@@ -1,8 +1,8 @@
 mod vote;
 pub use vote::*;
 
-#[cfg(feature = "actix")]
-mod actix;
+#[cfg(feature = "actix-web")]
+mod actix_web;
 
 #[cfg(feature = "rocket")]
 mod rocket;

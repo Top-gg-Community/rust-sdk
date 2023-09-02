@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.1.1"
+version = "1.2.0"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
@@ -41,4 +41,4 @@ webhook = []
 rocket = ["webhook", "serde_json", "dep:rocket"]
 axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
 warp = ["webhook", "async-trait", "dep:warp"]
-actix = ["webhook", "actix-web"]
+actix-web = ["webhook", "dep:actix-web"]

@@ -3,7 +3,7 @@
 //! Basic usage:
 //!
 //! ```rust,no_run
-//! use std::net::SocketAddr;
+//! use std::{net::SocketAddr, sync::Arc};
 //! use topgg::{Vote, VoteHandler};
 //! use warp::Filter;
 //!
@@ -18,11 +18,10 @@
 //!
 //! #[tokio::main]
 //! async fn main() {
-//!   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-//!   let state = MyVoteHandler {};
+//!   let state = Arc::new(MyVoteHandler {});
 //!
 //!   // POST /webhook
-//!   let webhook = topgg::warp::webhook("webhook", password, state);
+//!   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
 //!
 //!   let routes = warp::get()
 //!     .map(|| "Hello, World!")
@@ -38,19 +37,18 @@
 //! }
 //! ```
 
-use crate::{Vote, VoteHandler, WebhookState};
+use crate::{Vote, VoteHandler};
 use std::sync::Arc;
 use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 
 /// Creates a new `warp` [`Filter`] for adding an on-vote event handler to your application logic.
-/// `state` here is your webhook handler.
 ///
 /// # Examples
 ///
 /// Basic usage:
 ///
 /// ```rust,no_run
-/// use std::net::SocketAddr;
+/// use std::{net::SocketAddr, sync::Arc};
 /// use topgg::{Vote, VoteHandler};
 /// use warp::Filter;
 ///
@@ -65,11 +63,10 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///
 /// #[tokio::main]
 /// async fn main() {
-///   let password = env!("TOPGG_WEBHOOK_PASSWORD").to_owned();
-///   let state = MyVoteHandler {};
+///   let state = Arc::new(MyVoteHandler {});
 ///
 ///   // POST /webhook
-///   let webhook = topgg::warp::webhook("webhook", password, state);
+///   let webhook = topgg::warp::webhook("webhook", env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone());
 ///
 ///   let routes = warp::get()
 ///     .map(|| "Hello, World!")
@@ -88,23 +85,24 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 pub fn webhook<T>(
   endpoint: &'static str,
   password: String,
-  state: T,
+  state: Arc<T>,
 ) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
 where
   T: VoteHandler,
 {
-  let state = Arc::new(WebhookState { state, password });
+  let password = Arc::new(password);
 
   warp::post()
     .and(path(endpoint))
     .and(header("Authorization"))
     .and(body::json())
     .then(move |auth: String, vote: Vote| {
-      let current_state = Arc::clone(&state);
+      let current_state = state.clone();
+      let current_password = password.clone();
 
       async move {
-        if auth == current_state.password {
-          current_state.state.voted(vote).await;
+        if auth == *current_password {
+          current_state.voted(vote).await;
 
           StatusCode::OK
         } else {

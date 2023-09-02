@@ -26,7 +26,7 @@ impl Http {
   }
 
   pub(crate) async fn send<'a>(
-    &'a self,
+    &self,
     predicate: &'static str,
     path: &'a str,
     body: Option<&'a str>,
@@ -84,7 +84,7 @@ impl Http {
 
     if status_code >= 400 {
       Err(match status_code {
-        401 => panic!("unauthorized"),
+        401 => panic!("Invalid Top.gg API token."),
         404 => Error::NotFound,
         429 => Error::Ratelimit {
           retry_after: serde_json::from_str::<Ratelimit>(&response)

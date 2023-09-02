@@ -58,16 +58,13 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let _client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let _client = Client::new(env!("TOPGG_TOKEN").to_string());
   /// }
   /// ```
   #[inline(always)]
-  pub fn new<T>(token: T) -> Self
-  where
-    T: ToString,
-  {
+  pub fn new(token: String) -> Self {
     let inner = InnerClient {
-      http: Http::new(token.to_string()),
+      http: Http::new(token),
     };
 
     #[cfg(feature = "autoposter")]
@@ -101,7 +98,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -145,11 +142,12 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   let bot = client.get_bot(264811613708746752).await.unwrap();
   ///   
   ///   assert_eq!(bot.username, "Luca");
+  ///   assert_eq!(bot.discriminator, "1375");
   ///   assert_eq!(bot.id, 264811613708746752);
   ///   
   ///   println!("{:?}", bot);
@@ -187,7 +185,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   let stats = client.get_stats().await.unwrap();
   ///   
@@ -217,18 +215,14 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, NewStats};
+  /// use topgg::Client;
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   let server_count = 1234; // be TRUTHFUL!
-  ///   let shard_count = 10;
-  ///
-  ///   let stats = NewStats::count_based(server_count, Some(shard_count));
-  ///
-  ///   client.post_stats(stats).await.unwrap();
+  ///   let server_count = 12345;
+  ///   client.post_stats(NewStats::count_based(server_count, None)).await.unwrap();
   /// }
   /// ```
   #[inline(always)]
@@ -252,7 +246,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
   ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
   ///   // the autopost thread will stop once it's dropped.
@@ -269,10 +263,10 @@ impl Client {
   pub fn new_autoposter(&self, interval: Duration) -> Autoposter {
     assert!(
       interval.as_secs() >= 900,
-      "the interval mustn't be shorter than 15 minutes."
+      "The interval mustn't be shorter than 15 minutes."
     );
 
-    Autoposter::new(Arc::clone(&self.inner), interval)
+    Autoposter::new(self.inner.clone(), interval)
   }
 
   /// Fetches your Discord bot's last 1000 voters.
@@ -297,7 +291,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{:?}", voter);
@@ -334,7 +328,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   // inputting a string searches a bot that matches that username.
   ///   for bot in client.get_bots("shiro").await.unwrap() {
@@ -394,7 +388,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
   ///   if client.has_voted(661200758510977084).await.unwrap() {
   ///     println!("checks out");
@@ -438,7 +432,7 @@ impl Client {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   if client.is_weekend().await.unwrap() {
   ///     println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");

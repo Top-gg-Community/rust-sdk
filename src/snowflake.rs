@@ -28,18 +28,14 @@ pub trait SnowflakeLike: private::Sealed {
   fn as_snowflake(&self) -> u64;
 }
 
-macro_rules! impl_snowflake_as(
-  ($($t:ty),+) => {$(
-    impl private::Sealed for $t {}
+impl private::Sealed for u64 {}
 
-    impl SnowflakeLike for $t {
-      #[inline(always)]
-      fn as_snowflake(&self) -> u64 {
-        *self as _
-      }
-    }
-  )+}
-);
+impl SnowflakeLike for u64 {
+  #[inline(always)]
+  fn as_snowflake(&self) -> u64 {
+    *self
+  }
+}
 
 impl<S> private::Sealed for &S where S: AsRef<str> + ?Sized {}
 
@@ -49,11 +45,9 @@ where
 {
   #[inline(always)]
   fn as_snowflake(&self) -> u64 {
-    (*self).as_ref().parse().unwrap()
+    (*self).as_ref().parse().expect("Invalid snowflake as it's not numeric.")
   }
 }
-
-impl_snowflake_as!(i64, u64, i128, u128, isize, usize);
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "api")] {
@@ -62,7 +56,7 @@ cfg_if::cfg_if! {
       user::{User, Voter},
     };
 
-    macro_rules! impl_snowflake_idstruct(
+    macro_rules! impl_idstruct(
       ($($t:ty),+) => {$(
         impl private::Sealed for $t {}
         impl private::Sealed for &$t {}
@@ -83,6 +77,6 @@ cfg_if::cfg_if! {
       )+}
     );
 
-    impl_snowflake_idstruct!(Bot, User, Voter);
+    impl_idstruct!(Bot, User, Voter);
   }
 }

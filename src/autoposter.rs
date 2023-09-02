@@ -19,7 +19,7 @@ use tokio::{
 ///
 /// #[tokio::main]
 /// async fn main() {
-///   let client = Client::new(env!("TOPGG_TOKEN"));
+///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
 ///
 ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
 ///   // the autopost thread will stop once it's dropped.
@@ -27,8 +27,7 @@ use tokio::{
 ///
 ///   // ... then in some on ready/new guild event ...
 ///   let server_count = 12345;
-///   let stats = NewStats::count_based(server_count, None);
-///   autoposter.feed(stats).await;
+///   autoposter.feed(NewStats::count_based(server_count, None)).await;
 /// }
 /// ```
 #[must_use]
@@ -40,7 +39,7 @@ pub struct Autoposter {
 impl Autoposter {
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
     let current_thread_data = Arc::new(Mutex::new(None));
-    let thread_data = Arc::clone(&current_thread_data);
+    let thread_data = current_thread_data.clone();
 
     Self {
       thread: spawn(async move {
@@ -70,7 +69,7 @@ impl Autoposter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
   ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
   ///   // the autopost thread will stop once it's dropped.
@@ -78,8 +77,7 @@ impl Autoposter {
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
-  ///   let stats = NewStats::count_based(server_count, None);
-  ///   autoposter.feed(stats).await;
+  ///   autoposter.feed(NewStats::count_based(server_count, None)).await;
   /// }
   /// ```
   #[inline(always)]

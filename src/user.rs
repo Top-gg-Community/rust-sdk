@@ -1,7 +1,7 @@
 use crate::{snowflake, util};
 use chrono::{DateTime, Utc};
 use core::fmt::{self, Debug, Formatter};
-use serde::Deserialize;
+use serde::{Deserialize, Deserializer};
 
 /// A struct representing a user's social links.
 #[derive(Clone, Debug, Deserialize)]
@@ -38,6 +38,7 @@ pub struct User {
   /// The username of this user.
   pub username: String,
 
+  #[serde(deserialize_with = "deserialize_zero")]
   #[deprecated(
     since = "1.1.0",
     note = "deprecated in favor of discord's migration from using discriminators in usernames to using display names."
@@ -80,6 +81,14 @@ pub struct User {
   avatar: Option<String>,
 }
 
+#[inline(always)]
+pub(crate) fn deserialize_zero<'de, D>(_deserializer: D) -> Result<String, D::Error>
+where
+  D: Deserializer<'de>,
+{
+  Ok(String::from('0'))
+}
+
 impl User {
   /// Retrieves the creation date of this user.
   ///
@@ -92,7 +101,7 @@ impl User {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -118,7 +127,7 @@ impl User {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   let user = client.get_user(661200758510977084).await.unwrap();
   ///   
@@ -157,7 +166,7 @@ pub(crate) struct Voted {
   pub(crate) voted: u8,
 }
 
-/// A struct representing a user who has voted on a Discord bot listed on [Top.gg](https://top.gg). (See [crate::Client::get_voters`])
+/// A struct representing a user who has voted on a Discord bot listed on [Top.gg](https://top.gg). (See [`Client::get_voters`][crate::Client::get_voters])
 #[must_use]
 #[derive(Clone, Deserialize)]
 pub struct Voter {
@@ -183,7 +192,7 @@ impl Voter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.created_at());
@@ -209,7 +218,7 @@ impl Voter {
   ///
   /// #[tokio::main]
   /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN"));
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///   
   ///   for voter in client.get_voters().await.unwrap() {
   ///     println!("{}", voter.avatar());
