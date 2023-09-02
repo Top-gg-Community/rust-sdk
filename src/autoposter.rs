@@ -26,7 +26,7 @@ struct PendingData {
 /// async fn main() {
 ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
 ///
-///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+///   // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
 ///   // the autopost thread will stop once it's dropped.
 ///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
 ///
@@ -85,7 +85,7 @@ impl Autoposter {
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (15 minutes).
+  ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
   ///   // the autopost thread will stop once it's dropped.
   ///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
   ///
