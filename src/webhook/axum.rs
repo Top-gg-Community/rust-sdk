@@ -4,7 +4,7 @@
 //!
 //! ```rust,no_run
 //! use axum::{routing::get, Router, Server};
-//! use std::sync::Arc;
+//! use std::{net::SocketAddr, sync::Arc};
 //! use topgg::{Vote, VoteHandler};
 //!
 //! struct MyVoteHandler {}
@@ -28,8 +28,7 @@
 //!     .route("/", get(index))
 //!     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 //!   
-//!   // SAFETY: this will always be a valid SocketAddr syntax.
-//!   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+//!   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 //!
 //!   Server::bind(&addr)
 //!     .serve(app.into_make_service())
@@ -93,7 +92,7 @@ where
 ///
 /// ```rust,no_run
 /// use axum::{routing::get, Router, Server};
-/// use std::sync::Arc;
+/// use std::{net::SocketAddr, sync::Arc};
 /// use topgg::{Vote, VoteHandler};
 ///
 /// struct MyVoteHandler {}
@@ -117,8 +116,7 @@ where
 ///     .route("/", get(index))
 ///     .nest("/webhook", topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), state.clone()));
 ///   
-///   // SAFETY: this will always be a valid SocketAddr syntax.
-///   let addr = unsafe { "127.0.0.1:8080".parse().unwrap_unchecked() };
+///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
 ///
 ///   Server::bind(&addr)
 ///     .serve(app.into_make_service())
