@@ -45,7 +45,10 @@ where
 {
   #[inline(always)]
   fn as_snowflake(&self) -> u64 {
-    (*self).as_ref().parse().expect("Invalid snowflake as it's not numeric.")
+    (*self)
+      .as_ref()
+      .parse()
+      .expect("Invalid snowflake as it's not numeric.")
   }
 }
 

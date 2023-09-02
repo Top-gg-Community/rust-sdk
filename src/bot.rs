@@ -487,7 +487,6 @@ impl Filter {
   /// let _filter = Filter::new()
   ///   .discriminator("1536");
   /// ```
-  #[must_use]
   pub fn discriminator(mut self, new_discriminator: &str) -> Self {
     self
       .0

@@ -14,7 +14,7 @@ exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
 [dependencies]
 cfg-if = "1"
 serde = { version = "1", features = ["derive"] }
-urlencoding = "2"
+urlencoding = { version = "2", optional = true }
 
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 tokio = { version = "1", optional = true, features = ["net", "io-util"] }
@@ -34,7 +34,7 @@ rustc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["api"]
-api = ["chrono", "serde_json", "tokio", "tokio-native-tls"]
+api = ["chrono", "serde_json", "tokio", "tokio-native-tls", "urlencoding"]
 autoposter = ["api", "tokio/rt", "tokio/sync", "tokio/time"]
 
 webhook = []
