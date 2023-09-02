@@ -396,6 +396,7 @@ impl Client {
   ///   }
   /// }
   /// ```
+  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: SnowflakeLike,
