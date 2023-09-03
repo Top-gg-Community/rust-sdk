@@ -658,7 +658,7 @@ impl Query {
   ///   .limit(250)
   ///   .skip(100);
   /// ```
-  pub fn skip<S>(mut self, skip_by: u16) -> Self {
+  pub fn skip(mut self, skip_by: u16) -> Self {
     self.0.push_str(&format!("offset={}&", min(skip_by, 499)));
     self
   }
