@@ -1,4 +1,4 @@
-use crate::{client::InnerClient, NewStats};
+use crate::{client::InnerClient, Stats};
 use core::{mem::MaybeUninit, time::Duration};
 use std::sync::Arc;
 use tokio::{
@@ -9,10 +9,10 @@ use tokio::{
 
 struct PendingData {
   ready: bool,
-  stats: NewStats,
+  stats: Stats,
 }
 
-/// A struct that lets you automate the process of posting bot statistics to the [Top.gg](https://top.gg) API in intervals.
+/// A struct that lets you automate the process of posting bot statistics to the [Top.gg API](https://docs.top.gg) in intervals.
 ///
 /// # Examples
 ///
@@ -20,7 +20,7 @@ struct PendingData {
 ///
 /// ```rust,no_run
 /// use core::time::Duration;
-/// use topgg::{Client, NewStats};
+/// use topgg::{Client, Stats};
 ///
 /// #[tokio::main]
 /// async fn main() {
@@ -33,7 +33,7 @@ struct PendingData {
 ///   // ... then in some on ready/new guild event ...
 ///   let server_count = 12345;
 ///   autoposter
-///     .feed(NewStats::count_based(server_count, None))
+///     .feed(Stats::count_based(server_count, None))
 ///     .await;
 /// }
 /// ```
@@ -79,7 +79,7 @@ impl Autoposter {
   ///
   /// ```rust,no_run
   /// use core::time::Duration;
-  /// use topgg::{Client, NewStats};
+  /// use topgg::{Client, Stats};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -92,11 +92,11 @@ impl Autoposter {
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
   ///   autoposter
-  ///     .feed(NewStats::count_based(server_count, None))
+  ///     .feed(Stats::count_based(server_count, None))
   ///     .await;
   /// }
   /// ```
-  pub async fn feed(&self, new_stats: NewStats) {
+  pub async fn feed(&self, new_stats: Stats) {
     let mut lock = self.data.lock().await;
 
     lock.ready = true; // flag the PendingData object as containing new data.

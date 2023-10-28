@@ -78,7 +78,7 @@ async fn main() {
 <summary><b><code>api</code></b>: Querying several Discord bots</summary>
 
 ```rust,no_run
-use topgg::{Client, Filter, Query};
+use topgg::{Client, Query};
 
 #[tokio::main]
 async fn main() {
@@ -89,10 +89,11 @@ async fn main() {
     println!("{:?}", bot);
   }
 
-  // advanced query with filters...
-  let filter = Filter::new().username("shiro").certified(true);
-
-  let query = Query::new().limit(250).skip(50).filter(filter);
+  let query = Query::new()
+    .limit(250)
+    .skip(50)
+    .username("shiro")
+    .certified(true);
 
   for bot in client.get_bots(query).await.unwrap() {
     println!("{:?}", bot);
@@ -113,7 +114,7 @@ async fn main() {
 
   let server_count = 12345;
   client
-    .post_stats(NewStats::count_based(server_count, None))
+    .post_stats(Stats::count_based(server_count, None))
     .await
     .unwrap();
 }
@@ -151,7 +152,7 @@ In your code:
 
 ```rust,no_run
 use core::time::Duration;
-use topgg::{Client, NewStats};
+use topgg::{Client, Stats};
 
 #[tokio::main]
 async fn main() {
@@ -164,7 +165,7 @@ async fn main() {
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
   autoposter
-    .feed(NewStats::count_based(server_count, None))
+    .feed(Stats::count_based(server_count, None))
     .await;
 }
 ```

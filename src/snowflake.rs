@@ -22,15 +22,15 @@ mod private {
   pub trait Sealed {}
 }
 
-/// A trait that represents any data type that can be interpreted as a snowflake/ID.
-pub trait SnowflakeLike: private::Sealed {
+/// A trait that represents any data type that can be interpreted as a Discord snowflake/ID.
+pub trait Snowflake: private::Sealed {
   #[doc(hidden)]
   fn as_snowflake(&self) -> u64;
 }
 
 impl private::Sealed for u64 {}
 
-impl SnowflakeLike for u64 {
+impl Snowflake for u64 {
   #[inline(always)]
   fn as_snowflake(&self) -> u64 {
     *self
@@ -39,7 +39,7 @@ impl SnowflakeLike for u64 {
 
 impl<S> private::Sealed for &S where S: AsRef<str> + ?Sized {}
 
-impl<S> SnowflakeLike for &S
+impl<S> Snowflake for &S
 where
   S: AsRef<str> + ?Sized,
 {
@@ -64,14 +64,14 @@ cfg_if::cfg_if! {
         impl private::Sealed for $t {}
         impl private::Sealed for &$t {}
 
-        impl SnowflakeLike for $t {
+        impl Snowflake for $t {
           #[inline(always)]
           fn as_snowflake(&self) -> u64 {
             self.id
           }
         }
 
-        impl SnowflakeLike for &$t {
+        impl Snowflake for &$t {
           #[inline(always)]
           fn as_snowflake(&self) -> u64 {
             (*self).id

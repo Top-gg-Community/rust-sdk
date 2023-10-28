@@ -277,20 +277,108 @@ pub(crate) struct Bots {
   pub(crate) results: Vec<Bot>,
 }
 
-/// A struct representing a Discord bot's statistics returned from the API.
+/// A struct representing a Discord bot's statistics.
 #[must_use]
-#[derive(Clone, Deserialize)]
+#[derive(Clone, Serialize, Deserialize)]
 pub struct Stats {
-  /// The bot's server count per shard.
   #[serde(default, deserialize_with = "util::deserialize_default")]
-  pub shards: Vec<usize>,
-
+  shards: Option<Vec<usize>>,
   shard_count: Option<usize>,
   server_count: Option<usize>,
+  #[serde(default, deserialize_with = "util::deserialize_default")]
+  shard_id: Option<usize>,
 }
 
 impl Stats {
-  /// The amount of shards this Discord bot has according to posted stats.
+  /// Creates a [`Stats`] struct based on total server and optionally, shard count data.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Stats;
+  ///
+  /// let _stats = Stats::count_based(12345, Some(10));
+  /// ```
+  pub const fn count_based(server_count: usize, shard_count: Option<usize>) -> Self {
+    Self {
+      server_count: Some(server_count),
+      shard_count,
+      shards: None,
+      shard_id: None,
+    }
+  }
+
+  /// Creates a [`Stats`] struct based on an array of server count per shard and optionally the index (to the array) of shard posting this data.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the shard_index argument is [`Some`] yet it's out of range of the `shards` array.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Stats;
+  ///
+  /// // the shard posting this data has 456 servers.
+  /// let _stats = Stats::shards_based([123, 456, 789], Some(1));
+  /// ```
+  pub fn shards_based<A>(shards: A, shard_index: Option<usize>) -> Self
+  where
+    A: IntoIterator<Item = usize>,
+  {
+    let mut total_server_count = 0;
+    let shards = shards.into_iter();
+    let mut shards_list = Vec::with_capacity(shards.size_hint().0);
+
+    for server_count in shards {
+      total_server_count += server_count;
+      shards_list.push(server_count);
+    }
+
+    if let Some(index) = shard_index {
+      assert!(index < shards_list.len(), "Shard index out of range.");
+    }
+
+    Self {
+      server_count: Some(total_server_count),
+      shard_count: Some(shards_list.len()),
+      shards: Some(shards_list),
+      shard_id: shard_index,
+    }
+  }
+
+  /// An array of this Discord bot's server count for each shard.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Client;
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///   
+  ///   let stats = client.get_stats().await.unwrap();
+  ///   
+  ///   println!("{:?}", stats.shards());
+  /// }
+  /// ```
+  #[must_use]
+  #[inline(always)]
+  pub fn shards(&self) -> &[usize] {
+    match self.shards {
+      Some(ref shards) => shards,
+      None => &[],
+    }
+  }
+
+  /// The amount of shards this Discord bot has.
   ///
   /// # Examples
   ///
@@ -311,7 +399,10 @@ impl Stats {
   #[must_use]
   #[inline(always)]
   pub fn shard_count(&self) -> usize {
-    self.shard_count.unwrap_or(self.shards.len())
+    self.shard_count.unwrap_or(match self.shards {
+      Some(ref shards) => shards.len(),
+      None => 0,
+    })
   }
 
   /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
@@ -334,11 +425,15 @@ impl Stats {
   /// ```
   #[must_use]
   pub fn server_count(&self) -> Option<usize> {
-    self.server_count.or(if self.shards.is_empty() {
-      None
-    } else {
-      Some(self.shards.iter().copied().sum())
-    })
+    self
+      .server_count
+      .or(self.shards.as_ref().and_then(|shards| {
+        if shards.is_empty() {
+          None
+        } else {
+          Some(shards.iter().copied().sum())
+        }
+      }))
   }
 }
 
@@ -353,263 +448,18 @@ impl Debug for Stats {
   }
 }
 
-/// A struct representing a Discord bot's statistics [to be posted][crate::Client::post_stats] to the API.
-#[must_use]
-#[derive(Clone, Serialize)]
-pub struct NewStats {
-  server_count: usize,
-  shard_count: Option<usize>,
-  shards: Option<Vec<usize>>,
-  shard_id: Option<usize>,
-}
-
-impl NewStats {
-  /// Creates a [`NewStats`] struct based on total server (and optionally, shard) count data.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::NewStats;
-  ///
-  /// let _stats = NewStats::count_based(12345, Some(10));
-  /// ```
-  pub const fn count_based(server_count: usize, shard_count: Option<usize>) -> Self {
-    Self {
-      server_count,
-      shard_count,
-      shards: None,
-      shard_id: None,
-    }
-  }
-
-  /// Creates a [`NewStats`] struct based on server count per shard and optionally the index (to the first array) of shard posting posting this data.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the shard_index argument is [`Some`] yet it's out of range of the `shards` array.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::NewStats;
-  ///
-  /// // the shard posting this data has 456 servers.
-  /// let _stats = NewStats::shards_based([123, 456, 789], Some(1));
-  /// ```
-  pub fn shards_based<A>(shards: A, shard_index: Option<usize>) -> Self
-  where
-    A: IntoIterator<Item = usize>,
-  {
-    let mut total_server_count = 0;
-    let shards = shards.into_iter();
-    let mut shards_list = Vec::with_capacity(shards.size_hint().0);
-
-    for server_count in shards {
-      total_server_count += server_count;
-      shards_list.push(server_count);
-    }
-
-    if let Some(index) = shard_index {
-      assert!(index < shards_list.len(), "Shard index out of range.");
-    }
-
-    Self {
-      server_count: total_server_count,
-      shard_count: Some(shards_list.len()),
-      shards: Some(shards_list),
-      shard_id: shard_index,
-    }
-  }
-}
-
 #[derive(Deserialize)]
 pub(crate) struct IsWeekend {
   pub(crate) is_weekend: bool,
 }
 
-/// A struct for filtering the query in [`get_bots`][crate::Client::get_bots].
-#[must_use]
-#[derive(Clone)]
-pub struct Filter(String);
-
-impl Filter {
-  /// Initiates a new empty filtering struct.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new();
-  /// ```
-  #[inline(always)]
-  pub fn new() -> Self {
-    Self(String::new())
-  }
-
-  /// Filters only Discord bots that matches this username.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .username("shiro");
-  /// ```
-  pub fn username(mut self, new_username: &str) -> Self {
-    self.0.push_str(&format!(
-      "username%3A%20{}%20",
-      urlencoding::encode(new_username)
-    ));
-    self
-  }
-
-  /// Filters only Discord bots that matches this discriminator.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .discriminator("1536");
-  /// ```
-  pub fn discriminator(mut self, new_discriminator: &str) -> Self {
-    self
-      .0
-      .push_str(&format!("discriminator%3A%20{new_discriminator}%20"));
-    self
-  }
-
-  /// Filters only Discord bots that matches this prefix.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .prefix("!");
-  /// ```
-  pub fn prefix(mut self, new_prefix: &str) -> Self {
-    self.0.push_str(&format!(
-      "prefix%3A%20{}%20",
-      urlencoding::encode(new_prefix)
-    ));
-    self
-  }
-
-  /// Filters only Discord bots that has this vote count.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .votes(1000);
-  /// ```
-  pub fn votes(mut self, new_votes: usize) -> Self {
-    self.0.push_str(&format!("points%3A%20{new_votes}%20"));
-    self
-  }
-
-  /// Filters only Discord bots that has this monthly vote count.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .monthly_votes(100);
-  /// ```
-  pub fn monthly_votes(mut self, new_monthly_votes: usize) -> Self {
-    self
-      .0
-      .push_str(&format!("monthlyPoints%3A%20{new_monthly_votes}%20"));
-    self
-  }
-
-  /// Filters only [Top.gg](https://top.gg) certified Discord bots or not.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .certified(true);
-  /// ```
-  pub fn certified(mut self, is_certified: bool) -> Self {
-    self
-      .0
-      .push_str(&format!("certifiedBot%3A%20{is_certified}%20"));
-    self
-  }
-
-  /// Filters only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Filter;
-  ///
-  /// let _filter = Filter::new()
-  ///   .vanity("mee6");
-  /// ```
-  pub fn vanity(mut self, new_vanity: &str) -> Self {
-    self.0.push_str(&format!(
-      "vanity%3A%20{}%20",
-      urlencoding::encode(new_vanity)
-    ));
-    self
-  }
-}
-
-/// Initiates a new empty filtering struct. (Same as [`Filter::new`])
-///
-/// # Examples
-///
-/// Basic usage:
-///
-/// ```rust,no_run
-/// use topgg::Filter;
-///
-/// let _filter = Filter::default();
-/// ```
-impl Default for Filter {
-  #[inline(always)]
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
 /// A struct for configuring the query in [`get_bots`][crate::Client::get_bots].
 #[must_use]
 #[derive(Clone)]
-pub struct Query(String);
+pub struct Query {
+  query: String,
+  search: String,
+}
 
 impl Query {
   /// Initiates a new empty querying struct.
@@ -625,7 +475,10 @@ impl Query {
   /// ```
   #[inline(always)]
   pub fn new() -> Self {
-    Self(String::from('?'))
+    Self {
+      query: String::from('?'),
+      search: String::new(),
+    }
   }
 
   /// Sets the maximum amount of bots to be queried - it can't exceed 500.
@@ -637,11 +490,12 @@ impl Query {
   /// ```rust,no_run
   /// use topgg::Query;
   ///
-  /// let _query = Query::new()
-  ///   .limit(250);
+  /// let _query = Query::new().limit(250);
   /// ```
   pub fn limit(mut self, new_limit: u16) -> Self {
-    self.0.push_str(&format!("limit={}&", min(new_limit, 500)));
+    self
+      .query
+      .push_str(&format!("limit={}&", min(new_limit, 500)));
     self
   }
 
@@ -654,33 +508,150 @@ impl Query {
   /// ```rust,no_run
   /// use topgg::Query;
   ///
-  /// let _query = Query::new()
-  ///   .limit(250)
-  ///   .skip(100);
+  /// let _query = Query::new().skip(100);
   /// ```
   pub fn skip(mut self, skip_by: u16) -> Self {
-    self.0.push_str(&format!("offset={}&", min(skip_by, 499)));
+    self
+      .query
+      .push_str(&format!("offset={}&", min(skip_by, 499)));
     self
   }
 
-  /// Sets [`Filter`] instance to this query struct.
+  /// Queries only Discord bots that matches this username.
   ///
   /// # Examples
   ///
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Filter, Query};
+  /// use topgg::Query;
   ///
-  /// let filter = Filter::new().username("shiro").certified(true);
-  ///
-  /// let _query = Query::new().limit(250).skip(100).filter(filter);
+  /// let _query = Query::new().username("shiro");
   /// ```
-  pub fn filter(mut self, new_filter: Filter) -> Self {
+  pub fn username(mut self, new_username: &str) -> Self {
+    self.search.push_str(&format!(
+      "username%3A%20{}%20",
+      urlencoding::encode(new_username)
+    ));
     self
-      .0
-      .push_str(&format!("search={}&", new_filter.into_query_string()));
+  }
+
+  /// Queries only Discord bots that matches this discriminator.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().discriminator("1536");
+  /// ```
+  pub fn discriminator(mut self, new_discriminator: &str) -> Self {
     self
+      .search
+      .push_str(&format!("discriminator%3A%20{new_discriminator}%20"));
+    self
+  }
+
+  /// Queries only Discord bots that matches this prefix.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().prefix("!");
+  /// ```
+  pub fn prefix(mut self, new_prefix: &str) -> Self {
+    self.search.push_str(&format!(
+      "prefix%3A%20{}%20",
+      urlencoding::encode(new_prefix)
+    ));
+    self
+  }
+
+  /// Queries only Discord bots that has this vote count.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().votes(1000);
+  /// ```
+  pub fn votes(mut self, new_votes: usize) -> Self {
+    self.search.push_str(&format!("points%3A%20{new_votes}%20"));
+    self
+  }
+
+  /// Queries only Discord bots that has this monthly vote count.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().monthly_votes(100);
+  /// ```
+  pub fn monthly_votes(mut self, new_monthly_votes: usize) -> Self {
+    self
+      .search
+      .push_str(&format!("monthlyPoints%3A%20{new_monthly_votes}%20"));
+    self
+  }
+
+  /// Queries only [Top.gg](https://top.gg) certified Discord bots or not.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().certified(true);
+  /// ```
+  pub fn certified(mut self, is_certified: bool) -> Self {
+    self
+      .search
+      .push_str(&format!("certifiedBot%3A%20{is_certified}%20"));
+    self
+  }
+
+  /// Queries only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
+  ///
+  /// # Examples
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust,no_run
+  /// use topgg::Query;
+  ///
+  /// let _query = Query::new().vanity("mee6");
+  /// ```
+  pub fn vanity(mut self, new_vanity: &str) -> Self {
+    self.search.push_str(&format!(
+      "vanity%3A%20{}%20",
+      urlencoding::encode(new_vanity)
+    ));
+    self
+  }
+
+  pub(crate) fn query_string(mut self) -> String {
+    if !self.search.is_empty() {
+      self.query.push_str(&format!("search={}", self.search));
+    } else {
+      self.query.pop();
+    }
+
+    self.query
   }
 }
 
@@ -691,42 +662,15 @@ impl Default for Query {
   }
 }
 
-/// A trait that represents any data type that can be interpreted as a valid [Top.gg](https://top.gg) Discord bot query.
-pub trait QueryLike {
-  #[doc(hidden)]
-  fn into_query_string(self) -> String;
-}
-
-impl QueryLike for Query {
-  #[inline(always)]
-  fn into_query_string(mut self) -> String {
-    self.0.pop();
-    self.0
-  }
-}
-
-impl QueryLike for Filter {
-  #[inline(always)]
-  fn into_query_string(mut self) -> String {
-    if self.0.is_empty() {
-      String::new()
-    } else {
-      self.0.truncate(self.0.len() - 3);
-
-      format!("?search={}", self.0)
-    }
-  }
-}
-
-impl<S> QueryLike for &S
+impl<S> From<&S> for Query
 where
   S: AsRef<str> + ?Sized,
 {
   #[inline(always)]
-  fn into_query_string(self) -> String {
-    format!(
-      "?search=username%3A%20{}",
-      urlencoding::encode(self.as_ref())
-    )
+  fn from(other: &S) -> Self {
+    Self {
+      search: format!("username%3A%20{}", urlencoding::encode(other.as_ref())),
+      ..Default::default()
+    }
   }
 }

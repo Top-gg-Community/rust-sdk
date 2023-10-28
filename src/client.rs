@@ -1,10 +1,17 @@
 use crate::{
-  bot::{Bot, Bots, IsWeekend, NewStats, QueryLike, Stats},
-  http::{Http, GET, POST},
+  bot::{Bot, Bots, IsWeekend, Stats},
   user::{User, Voted, Voter},
-  Result, SnowflakeLike,
+  Error, Query, Result, Snowflake,
 };
-use core::mem::transmute;
+use core::{mem::transmute, str};
+use hyper::{
+  body::{Body, Buf, HttpBody},
+  client::connect::HttpConnector,
+  http::{request, uri::Scheme, version::Version},
+  Request, Response, Uri,
+};
+use hyper_tls::HttpsConnector;
+use serde::{de::DeserializeOwned, Deserialize};
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
@@ -18,25 +25,143 @@ cfg_if::cfg_if! {
   }
 }
 
+fn build_uri(path: &str) -> Uri {
+  // SAFETY: the URI here should always be valid
+  unsafe {
+    Uri::builder()
+      .scheme(Scheme::HTTPS)
+      .authority("top.gg")
+      .path_and_query(path)
+      .build()
+      .unwrap_unchecked()
+  }
+}
+
+async fn retrieve_body(response: Response<Body>) -> Result<Vec<u8>> {
+  let content_length = response
+    .headers()
+    .get("Content-Length")
+    .and_then(|value| {
+      unsafe { str::from_utf8_unchecked(value.as_bytes()) }
+        .parse::<usize>()
+        .ok()
+    })
+    .unwrap_or_default();
+
+  let mut content = Vec::with_capacity(content_length);
+  let mut body = response.into_body();
+
+  while let Some(buf) = body.data().await {
+    match buf {
+      Ok(buf) => {
+        if buf.has_remaining() {
+          content.extend_from_slice(&buf);
+        }
+      }
+      Err(err) => return Err(Error::InternalClientError(err)),
+    };
+  }
+
+  Ok(content)
+}
+
+macro_rules! req(
+  ($method:ident,$path:expr) => {
+    Request::$method(build_uri($path))
+  }
+);
+
+#[derive(Deserialize)]
+#[serde(rename = "kebab-case")]
+pub(crate) struct Ratelimit {
+  pub(crate) retry_after: u16,
+}
+
 pub(crate) struct InnerClient {
-  http: Http,
+  http: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+  token: String,
 }
 
 // this is implemented here because autoposter needs to access this function from a different thread.
 impl InnerClient {
-  pub(crate) async fn post_stats(&self, new_stats: &NewStats) -> Result<()> {
-    // SAFETY: no part of the NewStats struct would cause an error in the serialization process.
-    let body = unsafe { serde_json::to_string(new_stats).unwrap_unchecked() };
+  async fn send_inner(&self, builder: request::Builder, body: Vec<u8>) -> Result<Vec<u8>> {
+    let mut auth = String::with_capacity(self.token.len() + 7);
+    auth.push_str("Bearer ");
+    auth.push_str(&self.token);
+
+    // SAFETY: the header keys and values should be valid ASCII
+    match self
+      .http
+      .request(unsafe {
+        builder
+          .header("Authorization", &auth)
+          .header("Connection", "close")
+          .header("Content-Length", body.len())
+          .header("Content-Type", "application/json")
+          .header(
+            "User-Agent",
+            "topgg (https://github.com/top-gg/rust-sdk) Rust",
+          )
+          .version(Version::HTTP_11)
+          .body(body.into())
+          .unwrap_unchecked()
+      })
+      .await
+    {
+      Ok(response) => {
+        let status = response.status().as_u16();
+
+        if status < 400 {
+          retrieve_body(response).await
+        } else {
+          Err(match status {
+            401 => panic!("Invalid Top.gg API token."),
+            404 => Error::NotFound,
+            429 => {
+              if let Ok(parsed) = retrieve_body(response).await {
+                if let Ok(ratelimit) = serde_json::from_slice::<Ratelimit>(&parsed) {
+                  return Err(Error::Ratelimit {
+                    retry_after: ratelimit.retry_after,
+                  });
+                }
+              }
+
+              Error::InternalServerError
+            }
+            _ => Error::InternalServerError,
+          })
+        }
+      }
+
+      Err(err) => Err(Error::InternalClientError(err)),
+    }
+  }
+
+  #[inline(always)]
+  pub(crate) async fn send<T>(&self, builder: request::Builder, body: Option<Vec<u8>>) -> Result<T>
+  where
+    T: DeserializeOwned,
+  {
+    self
+      .send_inner(builder, body.unwrap_or_default())
+      .await
+      .and_then(|response| {
+        serde_json::from_slice(&response).map_err(|_| Error::InternalServerError)
+      })
+  }
+
+  pub(crate) async fn post_stats(&self, new_stats: &Stats) -> Result<()> {
+    // SAFETY: no part of the Stats struct would cause an error in the serialization process.
+    let body = unsafe { serde_json::to_vec(new_stats).unwrap_unchecked() };
 
     self
-      .http
-      .send(POST, "/bots/stats", Some(&body))
+      .send_inner(req!(post, "/bots/stats"), body)
       .await
       .map(|_| ())
   }
 }
 
-/// A struct representing a [Top.gg](https://top.gg) API client instance.
+/// A struct representing a [Top.gg API](https://docs.top.gg) client instance.
 #[must_use]
 pub struct Client {
   inner: SyncedClient,
@@ -62,7 +187,8 @@ impl Client {
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {
-      http: Http::new(token),
+      http: hyper::Client::builder().build(HttpsConnector::new()),
+      token,
     };
 
     #[cfg(feature = "autoposter")]
@@ -77,7 +203,7 @@ impl Client {
   ///
   /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -108,11 +234,11 @@ impl Client {
   /// ```
   pub async fn get_user<I>(&self, id: I) -> Result<User>
   where
-    I: SnowflakeLike,
+    I: Snowflake,
   {
     let path = format!("/users/{}", id.as_snowflake());
 
-    self.inner.http.request(GET, &path, None).await
+    self.inner.send(req!(get, &path), None).await
   }
 
   /// Fetches a listed Discord bot from a Discord ID.
@@ -121,7 +247,7 @@ impl Client {
   ///
   /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -153,18 +279,18 @@ impl Client {
   /// ```
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
-    I: SnowflakeLike,
+    I: Snowflake,
   {
     let path = format!("/bots/{}", id.as_snowflake());
 
-    self.inner.http.request(GET, &path, None).await
+    self.inner.send(req!(get, &path), None).await
   }
 
   /// Fetches your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -192,14 +318,14 @@ impl Client {
   /// ```
   #[inline(always)]
   pub async fn get_stats(&self) -> Result<Stats> {
-    self.inner.http.request(GET, "/bots/stats", None).await
+    self.inner.send(req!(get, "/bots/stats"), None).await
   }
 
   /// Posts your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -221,17 +347,17 @@ impl Client {
   ///
   ///   let server_count = 12345;
   ///   client
-  ///     .post_stats(NewStats::count_based(server_count, None))
+  ///     .post_stats(Stats::count_based(server_count, None))
   ///     .await
   ///     .unwrap();
   /// }
   /// ```
   #[inline(always)]
-  pub async fn post_stats(&self, new_stats: NewStats) -> Result<()> {
+  pub async fn post_stats(&self, new_stats: Stats) -> Result<()> {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg](https://top.gg) API in intervals.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg API](https://docs.top.gg) in intervals.
   ///
   /// # Panics
   ///
@@ -245,7 +371,7 @@ impl Client {
   ///
   /// ```rust,no_run
   /// use core::time::Duration;
-  /// use topgg::{Client, NewStats};
+  /// use topgg::{Client, Stats};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -257,7 +383,7 @@ impl Client {
   ///
   ///   // ... then in some on ready/new guild event ...
   ///   let server_count = 12345;
-  ///   let stats = NewStats::count_based(server_count, None);
+  ///   let stats = Stats::count_based(server_count, None);
   ///   autoposter.feed(stats).await;
   /// }
   /// ```
@@ -280,7 +406,7 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -307,7 +433,7 @@ impl Client {
   /// ```
   #[inline(always)]
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
-    self.inner.http.request(GET, "/bots/votes", None).await
+    self.inner.send(req!(get, "/bots/votes"), None).await
   }
 
   /// Queries/searches through the [Top.gg](https://top.gg) database to look for matching listed Discord bots.
@@ -316,7 +442,7 @@ impl Client {
   ///
   /// Panics if any of the following conditions are met:
   /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -331,7 +457,7 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, Filter, Query};
+  /// use topgg::{Client, Query};
   ///
   /// #[tokio::main]
   /// async fn main() {
@@ -342,10 +468,11 @@ impl Client {
   ///     println!("{:?}", bot);
   ///   }
   ///
-  ///   // advanced query with filters...
-  ///   let filter = Filter::new().username("shiro").certified(true);
-  ///
-  ///   let query = Query::new().limit(250).skip(50).filter(filter);
+  ///   let query = Query::new()
+  ///     .limit(250)
+  ///     .skip(50)
+  ///     .username("shiro")
+  ///     .certified(true);
   ///
   ///   for bot in client.get_bots(query).await.unwrap() {
   ///     println!("{:?}", bot);
@@ -354,14 +481,13 @@ impl Client {
   /// ```
   pub async fn get_bots<Q>(&self, query: Q) -> Result<Vec<Bot>>
   where
-    Q: QueryLike,
+    Q: Into<Query>,
   {
-    let path = format!("/bots{}", query.into_query_string());
+    let path = format!("/bots{}", query.into().query_string());
 
     self
       .inner
-      .http
-      .request::<Bots>(GET, &path, None)
+      .send::<Bots>(req!(get, &path), None)
       .await
       .map(|res| res.results)
   }
@@ -372,7 +498,7 @@ impl Client {
   ///
   /// Panics if any of the following conditions are met:
   /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
-  /// - The client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -400,24 +526,23 @@ impl Client {
   #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
-    I: SnowflakeLike,
+    I: Snowflake,
   {
     let path = format!("/bots/votes?userId={}", user_id.as_snowflake());
 
     // SAFETY: res.voted will always be either 0 or 1.
     self
       .inner
-      .http
-      .request(GET, &path, None)
+      .send::<Voted>(req!(get, &path), None)
       .await
-      .map(|res: Voted| unsafe { transmute(res.voted) })
+      .map(|res| unsafe { transmute(res.voted) })
   }
 
   /// Checks if the weekend multiplier is active.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg](https://top.gg) API token (unauthorized)
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
@@ -446,9 +571,8 @@ impl Client {
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
-      .http
-      .request(GET, "/weekend", None)
+      .send::<IsWeekend>(req!(get, "/weekend"), None)
       .await
-      .map(|res: IsWeekend| res.is_weekend)
+      .map(|res| res.is_weekend)
   }
 }

@@ -1,55 +1,11 @@
 use core::{fmt, result};
-use std::{error, io};
-use tokio_native_tls::native_tls;
-
-/// A struct representing an unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
-#[derive(Debug)]
-pub enum InternalError {
-  /// The client couldn't create a TLS connector.
-  CreateConnector(native_tls::Error),
-
-  /// The client connect to [Top.gg](https://top.gg)'s servers.
-  Connect(io::Error),
-
-  /// The client couldn't establish a handshake with [Top.gg](https://top.gg)'s servers.
-  Handshake(native_tls::Error),
-
-  /// The client couldn't write a HTTP request to [Top.gg](https://top.gg)'s servers.
-  WriteRequest(io::Error),
-}
-
-impl fmt::Display for InternalError {
-  fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-    match self {
-      Self::CreateConnector(_) => write!(f, "can't initiate a TLS connector"),
-      Self::Connect(_) => write!(f, "can't initiate a TCP stream to Top.gg"),
-      Self::Handshake(_) => write!(f, "can't initiate a handshake with Top.gg"),
-      Self::WriteRequest(_) => write!(f, "can't write a request to Top.gg"),
-    }?;
-
-    // SAFETY: look several lines below.
-    write!(f, " (original error: {})", unsafe {
-      error::Error::source(self).unwrap_unchecked()
-    })
-  }
-}
-
-impl error::Error for InternalError {
-  fn source(&self) -> Option<&(dyn error::Error + 'static)> {
-    Some(match self {
-      Self::CreateConnector(err) => err,
-      Self::Connect(err) => err,
-      Self::Handshake(err) => err,
-      Self::WriteRequest(err) => err,
-    })
-  }
-}
+use std::error;
 
 /// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
-  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg](https://top.gg) API.
-  InternalClientError(InternalError),
+  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg API](https://docs.top.gg).
+  InternalClientError(hyper::Error),
 
   /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
   InternalServerError,

@@ -11,7 +11,6 @@ cfg_if::cfg_if! {
   if #[cfg(feature = "api")] {
     mod client;
     mod error;
-    mod http;
     mod util;
 
     /// Bot-related structs.
@@ -21,10 +20,10 @@ cfg_if::cfg_if! {
     pub mod user;
 
     #[doc(inline)]
-    pub use bot::{Filter, NewStats, Query};
+    pub use bot::{Stats, Query};
     pub use client::Client;
-    pub use error::{Error, InternalError, Result};
-    pub use snowflake::SnowflakeLike; // for doc purposes
+    pub use error::{Error, Result};
+    pub use snowflake::Snowflake; // for doc purposes
   }
 }
 
