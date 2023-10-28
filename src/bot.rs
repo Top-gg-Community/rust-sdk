@@ -441,7 +441,7 @@ impl Debug for Stats {
   fn fmt(&self, fmt: &mut Formatter) -> fmt::Result {
     fmt
       .debug_struct("Stats")
-      .field("shards", &self.shards)
+      .field("shards", &self.shards())
       .field("shard_count", &self.shard_count())
       .field("server_count", &self.server_count())
       .finish()

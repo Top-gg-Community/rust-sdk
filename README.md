@@ -21,8 +21,8 @@ topgg = "1.2"
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
 
-- **`api`**: Interacting with the [Top.gg](https://top.gg) API and accessing the `top.gg/api/*` endpoints. (enabled by default)
-  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg](https://top.gg) API.
+- **`api`**: Interacting with the [Top.gg API](https://docs.top.gg) and accessing the `top.gg/api/*` endpoints. (enabled by default)
+  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg API](https://docs.top.gg).
 - **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
   - **`actix-web`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
