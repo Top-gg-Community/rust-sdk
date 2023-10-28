@@ -42,6 +42,7 @@ async fn retrieve_body(response: Response<Body>) -> Result<Vec<u8>> {
     .headers()
     .get("Content-Length")
     .and_then(|value| {
+      // SAFETY: Content-Length should always be valid ASCII
       unsafe { str::from_utf8_unchecked(value.as_bytes()) }
         .parse::<usize>()
         .ok()
