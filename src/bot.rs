@@ -674,3 +674,10 @@ where
     }
   }
 }
+
+impl From<String> for Query {
+  #[inline(always)]
+  fn from(other: String) -> Self {
+    Self::from(&other)
+  }
+}
