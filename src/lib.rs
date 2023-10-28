@@ -1,8 +1,4 @@
 #![doc = include_str!("../README.md")]
-#![doc(
-  html_logo_url = "https://top.gg/favicon.png",
-  html_favicon_url = "https://top.gg/favicon.png"
-)]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod snowflake;
