@@ -9,15 +9,15 @@ repository = "https://github.com/top-gg/rust-sdk"
 license = "MIT"
 keywords = ["discord", "bots", "topgg", "dbl"]
 categories = ["api-bindings", "web-programming::http-client"]
-exclude = [".gitattributes", ".gitignore", "rustfmt.toml"]
+exclude = [".gitattributes", ".github/", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
 cfg-if = "1"
 hyper = { version = "0.14", features = ["client", "http1"], optional = true }
 hyper-tls = { version = "0.5", optional = true }
 serde = { version = "1", features = ["derive"] }
-tokio = { version = "1", optional = true }
-urlencoding = { version = "2", optional = true }
+tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
+urlencoding = "2"
 
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
@@ -35,8 +35,8 @@ rustc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["api"]
-api = ["chrono", "hyper", "hyper-tls", "serde_json", "urlencoding"]
-autoposter = ["api", "tokio/rt", "tokio/sync", "tokio/time"]
+api = ["chrono", "hyper", "hyper-tls", "serde_json"]
+autoposter = ["api", "tokio"]
 
 webhook = []
 rocket = ["webhook", "serde_json", "dep:rocket"]
