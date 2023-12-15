@@ -261,7 +261,6 @@ impl Client {
   ///
   /// println!("{:?}", stats);
   /// ```
-  #[inline(always)]
   pub async fn get_stats(&self) -> Result<Stats> {
     self
       .inner
@@ -370,7 +369,6 @@ impl Client {
   ///   println!("{:?}", voter);
   /// }
   /// ```
-  #[inline(always)]
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
     self
       .inner
@@ -474,7 +472,7 @@ impl Client {
         self
           .inner
           .http
-          .get("/bots/votes?userId={}", user_id.as_snowflake()),
+          .get(api!("/bots/votes?userId={}", user_id.as_snowflake())),
         None,
       )
       .await
@@ -507,7 +505,6 @@ impl Client {
   ///   println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
   /// }
   /// ```
-  #[inline(always)]
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
