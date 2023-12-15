@@ -28,7 +28,7 @@ cfg_if::cfg_if! {
     mod autoposter;
 
     #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-    pub use autoposter::Autoposter;
+    pub use autoposter::{Autoposter, AutoposterHandle};
   }
 }
 

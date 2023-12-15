@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
