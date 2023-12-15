@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.2.0"
+version = "1.2.1"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
@@ -22,7 +22,7 @@ urlencoding = "2"
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
 
-rocket = { version = "0.4", default-features = false, optional = true }
+rocket = { version = "0.5", default-features = false, optional = true }
 axum = { version = "0.7", default-features = false, optional = true, features = ["http1", "tokio"] }
 async-trait = { version = "0.1", optional = true }
 warp = { version = "0.3", default-features = false, optional = true }

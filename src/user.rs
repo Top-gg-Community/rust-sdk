@@ -99,14 +99,10 @@ impl User {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
-  ///   println!("{}", user.created_at());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let user = client.get_user(661200758510977084).await.unwrap();
+  ///
+  /// println!("{}", user.created_at());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -125,14 +121,10 @@ impl User {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
-  ///   println!("{}", user.avatar());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let user = client.get_user(661200758510977084).await.unwrap();
+  ///
+  /// println!("{}", user.avatar());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -190,13 +182,10 @@ impl Voter {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   for voter in client.get_voters().await.unwrap() {
-  ///     println!("{}", voter.created_at());
-  ///   }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  /// for voter in client.get_voters().await.unwrap() {
+  ///   println!("{}", voter.created_at());
   /// }
   /// ```
   #[must_use]
@@ -216,13 +205,10 @@ impl Voter {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   for voter in client.get_voters().await.unwrap() {
-  ///     println!("{}", voter.avatar());
-  ///   }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  /// for voter in client.get_voters().await.unwrap() {
+  ///   println!("{}", voter.avatar());
   /// }
   /// ```
   #[must_use]

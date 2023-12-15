@@ -120,14 +120,10 @@ impl Bot {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   println!("{}", bot.created_at());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// println!("{}", bot.created_at());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -146,14 +142,10 @@ impl Bot {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   println!("{}", bot.avatar());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// println!("{}", bot.avatar());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -170,14 +162,10 @@ impl Bot {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   println!("{}", bot.invite());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// println!("{}", bot.invite());
   /// ```
   #[must_use]
   pub fn invite(&self) -> String {
@@ -199,14 +187,10 @@ impl Bot {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   println!("{}", bot.shard_count());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// println!("{}", bot.shard_count());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -223,14 +207,10 @@ impl Bot {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   println!("{}", bot.url());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// println!("{}", bot.url());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -360,14 +340,10 @@ impl Stats {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let stats = client.get_stats().await.unwrap();
-  ///   
-  ///   println!("{:?}", stats.shards());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let stats = client.get_stats().await.unwrap();
+  ///
+  /// println!("{:?}", stats.shards());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -387,14 +363,10 @@ impl Stats {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let stats = client.get_stats().await.unwrap();
-  ///   
-  ///   println!("{:?}", stats.shard_count());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let stats = client.get_stats().await.unwrap();
+  ///
+  /// println!("{:?}", stats.shard_count());
   /// ```
   #[must_use]
   #[inline(always)]
@@ -414,14 +386,10 @@ impl Stats {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let stats = client.get_stats().await.unwrap();
-  ///   
-  ///   println!("{:?}", stats.server_count());
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let stats = client.get_stats().await.unwrap();
+  ///
+  /// println!("{:?}", stats.server_count());
   /// ```
   #[must_use]
   pub fn server_count(&self) -> Option<usize> {

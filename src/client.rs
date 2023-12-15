@@ -180,10 +180,7 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let _client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// }
+  /// let _client = Client::new(env!("TOPGG_TOKEN").to_string());
   /// ```
   #[inline(always)]
   pub fn new(token: String) -> Self {
@@ -221,17 +218,13 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let user = client.get_user(661200758510977084).await.unwrap();
-  ///   
-  ///   assert_eq!(user.username, "null");
-  ///   assert_eq!(user.id, 661200758510977084);
-  ///   
-  ///   println!("{:?}", user);
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let user = client.get_user(661200758510977084).await.unwrap();
+  ///
+  /// assert_eq!(user.username, "null");
+  /// assert_eq!(user.id, 661200758510977084);
+  ///
+  /// println!("{:?}", user);
   /// ```
   pub async fn get_user<I>(&self, id: I) -> Result<User>
   where
@@ -265,18 +258,14 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///   
-  ///   assert_eq!(bot.username, "Luca");
-  ///   assert_eq!(bot.discriminator, "1375");
-  ///   assert_eq!(bot.id, 264811613708746752);
-  ///   
-  ///   println!("{:?}", bot);
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  ///
+  /// assert_eq!(bot.username, "Luca");
+  /// assert_eq!(bot.discriminator, "1375");
+  /// assert_eq!(bot.id, 264811613708746752);
+  ///
+  /// println!("{:?}", bot);
   /// ```
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
@@ -298,7 +287,6 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -308,14 +296,10 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   let stats = client.get_stats().await.unwrap();
-  ///   
-  ///   println!("{:?}", stats);
-  /// }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let stats = client.get_stats().await.unwrap();
+  ///
+  /// println!("{:?}", stats);
   /// ```
   #[inline(always)]
   pub async fn get_stats(&self) -> Result<Stats> {
@@ -342,16 +326,13 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   let server_count = 12345;
-  ///   client
-  ///     .post_stats(Stats::count_based(server_count, None))
-  ///     .await
-  ///     .unwrap();
-  /// }
+  /// let server_count = 12345;
+  /// client
+  ///   .post_stats(Stats::count_based(server_count, None))
+  ///   .await
+  ///   .unwrap();
   /// ```
   #[inline(always)]
   pub async fn post_stats(&self, new_stats: Stats) -> Result<()> {
@@ -374,19 +355,16 @@ impl Client {
   /// use core::time::Duration;
   /// use topgg::{Client, Stats};
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
-  ///   // the autopost thread will stop once it's dropped.
-  ///   let autoposter = client.new_autoposter(Duration::from_secs(1800));
+  /// // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
+  /// // the autopost thread will stop once it's dropped.
+  /// let autoposter = client.new_autoposter(Duration::from_secs(1800));
   ///
-  ///   // ... then in some on ready/new guild event ...
-  ///   let server_count = 12345;
-  ///   let stats = Stats::count_based(server_count, None);
-  ///   autoposter.feed(stats).await;
-  /// }
+  /// // ... then in some on ready/new guild event ...
+  /// let server_count = 12345;
+  /// let stats = Stats::count_based(server_count, None);
+  /// autoposter.feed(stats).await;
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
@@ -423,13 +401,10 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   for voter in client.get_voters().await.unwrap() {
-  ///     println!("{:?}", voter);
-  ///   }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  /// for voter in client.get_voters().await.unwrap() {
+  ///   println!("{:?}", voter);
   /// }
   /// ```
   #[inline(always)]
@@ -450,7 +425,6 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
@@ -460,24 +434,21 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::{Client, Query};
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   // inputting a string searches a bot that matches that username.
-  ///   for bot in client.get_bots("shiro").await.unwrap() {
-  ///     println!("{:?}", bot);
-  ///   }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   let query = Query::new()
-  ///     .limit(250)
-  ///     .skip(50)
-  ///     .username("shiro")
-  ///     .certified(true);
+  /// // inputting a string searches a bot that matches that username.
+  /// for bot in client.get_bots("shiro").await.unwrap() {
+  ///   println!("{:?}", bot);
+  /// }
   ///
-  ///   for bot in client.get_bots(query).await.unwrap() {
-  ///     println!("{:?}", bot);
-  ///   }
+  /// let query = Query::new()
+  ///   .limit(250)
+  ///   .skip(50)
+  ///   .username("shiro")
+  ///   .certified(true);
+  ///
+  /// for bot in client.get_bots(query).await.unwrap() {
+  ///   println!("{:?}", bot);
   /// }
   /// ```
   pub async fn get_bots<Q>(&self, query: Q) -> Result<Vec<Bot>>
@@ -515,13 +486,10 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   if client.has_voted(661200758510977084).await.unwrap() {
-  ///     println!("checks out");
-  ///   }
+  /// if client.has_voted(661200758510977084).await.unwrap() {
+  ///   println!("checks out");
   /// }
   /// ```
   #[allow(clippy::transmute_int_to_bool)]
@@ -559,13 +527,10 @@ impl Client {
   /// ```rust,no_run
   /// use topgg::Client;
   ///
-  /// #[tokio::main]
-  /// async fn main() {
-  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///   
-  ///   if client.is_weekend().await.unwrap() {
-  ///     println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
-  ///   }
+  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  /// if client.is_weekend().await.unwrap() {
+  ///   println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
   /// }
   /// ```
   #[inline(always)]
