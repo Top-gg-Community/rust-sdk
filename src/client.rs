@@ -4,13 +4,7 @@ use crate::{
   Error, Query, Result, Snowflake,
 };
 use core::{mem::transmute, str};
-use hyper::{
-  body::{Body, Buf, HttpBody},
-  client::connect::HttpConnector,
-  http::{request, uri::Scheme, version::Version},
-  Request, Response, Uri,
-};
-use hyper_tls::HttpsConnector;
+use reqwest::{RequestBuilder, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
 
 cfg_if::cfg_if! {
@@ -25,67 +19,30 @@ cfg_if::cfg_if! {
   }
 }
 
-fn build_uri(path: &str) -> Uri {
-  // SAFETY: the URI here should always be valid
-  unsafe {
-    Uri::builder()
-      .scheme(Scheme::HTTPS)
-      .authority("top.gg")
-      .path_and_query(path)
-      .build()
-      .unwrap_unchecked()
-  }
-}
-
-async fn retrieve_body(response: Response<Body>) -> Result<Vec<u8>> {
-  let content_length = response
-    .headers()
-    .get("Content-Length")
-    .and_then(|value| {
-      // SAFETY: Content-Length should always be valid ASCII
-      unsafe { str::from_utf8_unchecked(value.as_bytes()) }
-        .parse::<usize>()
-        .ok()
-    })
-    .unwrap_or_default();
-
-  let mut content = Vec::with_capacity(content_length);
-  let mut body = response.into_body();
-
-  while let Some(buf) = body.data().await {
-    match buf {
-      Ok(buf) => {
-        if buf.has_remaining() {
-          content.extend_from_slice(&buf);
-        }
-      }
-      Err(err) => return Err(Error::InternalClientError(err)),
-    };
-  }
-
-  Ok(content)
-}
-
-macro_rules! req(
-  ($method:ident,$path:expr) => {
-    Request::$method(build_uri($path))
-  }
-);
-
 #[derive(Deserialize)]
 #[serde(rename = "kebab-case")]
 pub(crate) struct Ratelimit {
   pub(crate) retry_after: u16,
 }
 
+macro_rules! api {
+  ($e:expr) => {
+    concat!("https://top.gg/api", $e)
+  };
+
+  ($e:expr,$($rest:tt)*) => {
+    format!(api!($e), $($rest)*)
+  };
+}
+
 pub(crate) struct InnerClient {
-  http: hyper::Client<HttpsConnector<HttpConnector>, Body>,
+  http: reqwest::Client,
   token: String,
 }
 
 // this is implemented here because autoposter needs to access this function from a different thread.
 impl InnerClient {
-  async fn send_inner(&self, builder: request::Builder, body: Vec<u8>) -> Result<Vec<u8>> {
+  async fn send_inner(&self, request: RequestBuilder, body: Vec<u8>) -> Result<Response> {
     let mut auth = String::with_capacity(self.token.len() + 7);
     auth.push_str("Bearer ");
     auth.push_str(&self.token);
@@ -93,7 +50,7 @@ impl InnerClient {
     // SAFETY: the header keys and values should be valid ASCII
     match self
       .http
-      .request(unsafe {
+      .execute(unsafe {
         builder
           .header("Authorization", &auth)
           .header("Connection", "close")
@@ -104,31 +61,27 @@ impl InnerClient {
             "topgg (https://github.com/top-gg/rust-sdk) Rust",
           )
           .version(Version::HTTP_11)
-          .body(body.into())
+          .body(body)
+          .build()
           .unwrap_unchecked()
       })
       .await
     {
       Ok(response) => {
-        let status = response.status().as_u16();
+        let status = response.status();
 
-        if status < 400 {
-          retrieve_body(response).await
+        if status.is_success() {
+          Ok(response)
         } else {
           Err(match status {
-            401 => panic!("Invalid Top.gg API token."),
-            404 => Error::NotFound,
-            429 => {
-              if let Ok(parsed) = retrieve_body(response).await {
-                if let Ok(ratelimit) = serde_json::from_slice::<Ratelimit>(&parsed) {
-                  return Err(Error::Ratelimit {
-                    retry_after: ratelimit.retry_after,
-                  });
-                }
-              }
-
-              Error::InternalServerError
-            }
+            StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
+            StatusCode::NOT_FOUND => Error::NotFound,
+            StatusCode::TOO_MANY_REQUESTS => match response.json() {
+              Ok(Ratelimit { retry_after }) => Error::Ratelimit {
+                retry_after: ratelimit.retry_after,
+              },
+              _ => Error::InternalServerError,
+            },
             _ => Error::InternalServerError,
           })
         }
@@ -139,16 +92,15 @@ impl InnerClient {
   }
 
   #[inline(always)]
-  pub(crate) async fn send<T>(&self, builder: request::Builder, body: Option<Vec<u8>>) -> Result<T>
+  pub(crate) async fn send<T>(&self, request: RequestBuilder, body: Option<Vec<u8>>) -> Result<T>
   where
     T: DeserializeOwned,
   {
     self
-      .send_inner(builder, body.unwrap_or_default())
+      .send_inner(request, body.unwrap_or_default())
       .await
-      .and_then(|response| {
-        serde_json::from_slice(&response).map_err(|_| Error::InternalServerError)
-      })
+      .json()
+      .map_err(|_| Error::InternalServerError)
   }
 
   pub(crate) async fn post_stats(&self, new_stats: &Stats) -> Result<()> {
@@ -156,7 +108,7 @@ impl InnerClient {
     let body = unsafe { serde_json::to_vec(new_stats).unwrap_unchecked() };
 
     self
-      .send_inner(req!(post, "/bots/stats"), body)
+      .send_inner(self.http.post(api!("/bots/stats")), body)
       .await
       .map(|_| ())
   }
@@ -185,7 +137,7 @@ impl Client {
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {
-      http: hyper::Client::builder().build(HttpsConnector::new()),
+      http: reqwest::Client::new(),
       token,
     };
 
@@ -230,9 +182,13 @@ impl Client {
   where
     I: Snowflake,
   {
-    let path = format!("/users/{}", id.as_snowflake());
-
-    self.inner.send(req!(get, &path), None).await
+    self
+      .inner
+      .send(
+        self.inner.http.get(api!("/users/{}", id.as_snowflake())),
+        None,
+      )
+      .await
   }
 
   /// Fetches a listed Discord bot from a Discord ID.
@@ -271,9 +227,13 @@ impl Client {
   where
     I: Snowflake,
   {
-    let path = format!("/bots/{}", id.as_snowflake());
-
-    self.inner.send(req!(get, &path), None).await
+    self
+      .inner
+      .send(
+        self.inner.http.get(api!("/bots/{}", id.as_snowflake())),
+        None,
+      )
+      .await
   }
 
   /// Fetches your Discord bot's statistics.
@@ -303,7 +263,10 @@ impl Client {
   /// ```
   #[inline(always)]
   pub async fn get_stats(&self) -> Result<Stats> {
-    self.inner.send(req!(get, "/bots/stats"), None).await
+    self
+      .inner
+      .send(self.inner.http.get(api!("/bots/stats")), None)
+      .await
   }
 
   /// Posts your Discord bot's statistics.
@@ -409,7 +372,10 @@ impl Client {
   /// ```
   #[inline(always)]
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
-    self.inner.send(req!(get, "/bots/votes"), None).await
+    self
+      .inner
+      .send(self.inner.http.get(api!("/bots/votes")), None)
+      .await
   }
 
   /// Queries/searches through the [Top.gg](https://top.gg) database to look for matching listed Discord bots.
@@ -455,11 +421,15 @@ impl Client {
   where
     Q: Into<Query>,
   {
-    let path = format!("/bots{}", query.into().query_string());
-
     self
       .inner
-      .send::<Bots>(req!(get, &path), None)
+      .send::<Bots>(
+        self
+          .inner
+          .http
+          .get(api!("/bots{}", query.into().query_string())),
+        None,
+      )
       .await
       .map(|res| res.results)
   }
@@ -497,12 +467,16 @@ impl Client {
   where
     I: Snowflake,
   {
-    let path = format!("/bots/votes?userId={}", user_id.as_snowflake());
-
     // SAFETY: res.voted will always be either 0 or 1.
     self
       .inner
-      .send::<Voted>(req!(get, &path), None)
+      .send::<Voted>(
+        self
+          .inner
+          .http
+          .get("/bots/votes?userId={}", user_id.as_snowflake()),
+        None,
+      )
       .await
       .map(|res| unsafe { transmute(res.voted) })
   }
@@ -537,7 +511,7 @@ impl Client {
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
-      .send::<IsWeekend>(req!(get, "/weekend"), None)
+      .send::<IsWeekend>(self.inner.http.get(api!("/weekend")), None)
       .await
       .map(|res| res.is_weekend)
   }

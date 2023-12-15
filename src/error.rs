@@ -5,7 +5,7 @@ use std::error;
 #[derive(Debug)]
 pub enum Error {
   /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg API](https://docs.top.gg).
-  InternalClientError(hyper::Error),
+  InternalClientError(reqwest::Error),
 
   /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
   InternalServerError,
