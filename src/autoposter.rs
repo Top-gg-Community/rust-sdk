@@ -36,8 +36,7 @@ impl AutoposterHandle {
   ///
   /// // ... then in some on ready/new guild event ...
   /// let server_count = 12345;
-  /// let stats = Stats::from(server_count);
-  /// autoposter.feed(stats).await;
+  /// autoposter.feed(Stats::from(server_count)).await;
   /// ```
   ///
   /// Remote usage with an [`AutoposterHandle`]:

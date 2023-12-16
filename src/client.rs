@@ -252,8 +252,7 @@ impl Client {
   ///
   /// // ... then in some on ready/new guild event ...
   /// let server_count = 12345;
-  /// let stats = Stats::from(server_count);
-  /// autoposter.feed(stats).await;
+  /// autoposter.feed(Stats::from(server_count)).await;
   /// ```
   #[cfg(feature = "autoposter")]
   #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]

@@ -164,8 +164,7 @@ async fn main() {
 
   // ... then in some on ready/new guild event ...
   let server_count = 12345;
-  let stats = Stats::count_based(server_count, None);
-  autoposter.feed(stats).await;
+  autoposter.feed(Stats::from(server_count)).await;
 }
 ```
 
