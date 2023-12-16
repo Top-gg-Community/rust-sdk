@@ -18,28 +18,25 @@ where
     .map(|s: Vec<String>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
 }
 
-mod private {
-  pub trait Sealed {}
-}
-
-/// A trait that represents any data type that can be interpreted as a Discord snowflake/ID.
-pub trait Snowflake: private::Sealed {
-  #[doc(hidden)]
+pub trait SnowflakeSealed {
   fn as_snowflake(&self) -> u64;
 }
 
-impl private::Sealed for u64 {}
+/// A trait that represents any data type that can be interpreted as a Discord snowflake/ID.
+pub trait Snowflake: SnowflakeSealed {}
 
-impl Snowflake for u64 {
+impl Snowflake for u64 {}
+
+impl SnowflakeSealed for u64 {
   #[inline(always)]
   fn as_snowflake(&self) -> u64 {
     *self
   }
 }
 
-impl<S> private::Sealed for &S where S: AsRef<str> + ?Sized {}
+impl<S> Snowflake for &S where S: AsRef<str> + ?Sized {}
 
-impl<S> Snowflake for &S
+impl<S> SnowflakeSealed for &S
 where
   S: AsRef<str> + ?Sized,
 {
@@ -61,17 +58,18 @@ cfg_if::cfg_if! {
 
     macro_rules! impl_idstruct(
       ($($t:ty),+) => {$(
-        impl private::Sealed for $t {}
-        impl private::Sealed for &$t {}
+        impl Snowflake for $t {}
 
-        impl Snowflake for $t {
+        impl SnowflakeSealed for $t {
           #[inline(always)]
           fn as_snowflake(&self) -> u64 {
             self.id
           }
         }
 
-        impl Snowflake for &$t {
+        impl Snowflake for &$t {}
+
+        impl SnowflakeSealed for &$t {
           #[inline(always)]
           fn as_snowflake(&self) -> u64 {
             (*self).id
