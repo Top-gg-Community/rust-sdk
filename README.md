@@ -106,7 +106,7 @@ async fn main() {
 <summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run
-use topgg::Client;
+use topgg::{Client, Stats};
 
 #[tokio::main]
 async fn main() {
