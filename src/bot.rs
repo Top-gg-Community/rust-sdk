@@ -112,19 +112,6 @@ where
 
 impl Bot {
   /// Retrieves the creation date of this bot.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// println!("{}", bot.created_at());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn created_at(&self) -> DateTime<Utc> {
@@ -133,20 +120,7 @@ impl Bot {
 
   /// Retrieves the avatar URL of this bot.
   ///
-  /// It's format will be either PNG or GIF if animated.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// println!("{}", bot.avatar());
-  /// ```
+  /// It's format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
@@ -154,19 +128,6 @@ impl Bot {
   }
 
   /// The invite URL of this Discord bot.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// println!("{}", bot.invite());
-  /// ```
   #[must_use]
   pub fn invite(&self) -> String {
     match &self.invite {
@@ -179,19 +140,6 @@ impl Bot {
   }
 
   /// The amount of shards this Discord bot has according to posted stats.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// println!("{}", bot.shard_count());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn shard_count(&self) -> usize {
@@ -199,19 +147,6 @@ impl Bot {
   }
 
   /// Retrieves the URL of this Discord bot's [Top.gg](https://top.gg) page.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// println!("{}", bot.url());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn url(&self) -> String {
@@ -258,6 +193,35 @@ pub(crate) struct Bots {
 }
 
 /// A struct representing a Discord bot's statistics.
+///
+/// # Examples
+///
+/// Solely from a server count:
+///
+/// ```rust,no_run
+/// use topgg::Stats;
+///
+/// let _stats = Stats::from(12345);
+/// ```
+///
+/// Server count with a shard count:
+///
+/// ```rust,no_run
+/// use topgg::Stats;
+///
+/// let server_count = 12345;
+/// let shard_count = 10;
+/// let _stats = Stats::count_based(server_count, Some(shard_count));
+/// ```
+///
+/// Solely from shards information:
+///
+/// ```rust,no_run
+/// use topgg::Stats;
+///
+/// // the shard posting this data has 456 servers.
+/// let _stats = Stats::shards_based([123, 456, 789], Some(1));
+/// ```
 #[must_use]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Stats {
@@ -271,16 +235,6 @@ pub struct Stats {
 
 impl Stats {
   /// Creates a [`Stats`] struct based on total server and optionally, shard count data.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Stats;
-  ///
-  /// let _stats = Stats::count_based(12345, Some(10));
-  /// ```
   pub const fn count_based(server_count: usize, shard_count: Option<usize>) -> Self {
     Self {
       server_count: Some(server_count),
@@ -332,19 +286,6 @@ impl Stats {
   }
 
   /// An array of this Discord bot's server count for each shard.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let stats = client.get_stats().await.unwrap();
-  ///
-  /// println!("{:?}", stats.shards());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn shards(&self) -> &[usize] {
@@ -355,19 +296,6 @@ impl Stats {
   }
 
   /// The amount of shards this Discord bot has.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let stats = client.get_stats().await.unwrap();
-  ///
-  /// println!("{:?}", stats.shard_count());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn shard_count(&self) -> usize {
@@ -378,19 +306,6 @@ impl Stats {
   }
 
   /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let stats = client.get_stats().await.unwrap();
-  ///
-  /// println!("{:?}", stats.server_count());
-  /// ```
   #[must_use]
   pub fn server_count(&self) -> Option<usize> {
     self
@@ -402,6 +317,14 @@ impl Stats {
           Some(shards.iter().copied().sum())
         }
       }))
+  }
+}
+
+/// Creates a [`Stats`] struct solely from a server count.
+impl From<usize> for Stats {
+  #[inline(always)]
+  fn from(server_count: usize) -> Self {
+    Self::count_based(server_count, None)
   }
 }
 
@@ -422,6 +345,20 @@ pub(crate) struct IsWeekend {
 }
 
 /// A struct for configuring the query in [`get_bots`][crate::Client::get_bots].
+///
+/// # Examples
+///
+/// Basic usage:
+///
+/// ```rust,no_run
+/// use topgg::Query;
+///
+/// let _query = Query::new()
+///   .limit(250)
+///   .skip(50)
+///   .username("shiro")
+///   .certified(true);
+/// ```
 #[must_use]
 #[derive(Clone)]
 pub struct Query {
@@ -431,16 +368,6 @@ pub struct Query {
 
 impl Query {
   /// Initiates a new empty querying struct.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new();
-  /// ```
   #[inline(always)]
   pub fn new() -> Self {
     Self {
@@ -449,17 +376,7 @@ impl Query {
     }
   }
 
-  /// Sets the maximum amount of bots to be queried - it can't exceed 500.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().limit(250);
-  /// ```
+  /// Sets the maximum amount of bots to be queried.
   pub fn limit(mut self, new_limit: u16) -> Self {
     self
       .query
@@ -467,17 +384,7 @@ impl Query {
     self
   }
 
-  /// Sets the amount of bots to be skipped during the query - it can't exceed 499.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().skip(100);
-  /// ```
+  /// Sets the amount of bots to be skipped during the query.
   pub fn skip(mut self, skip_by: u16) -> Self {
     self
       .query
@@ -486,16 +393,6 @@ impl Query {
   }
 
   /// Queries only Discord bots that matches this username.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().username("shiro");
-  /// ```
   pub fn username(mut self, new_username: &str) -> Self {
     self.search.push_str(&format!(
       "username%3A%20{}%20",
@@ -505,16 +402,6 @@ impl Query {
   }
 
   /// Queries only Discord bots that matches this discriminator.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().discriminator("1536");
-  /// ```
   pub fn discriminator(mut self, new_discriminator: &str) -> Self {
     self
       .search
@@ -523,16 +410,6 @@ impl Query {
   }
 
   /// Queries only Discord bots that matches this prefix.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().prefix("!");
-  /// ```
   pub fn prefix(mut self, new_prefix: &str) -> Self {
     self.search.push_str(&format!(
       "prefix%3A%20{}%20",
@@ -542,32 +419,12 @@ impl Query {
   }
 
   /// Queries only Discord bots that has this vote count.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().votes(1000);
-  /// ```
   pub fn votes(mut self, new_votes: usize) -> Self {
     self.search.push_str(&format!("points%3A%20{new_votes}%20"));
     self
   }
 
   /// Queries only Discord bots that has this monthly vote count.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().monthly_votes(100);
-  /// ```
   pub fn monthly_votes(mut self, new_monthly_votes: usize) -> Self {
     self
       .search
@@ -576,16 +433,6 @@ impl Query {
   }
 
   /// Queries only [Top.gg](https://top.gg) certified Discord bots or not.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().certified(true);
-  /// ```
   pub fn certified(mut self, is_certified: bool) -> Self {
     self
       .search
@@ -594,16 +441,6 @@ impl Query {
   }
 
   /// Queries only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Query;
-  ///
-  /// let _query = Query::new().vanity("mee6");
-  /// ```
   pub fn vanity(mut self, new_vanity: &str) -> Self {
     self.search.push_str(&format!(
       "vanity%3A%20{}%20",

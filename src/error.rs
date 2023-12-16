@@ -4,7 +4,7 @@ use std::error;
 /// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
-  /// An unexpected internal error coming from the client itself, preventing it from sending a request to the [Top.gg API](https://docs.top.gg).
+  /// An unexpected internal error coming from the client itself, preventing it from sending a request to [Top.gg](https://top.gg).
   InternalClientError(reqwest::Error),
 
   /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.

@@ -102,75 +102,20 @@ cfg_if::cfg_if! {
       ///
       /// # Examples
       ///
-      /// Basic usage with [`actix-web`](https://actix.rs/):
+      /// Basic usage:
       ///
       /// ```rust,no_run
-      /// use actix_web::{
-      ///   error::{Error, ErrorUnauthorized},
-      ///   get, post, App, HttpServer,
-      /// };
-      /// use std::io;
-      /// use topgg::IncomingVote;
+      /// match incoming_vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///   Some(vote) => {
+      ///     println!("{:?}", vote);
       ///
-      /// #[get("/")]
-      /// async fn index() -> &'static str {
-      ///   "Hello, World!"
-      /// }
+      ///     // respond with 200 OK...
+      ///   },
+      ///   _ => {
+      ///     println!("found an unauthorized attacker.");
       ///
-      /// #[post("/webhook")]
-      /// async fn webhook(vote: IncomingVote) -> Result<&'static str, Error> {
-      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-      ///     Some(vote) => {
-      ///       println!("{:?}", vote);
-      ///
-      ///       Ok("ok")
-      ///     }
-      ///     _ => Err(ErrorUnauthorized("401")),
+      ///     // respond with 401 UNAUTHORIZED...
       ///   }
-      /// }
-      ///
-      /// #[actix_web::main]
-      /// async fn main() -> io::Result<()> {
-      ///   HttpServer::new(|| App::new().service(index).service(webhook))
-      ///     .bind("127.0.0.1:8080")?
-      ///     .run()
-      ///     .await
-      /// }
-      /// ```
-      ///
-      /// Basic usage with [`rocket`](https://rocket.rs):
-      ///
-      /// ```rust,no_run
-      /// #![feature(decl_macro)]
-      ///
-      /// use rocket::{get, http::Status, post, routes};
-      /// use topgg::IncomingVote;
-      ///
-      /// #[get("/")]
-      /// fn index() -> &'static str {
-      ///   "Hello, World!"
-      /// }
-      ///
-      /// #[post("/webhook", data = "<vote>")]
-      /// fn webhook(vote: IncomingVote) -> Status {
-      ///   match vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-      ///     Some(vote) => {
-      ///       println!("{:?}", vote);
-      ///
-      ///       Status::Ok
-      ///     },
-      ///     _ => {
-      ///       println!("found an unauthorized attacker.");
-      ///
-      ///       Status::Unauthorized
-      ///     }
-      ///   }
-      /// }
-      ///
-      /// fn main() {
-      ///   rocket::ignite()
-      ///     .mount("/", routes![index, webhook])
-      ///     .launch();
       /// }
       /// ```
       #[must_use]
@@ -201,81 +146,6 @@ cfg_if::cfg_if! {
     #[async_trait::async_trait]
     pub trait VoteHandler: Send + Sync + 'static {
       /// Your vote handler's on-vote async callback. The endpoint will always return a 200 (OK) HTTP status code after running this method.
-      ///
-      /// # Examples
-      ///
-      /// Basic usage with [`axum`](https://crates.io/crates/axum):
-      ///
-      /// ```rust,no_run
-      /// use axum::{routing::get, Router, Server};
-      /// use std::{net::SocketAddr, sync::Arc};
-      /// use topgg::{Vote, VoteHandler};
-      ///
-      /// struct MyVoteHandler {}
-      ///
-      /// #[axum::async_trait]
-      /// impl VoteHandler for MyVoteHandler {
-      ///   async fn voted(&self, vote: Vote) {
-      ///     println!("{:?}", vote);
-      ///   }
-      /// }
-      ///
-      /// async fn index() -> &'static str {
-      ///   "Hello, World!"
-      /// }
-      ///
-      /// #[tokio::main]
-      /// async fn main() {
-      ///   let state = Arc::new(MyVoteHandler {});
-      ///
-      ///   let app = Router::new().route("/", get(index)).nest(
-      ///     "/webhook",
-      ///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
-      ///   );
-      ///
-      ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-      ///
-      ///   Server::bind(&addr)
-      ///     .serve(app.into_make_service())
-      ///     .await
-      ///     .unwrap();
-      /// }
-      /// ```
-      ///
-      /// Basic usage with [`warp`](https://crates.io/crates/warp):
-      ///
-      /// ```rust,no_run
-      /// use std::{net::SocketAddr, sync::Arc};
-      /// use topgg::{Vote, VoteHandler};
-      /// use warp::Filter;
-      ///
-      /// struct MyVoteHandler {}
-      ///
-      /// #[async_trait::async_trait]
-      /// impl VoteHandler for MyVoteHandler {
-      ///   async fn voted(&self, vote: Vote) {
-      ///     println!("{:?}", vote);
-      ///   }
-      /// }
-      ///
-      /// #[tokio::main]
-      /// async fn main() {
-      ///   let state = Arc::new(MyVoteHandler {});
-      ///
-      ///   // POST /webhook
-      ///   let webhook = topgg::warp::webhook(
-      ///     "webhook",
-      ///     env!("TOPGG_WEBHOOK_PASSWORD").to_string(),
-      ///     Arc::clone(&state),
-      ///   );
-      ///
-      ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
-      ///
-      ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-      ///
-      ///   warp::serve(routes).run(addr).await
-      /// }
-      /// ```
       async fn voted(&self, vote: Vote);
     }
   }

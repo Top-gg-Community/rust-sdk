@@ -1,5 +1,5 @@
 use crate::{client::InnerClient, Stats};
-use core::{mem::MaybeUninit, ops::Deref, time::Duration};
+use core::{ops::Deref, time::Duration};
 use std::sync::Arc;
 use tokio::{
   sync::Mutex,
@@ -18,7 +18,7 @@ pub struct AutoposterHandle {
 }
 
 impl AutoposterHandle {
-  /// Feeds new bot stats to this autoposter handle. The [autoposter itself][Autoposter] will automatically post it to the [Top.gg](https://top.gg) servers once appropiate.
+  /// Feeds new bot stats to this autoposter handle. The [autoposter itself][Autoposter] will automatically post it to [Top.gg](https://top.gg) servers once appropiate.
   ///
   /// # Examples
   ///
@@ -36,7 +36,7 @@ impl AutoposterHandle {
   ///
   /// // ... then in some on ready/new guild event ...
   /// let server_count = 12345;
-  /// let stats = Stats::count_based(server_count, None);
+  /// let stats = Stats::from(server_count);
   /// autoposter.feed(stats).await;
   /// ```
   ///
@@ -54,7 +54,7 @@ impl AutoposterHandle {
   ///
   /// let server_count = 12345;
   /// autoposter
-  ///   .feed(Stats::count_based(server_count, None))
+  ///   .feed(Stats::from(server_count))
   ///   .await;
   ///
   /// // this handle can be cloned and tossed around threads!
@@ -62,14 +62,14 @@ impl AutoposterHandle {
   ///
   /// // do the same thing...
   /// new_handle
-  ///   .feed(Stats::count_based(server_count, None))
+  ///   .feed(Stats::from(server_count))
   ///   .await;
   ///
   /// let another_handle = new_handle.clone();
   ///
   /// // do the same thing...
   /// another_handle
-  ///   .feed(Stats::count_based(server_count, None))
+  ///   .feed(Stats::from(server_count))
   ///   .await;
   /// ```
   pub async fn feed(&self, new_stats: Stats) {
@@ -90,7 +90,9 @@ impl Clone for AutoposterHandle {
   }
 }
 
-/// A struct that lets you automate the process of posting bot statistics to the [Top.gg API](https://docs.top.gg) in intervals.
+/// A struct that lets you automate the process of posting bot statistics to [Top.gg](https://top.gg) in intervals.
+///
+/// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once it's dropped.
 #[must_use]
 pub struct Autoposter {
   thread: JoinHandle<()>,
@@ -100,11 +102,10 @@ pub struct Autoposter {
 impl Autoposter {
   #[allow(invalid_value, clippy::uninit_assumed_init)]
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
-    // SAFETY: post_stats will be called ONLY when the ready flag is set to true.
     let handle = AutoposterHandle {
       data: Arc::new(Mutex::new(PendingData {
         ready: false,
-        stats: unsafe { MaybeUninit::uninit().assume_init() },
+        stats: Stats::count_based(0, None),
       })),
     };
 

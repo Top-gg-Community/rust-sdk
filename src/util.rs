@@ -34,13 +34,10 @@ where
 
 #[inline(always)]
 pub(crate) fn get_creation_date(id: u64) -> DateTime<Utc> {
-  // SAFETY: Discord IDs are guaranteed to be valid UNIX timestamps.
-  unsafe {
-    Utc
-      .timestamp_millis_opt(((id >> 22) + DISCORD_EPOCH) as _)
-      .single()
-      .unwrap_unchecked()
-  }
+  Utc
+    .timestamp_millis_opt(((id >> 22) + DISCORD_EPOCH) as _)
+    .single()
+    .unwrap()
 }
 
 pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {

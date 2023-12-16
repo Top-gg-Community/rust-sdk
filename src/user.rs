@@ -6,23 +6,23 @@ use serde::{Deserialize, Deserializer};
 /// A struct representing a user's social links.
 #[derive(Clone, Debug, Deserialize)]
 pub struct Socials {
-  /// A URL to this user's GitHub account.
+  /// A URL of this user's GitHub account.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub github: Option<String>,
 
-  /// A URL to this user's Instagram account.
+  /// A URL of this user's Instagram account.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub instagram: Option<String>,
 
-  /// A URL to this user's Reddit account.
+  /// A URL of this user's Reddit account.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub reddit: Option<String>,
 
-  /// A URL to this user's Twitter account.
+  /// A URL of this user's Twitter account.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub twitter: Option<String>,
 
-  /// A URL to this user's YouTube channel.
+  /// A URL of this user's YouTube channel.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub youtube: Option<String>,
 }
@@ -49,7 +49,7 @@ pub struct User {
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub bio: Option<String>,
 
-  /// A URL to this user's profile banner image.
+  /// A URL of this user's profile banner image.
   #[serde(default, deserialize_with = "util::deserialize_optional_string")]
   pub banner: Option<String>,
 
@@ -91,19 +91,6 @@ where
 
 impl User {
   /// Retrieves the creation date of this user.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let user = client.get_user(661200758510977084).await.unwrap();
-  ///
-  /// println!("{}", user.created_at());
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn created_at(&self) -> DateTime<Utc> {
@@ -112,20 +99,7 @@ impl User {
 
   /// Retrieves the Discord avatar URL of this user.
   ///
-  /// It's format will be either PNG or GIF if animated.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let user = client.get_user(661200758510977084).await.unwrap();
-  ///
-  /// println!("{}", user.avatar());
-  /// ```
+  /// It's format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
@@ -174,20 +148,6 @@ pub struct Voter {
 
 impl Voter {
   /// Retrieves the creation date of this user.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// for voter in client.get_voters().await.unwrap() {
-  ///   println!("{}", voter.created_at());
-  /// }
-  /// ```
   #[must_use]
   #[inline(always)]
   pub fn created_at(&self) -> DateTime<Utc> {
@@ -196,21 +156,7 @@ impl Voter {
 
   /// Retrieves the Discord avatar URL of this user.
   ///
-  /// It's format will be either PNG or GIF if animated.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// for voter in client.get_voters().await.unwrap() {
-  ///   println!("{}", voter.avatar());
-  /// }
-  /// ```
+  /// It's format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {

@@ -3,8 +3,7 @@ use crate::{
   user::{User, Voted, Voter},
   Error, Query, Result, Snowflake,
 };
-use core::{mem::transmute, str};
-use reqwest::{RequestBuilder, Response, StatusCode, Version};
+use reqwest::{IntoUrl, Method, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
 
 cfg_if::cfg_if! {
@@ -26,11 +25,11 @@ pub(crate) struct Ratelimit {
 }
 
 macro_rules! api {
-  ($e:expr) => {
+  ($e:literal) => {
     concat!("https://top.gg/api", $e)
   };
 
-  ($e:expr,$($rest:tt)*) => {
+  ($e:literal, $($rest:tt)*) => {
     format!(api!($e), $($rest)*)
   };
 }
@@ -40,18 +39,19 @@ pub(crate) struct InnerClient {
   token: String,
 }
 
-// this is implemented here because autoposter needs to access this function from a different thread.
+// this is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
-  async fn send_inner(&self, request: RequestBuilder, body: Vec<u8>) -> Result<Response> {
+  async fn send_inner(&self, method: Method, url: impl IntoUrl, body: Vec<u8>) -> Result<Response> {
     let mut auth = String::with_capacity(self.token.len() + 7);
     auth.push_str("Bearer ");
     auth.push_str(&self.token);
 
-    // SAFETY: the header keys and values should be valid ASCII
     match self
       .http
-      .execute(unsafe {
-        builder
+      .execute(
+        self
+          .http
+          .request(method, url)
           .header("Authorization", &auth)
           .header("Connection", "close")
           .header("Content-Length", body.len())
@@ -63,8 +63,8 @@ impl InnerClient {
           .version(Version::HTTP_11)
           .body(body)
           .build()
-          .unwrap_unchecked()
-      })
+          .unwrap(),
+      )
       .await
     {
       Ok(response) => {
@@ -76,8 +76,8 @@ impl InnerClient {
           Err(match status {
             StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
             StatusCode::NOT_FOUND => Error::NotFound,
-            StatusCode::TOO_MANY_REQUESTS => match response.json() {
-              Ok(Ratelimit { retry_after }) => Error::Ratelimit {
+            StatusCode::TOO_MANY_REQUESTS => match response.json::<Ratelimit>().await {
+              Ok(ratelimit) => Error::Ratelimit {
                 retry_after: ratelimit.retry_after,
               },
               _ => Error::InternalServerError,
@@ -92,23 +92,28 @@ impl InnerClient {
   }
 
   #[inline(always)]
-  pub(crate) async fn send<T>(&self, request: RequestBuilder, body: Option<Vec<u8>>) -> Result<T>
+  pub(crate) async fn send<T>(
+    &self,
+    method: Method,
+    url: impl IntoUrl,
+    body: Option<Vec<u8>>,
+  ) -> Result<T>
   where
     T: DeserializeOwned,
   {
-    self
-      .send_inner(request, body.unwrap_or_default())
-      .await
-      .json()
-      .map_err(|_| Error::InternalServerError)
+    match self.send_inner(method, url, body.unwrap_or_default()).await {
+      Ok(out) => out.json().await.map_err(|_| Error::InternalServerError),
+      Err(err) => Err(err),
+    }
   }
 
   pub(crate) async fn post_stats(&self, new_stats: &Stats) -> Result<()> {
-    // SAFETY: no part of the Stats struct would cause an error in the serialization process.
-    let body = unsafe { serde_json::to_vec(new_stats).unwrap_unchecked() };
-
     self
-      .send_inner(self.http.post(api!("/bots/stats")), body)
+      .send_inner(
+        Method::POST,
+        api!("/bots/stats"),
+        serde_json::to_vec(new_stats).unwrap(),
+      )
       .await
       .map(|_| ())
   }
@@ -124,16 +129,6 @@ impl Client {
   /// Creates a brand new client instance from a [Top.gg](https://top.gg) token.
   ///
   /// You can get a [Top.gg](https://top.gg) token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section)
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let _client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// ```
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {
@@ -158,36 +153,17 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let user = client.get_user(661200758510977084).await.unwrap();
-  ///
-  /// assert_eq!(user.username, "null");
-  /// assert_eq!(user.id, 661200758510977084);
-  ///
-  /// println!("{:?}", user);
-  /// ```
   pub async fn get_user<I>(&self, id: I) -> Result<User>
   where
     I: Snowflake,
   {
     self
       .inner
-      .send(
-        self.inner.http.get(api!("/users/{}", id.as_snowflake())),
-        None,
-      )
+      .send(Method::GET, api!("/users/{}", id.as_snowflake()), None)
       .await
   }
 
@@ -202,37 +178,17 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  ///
-  /// assert_eq!(bot.username, "Luca");
-  /// assert_eq!(bot.discriminator, "1375");
-  /// assert_eq!(bot.id, 264811613708746752);
-  ///
-  /// println!("{:?}", bot);
-  /// ```
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: Snowflake,
   {
     self
       .inner
-      .send(
-        self.inner.http.get(api!("/bots/{}", id.as_snowflake())),
-        None,
-      )
+      .send(Method::GET, api!("/bots/{}", id.as_snowflake()), None)
       .await
   }
 
@@ -245,26 +201,13 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  /// let stats = client.get_stats().await.unwrap();
-  ///
-  /// println!("{:?}", stats);
-  /// ```
   pub async fn get_stats(&self) -> Result<Stats> {
     self
       .inner
-      .send(self.inner.http.get(api!("/bots/stats")), None)
+      .send(Method::GET, api!("/bots/stats"), None)
       .await
   }
 
@@ -277,31 +220,15 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// let server_count = 12345;
-  /// client
-  ///   .post_stats(Stats::count_based(server_count, None))
-  ///   .await
-  ///   .unwrap();
-  /// ```
   #[inline(always)]
   pub async fn post_stats(&self, new_stats: Stats) -> Result<()> {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to the [Top.gg API](https://docs.top.gg) in intervals.
+  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to [Top.gg](https://top.gg) in intervals.
   ///
   /// # Panics
   ///
@@ -325,7 +252,7 @@ impl Client {
   ///
   /// // ... then in some on ready/new guild event ...
   /// let server_count = 12345;
-  /// let stats = Stats::count_based(server_count, None);
+  /// let stats = Stats::from(server_count);
   /// autoposter.feed(stats).await;
   /// ```
   #[cfg(feature = "autoposter")]
@@ -352,27 +279,13 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// for voter in client.get_voters().await.unwrap() {
-  ///   println!("{:?}", voter);
-  /// }
-  /// ```
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
     self
       .inner
-      .send(self.inner.http.get(api!("/bots/votes")), None)
+      .send(Method::GET, api!("/bots/votes"), None)
       .await
   }
 
@@ -387,7 +300,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   ///
@@ -422,10 +335,8 @@ impl Client {
     self
       .inner
       .send::<Bots>(
-        self
-          .inner
-          .http
-          .get(api!("/bots{}", query.into().query_string())),
+        Method::GET,
+        api!("/bots{}", query.into().query_string()),
         None,
       )
       .await
@@ -443,40 +354,23 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// if client.has_voted(661200758510977084).await.unwrap() {
-  ///   println!("checks out");
-  /// }
-  /// ```
   #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,
   {
-    // SAFETY: res.voted will always be either 0 or 1.
     self
       .inner
       .send::<Voted>(
-        self
-          .inner
-          .http
-          .get(api!("/bots/votes?userId={}", user_id.as_snowflake())),
+        Method::GET,
+        api!("/bots/votes?userId={}", user_id.as_snowflake()),
         None,
       )
       .await
-      .map(|res| unsafe { transmute(res.voted) })
+      .map(|res| res.voted != 0)
   }
 
   /// Checks if the weekend multiplier is active.
@@ -488,27 +382,13 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to the [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Client;
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// if client.is_weekend().await.unwrap() {
-  ///   println!("guess what? it's the weekend! woohoo! 🎉🎉🎉🎉");
-  /// }
-  /// ```
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
-      .send::<IsWeekend>(self.inner.http.get(api!("/weekend")), None)
+      .send::<IsWeekend>(Method::GET, api!("/weekend"), None)
       .await
       .map(|res| res.is_weekend)
   }
