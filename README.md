@@ -114,7 +114,7 @@ async fn main() {
 
   let server_count = 12345;
   client
-    .post_stats(Stats::count_based(server_count, None))
+    .post_stats(Stats::from(server_count))
     .await
     .unwrap();
 }
