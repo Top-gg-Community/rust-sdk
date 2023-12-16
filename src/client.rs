@@ -357,7 +357,6 @@ impl Client {
   /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
-  #[allow(clippy::transmute_int_to_bool)]
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,

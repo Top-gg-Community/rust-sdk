@@ -100,7 +100,6 @@ pub struct Autoposter {
 }
 
 impl Autoposter {
-  #[allow(invalid_value, clippy::uninit_assumed_init)]
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
     let handle = AutoposterHandle {
       data: Arc::new(Mutex::new(PendingData {
