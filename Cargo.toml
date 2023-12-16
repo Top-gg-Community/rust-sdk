@@ -21,7 +21,7 @@ urlencoding = { version = "2", optional = true }
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
 
-rocket = { version = "0.5", default-features = false, optional = true }
+rocket = { version = "0.5", default-features = false, features = ["json"], optional = true }
 axum = { version = "0.7", default-features = false, optional = true, features = ["http1", "tokio"] }
 async-trait = { version = "0.1", optional = true }
 warp = { version = "0.3", default-features = false, optional = true }
@@ -38,7 +38,7 @@ api = ["chrono", "reqwest", "serde_json", "urlencoding"]
 autoposter = ["api", "tokio"]
 
 webhook = []
-rocket = ["webhook", "serde_json", "dep:rocket"]
+rocket = ["webhook", "dep:rocket"]
 axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
 warp = ["webhook", "async-trait", "dep:warp"]
 actix-web = ["webhook", "dep:actix-web"]
