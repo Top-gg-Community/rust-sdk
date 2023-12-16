@@ -92,7 +92,7 @@ impl Clone for AutoposterHandle {
 
 /// A struct that lets you automate the process of posting bot statistics to [Top.gg](https://top.gg) in intervals.
 ///
-/// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once it's dropped.
+/// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once this struct is dropped.
 #[must_use]
 pub struct Autoposter {
   thread: JoinHandle<()>,
