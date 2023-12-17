@@ -42,7 +42,6 @@ use topgg::Client;
 #[tokio::main]
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  
   let user = client.get_user(661200758510977084).await.unwrap();
   
   assert_eq!(user.username, "null");
@@ -62,7 +61,6 @@ use topgg::Client;
 #[tokio::main]
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  
   let bot = client.get_bot(264811613708746752).await.unwrap();
   
   assert_eq!(bot.username, "Luca");
