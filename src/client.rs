@@ -128,7 +128,7 @@ pub struct Client {
 impl Client {
   /// Creates a brand new client instance from a [Top.gg](https://top.gg) token.
   ///
-  /// You can get a [Top.gg](https://top.gg) token if you own a listed Discord bot on [Top.gg](https://top.gg) (open the edit page, see in `Webhooks` section)
+  /// To get your [Top.gg](https://top.gg) token, [view this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient {
