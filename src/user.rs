@@ -99,7 +99,7 @@ impl User {
 
   /// Retrieves the Discord avatar URL of this user.
   ///
-  /// It's format will either be PNG or GIF if animated.
+  /// Its format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
@@ -156,7 +156,7 @@ impl Voter {
 
   /// Retrieves the Discord avatar URL of this user.
   ///
-  /// It's format will either be PNG or GIF if animated.
+  /// Its format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {

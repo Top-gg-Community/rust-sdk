@@ -120,7 +120,7 @@ impl Bot {
 
   /// Retrieves the avatar URL of this bot.
   ///
-  /// It's format will either be PNG or GIF if animated.
+  /// Its format will either be PNG or GIF if animated.
   #[must_use]
   #[inline(always)]
   pub fn avatar(&self) -> String {
