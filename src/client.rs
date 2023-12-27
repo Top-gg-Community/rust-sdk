@@ -42,17 +42,13 @@ pub(crate) struct InnerClient {
 // this is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
   async fn send_inner(&self, method: Method, url: impl IntoUrl, body: Vec<u8>) -> Result<Response> {
-    let mut auth = String::with_capacity(self.token.len() + 7);
-    auth.push_str("Bearer ");
-    auth.push_str(&self.token);
-
     match self
       .http
       .execute(
         self
           .http
           .request(method, url)
-          .header("Authorization", &auth)
+          .header("Authorization", &self.token)
           .header("Connection", "close")
           .header("Content-Length", body.len())
           .header("Content-Type", "application/json")
@@ -130,7 +126,9 @@ impl Client {
   ///
   /// To get your [Top.gg](https://top.gg) token, [view this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
   #[inline(always)]
-  pub fn new(token: String) -> Self {
+  pub fn new(mut token: String) -> Self {
+    token.insert_str(0, "Bearer ");
+
     let inner = InnerClient {
       http: reqwest::Client::new(),
       token,

@@ -308,15 +308,15 @@ impl Stats {
   /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
   #[must_use]
   pub fn server_count(&self) -> Option<usize> {
-    self
-      .server_count
-      .or(self.shards.as_ref().and_then(|shards| {
+    self.server_count.or_else(|| {
+      self.shards.as_ref().and_then(|shards| {
         if shards.is_empty() {
           None
         } else {
           Some(shards.iter().copied().sum())
         }
-      }))
+      })
+    })
   }
 }
 
