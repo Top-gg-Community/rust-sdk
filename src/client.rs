@@ -3,7 +3,7 @@ use crate::{
   user::{User, Voted, Voter},
   Error, Query, Result, Snowflake,
 };
-use reqwest::{IntoUrl, Method, Response, StatusCode, Version};
+use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
 
 cfg_if::cfg_if! {
@@ -48,12 +48,12 @@ impl InnerClient {
         self
           .http
           .request(method, url)
-          .header("Authorization", &self.token)
-          .header("Connection", "close")
-          .header("Content-Length", body.len())
-          .header("Content-Type", "application/json")
+          .header(header::AUTHORIZATION, &self.token)
+          .header(header::CONNECTION, "close")
+          .header(header::CONTENT_LENGTH, body.len())
+          .header(header::CONTENT_TYPE, "application/json")
           .header(
-            "User-Agent",
+            header::USER_AGENT,
             "topgg (https://github.com/top-gg/rust-sdk) Rust",
           )
           .version(Version::HTTP_11)
