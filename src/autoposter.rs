@@ -109,16 +109,15 @@ impl Autoposter {
 
     Self {
       thread: spawn(async move {
-        notify.notified().await;
-
         loop {
+          notify.notified().await;
+
           {
             let lock = thread_stats.lock().await;
             let _ = client.post_stats(&lock).await;
           };
 
           sleep(interval).await;
-          notify.notified().await;
         }
       }),
       handle,
