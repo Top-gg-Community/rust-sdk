@@ -115,7 +115,7 @@ impl Autoposter {
       thread: spawn(async move {
         loop {
           {
-            let _ = data.sem.acquire().await.unwrap();
+            data.sem.acquire().await.unwrap().forget();
             let lock = data.stats.lock().await;
             let _ = client.post_stats(&lock).await;
           };
