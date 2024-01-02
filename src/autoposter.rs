@@ -2,14 +2,14 @@ use crate::{client::InnerClient, Stats};
 use core::{ops::Deref, time::Duration};
 use std::sync::Arc;
 use tokio::{
-  sync::{Mutex, Notify},
+  sync::{Mutex, Semaphore},
   task::{spawn, JoinHandle},
   time::sleep,
 };
 
 struct Data {
   stats: Mutex<Stats>,
-  notify: Notify,
+  sem: Semaphore,
 }
 
 /// A fully [`Clone`]able and thread-safe struct that lets you remotely feed bot statistics to the [`Autoposter`].
@@ -77,7 +77,9 @@ impl AutoposterHandle {
       *lock = new_stats;
     };
 
-    self.data.notify.notify_one();
+    if self.data.sem.available_permits() == 0 {
+      self.data.sem.add_permits(1);
+    }
   }
 }
 
@@ -104,19 +106,16 @@ impl Autoposter {
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
     let data = Arc::new(Data {
       stats: Mutex::const_new(Stats::from(0)),
-      notify: Notify::const_new(),
+      sem: Semaphore::const_new(0),
     });
 
-    let handle = AutoposterHandle {
-      data: data.clone(),
-    };
+    let handle = AutoposterHandle { data: data.clone() };
 
     Self {
       thread: spawn(async move {
         loop {
-          data.notify.notified().await;
-
           {
+            let _ = data.sem.acquire().await.unwrap();
             let lock = data.stats.lock().await;
             let _ = client.post_stats(&lock).await;
           };
