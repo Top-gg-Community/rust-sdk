@@ -1,7 +1,7 @@
 use crate::{
   bot::{Bot, Bots, IsWeekend, Stats},
   user::{User, Voted, Voter},
-  Error, Query, Result, Snowflake,
+  util, Error, Query, Result, Snowflake,
 };
 use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
@@ -72,7 +72,7 @@ impl InnerClient {
           Err(match status {
             StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
             StatusCode::NOT_FOUND => Error::NotFound,
-            StatusCode::TOO_MANY_REQUESTS => match response.json::<Ratelimit>().await {
+            StatusCode::TOO_MANY_REQUESTS => match util::parse_json::<Ratelimit>(response).await {
               Ok(ratelimit) => Error::Ratelimit {
                 retry_after: ratelimit.retry_after,
               },
@@ -98,7 +98,7 @@ impl InnerClient {
     T: DeserializeOwned,
   {
     match self.send_inner(method, url, body.unwrap_or_default()).await {
-      Ok(out) => out.json().await.map_err(|_| Error::InternalServerError),
+      Ok(response) => util::parse_json(response).await,
       Err(err) => Err(err),
     }
   }

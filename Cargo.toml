@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.2.1"
+version = "1.2.2"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "The official Rust wrapper for the Top.gg API"
@@ -13,7 +13,7 @@ exclude = [".gitattributes", ".github/", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
 cfg-if = "1"
-reqwest = { version = "0.11", features = ["json"], optional = true }
+reqwest = { version = "0.11", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
 urlencoding = { version = "2", optional = true }

@@ -2,19 +2,15 @@ use crate::{client::InnerClient, Stats};
 use core::{ops::Deref, time::Duration};
 use std::sync::Arc;
 use tokio::{
-  sync::Mutex,
+  sync::{Mutex, Notify},
   task::{spawn, JoinHandle},
   time::sleep,
 };
 
-struct PendingData {
-  ready: bool,
-  stats: Stats,
-}
-
 /// A fully [`Clone`]able and thread-safe struct that lets you remotely feed bot statistics to the [`Autoposter`].
 pub struct AutoposterHandle {
-  data: Arc<Mutex<PendingData>>,
+  stats: Arc<Mutex<Stats>>,
+  notify: Arc<Notify>,
 }
 
 impl AutoposterHandle {
@@ -72,10 +68,12 @@ impl AutoposterHandle {
   ///   .await;
   /// ```
   pub async fn feed(&self, new_stats: Stats) {
-    let mut lock = self.data.lock().await;
+    {
+      let mut lock = self.stats.lock().await;
+      *lock = new_stats;
+    };
 
-    lock.ready = true; // flag the PendingData object as containing new data.
-    lock.stats = new_stats;
+    self.notify.notify_one();
   }
 }
 
@@ -84,7 +82,8 @@ impl Clone for AutoposterHandle {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
-      data: Arc::clone(&self.data),
+      stats: Arc::clone(&self.stats),
+      notify: Arc::clone(&self.notify),
     }
   }
 }
@@ -100,26 +99,26 @@ pub struct Autoposter {
 
 impl Autoposter {
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
-    let handle = AutoposterHandle {
-      data: Arc::new(Mutex::new(PendingData {
-        ready: false,
-        stats: Stats::count_based(0, None),
-      })),
-    };
+    let notify = Arc::new(Notify::const_new());
+    let thread_stats = Arc::new(Mutex::const_new(Stats::from(0)));
 
-    let thread_data = Arc::clone(&handle.data);
+    let handle = AutoposterHandle {
+      stats: Arc::clone(&thread_stats),
+      notify: Arc::clone(&notify),
+    };
 
     Self {
       thread: spawn(async move {
+        notify.notified().await;
+
         loop {
+          {
+            let lock = thread_stats.lock().await;
+            let _ = client.post_stats(&lock).await;
+          };
+
           sleep(interval).await;
-
-          let mut lock = thread_data.lock().await;
-
-          if lock.ready {
-            let _ = client.post_stats(&lock.stats).await;
-            lock.ready = false; // flag the PendingData object as out-of-date.
-          }
+          notify.notified().await;
         }
       }),
       handle,
