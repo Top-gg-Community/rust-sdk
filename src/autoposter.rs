@@ -7,10 +7,14 @@ use tokio::{
   time::sleep,
 };
 
+struct Data {
+  stats: Mutex<Stats>,
+  notify: Notify,
+}
+
 /// A fully [`Clone`]able and thread-safe struct that lets you remotely feed bot statistics to the [`Autoposter`].
 pub struct AutoposterHandle {
-  stats: Arc<Mutex<Stats>>,
-  notify: Arc<Notify>,
+  data: Arc<Data>,
 }
 
 impl AutoposterHandle {
@@ -69,11 +73,11 @@ impl AutoposterHandle {
   /// ```
   pub async fn feed(&self, new_stats: Stats) {
     {
-      let mut lock = self.stats.lock().await;
+      let mut lock = self.data.stats.lock().await;
       *lock = new_stats;
     };
 
-    self.notify.notify_one();
+    self.data.notify.notify_one();
   }
 }
 
@@ -82,8 +86,7 @@ impl Clone for AutoposterHandle {
   #[inline(always)]
   fn clone(&self) -> Self {
     Self {
-      stats: Arc::clone(&self.stats),
-      notify: Arc::clone(&self.notify),
+      data: Arc::clone(&self.data),
     }
   }
 }
@@ -99,21 +102,22 @@ pub struct Autoposter {
 
 impl Autoposter {
   pub(crate) fn new(client: Arc<InnerClient>, interval: Duration) -> Self {
-    let notify = Arc::new(Notify::const_new());
-    let thread_stats = Arc::new(Mutex::const_new(Stats::from(0)));
+    let data = Arc::new(Data {
+      stats: Mutex::const_new(Stats::from(0)),
+      notify: Notify::const_new(),
+    });
 
     let handle = AutoposterHandle {
-      stats: Arc::clone(&thread_stats),
-      notify: Arc::clone(&notify),
+      data: data.clone(),
     };
 
     Self {
       thread: spawn(async move {
         loop {
-          notify.notified().await;
+          data.notify.notified().await;
 
           {
-            let lock = thread_stats.lock().await;
+            let lock = data.stats.lock().await;
             let _ = client.post_stats(&lock).await;
           };
 
