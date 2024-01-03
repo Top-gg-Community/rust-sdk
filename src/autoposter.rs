@@ -72,13 +72,12 @@ impl AutoposterHandle {
   ///   .await;
   /// ```
   pub async fn feed(&self, new_stats: Stats) {
-    {
+    if self.data.sem.available_permits() < 1 {
       let mut lock = self.data.stats.lock().await;
-      *lock = new_stats;
-    };
 
-    if self.data.sem.available_permits() == 0 {
       self.data.sem.add_permits(1);
+
+      *lock = new_stats;
     }
   }
 }
