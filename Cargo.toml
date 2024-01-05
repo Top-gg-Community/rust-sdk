@@ -20,6 +20,9 @@ urlencoding = { version = "2", optional = true }
 
 serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
+twilight-model = { version = "0.15", optional = true }
+twilight-cache-inmemory = { version = "0.15", optional = true }
+
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
 
@@ -41,6 +44,9 @@ autoposter = ["api", "async-trait", "tokio"]
 
 serenity = ["dep:serenity"]
 serenity-cached = ["serenity", "serenity/cache"]
+
+twilight = ["twilight-model"]
+twilight-cached = ["twilight", "twilight-cache-inmemory"]
 
 webhook = []
 rocket = ["webhook", "dep:rocket"]
