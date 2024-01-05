@@ -9,7 +9,7 @@ cfg_if::cfg_if! {
     mod error;
     mod util;
 
-    /// Bot-related structs.
+    /// Bot-related traits and structs.
     pub mod bot;
 
     /// User-related structs.
@@ -24,11 +24,13 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "autoposter")] {
-    mod autoposter;
+  if #[cfg(all(feature = "autoposter", any(feature = "serenity", feature = "twilight")))] {
+    /// Autoposter-related traits and structs.
+    #[cfg_attr(docsrs, doc(cfg(all(feature = "autoposter", any(feature = "serenity", feature = "twilight")))))]
+    pub mod autoposter;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-    pub use autoposter::{Autoposter, AutoposterHandle};
+    #[doc(inline)]
+    pub use autoposter::{Autoposter, SharedStats};
   }
 }
 

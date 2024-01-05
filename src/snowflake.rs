@@ -22,62 +22,108 @@ pub trait SnowflakeSealed {
   fn as_snowflake(&self) -> u64;
 }
 
-/// A trait that represents any data type that can be interpreted as a Discord snowflake/ID.
+/// A private trait that represents any datatype that can be interpreted as a Discord snowflake/ID.
 pub trait Snowflake: SnowflakeSealed {}
 
-impl Snowflake for u64 {}
+macro_rules! impl_snowflake(
+  ($self:ident,$t:ty,$body:expr) => {
+    impl Snowflake for $t {}
 
-impl SnowflakeSealed for u64 {
-  #[inline(always)]
-  fn as_snowflake(&self) -> u64 {
-    *self
+    impl SnowflakeSealed for $t {
+      #[inline(always)]
+      fn as_snowflake(&$self) -> u64 {
+        $body
+      }
+    }
   }
-}
+);
 
-impl<S> Snowflake for &S where S: AsRef<str> + ?Sized {}
+impl_snowflake!(self, u64, *self);
 
-impl<S> SnowflakeSealed for &S
-where
-  S: AsRef<str> + ?Sized,
-{
-  #[inline(always)]
-  fn as_snowflake(&self) -> u64 {
-    (*self)
-      .as_ref()
-      .parse()
-      .expect("Invalid snowflake as it's not numeric.")
+macro_rules! impl_string(
+  ($($t:ty),+) => {$(
+    impl_snowflake!(self, $t, (*self).parse().expect("invalid snowflake as it's not numeric"));
+  )+}
+);
+
+impl_string!(&str, String);
+
+cfg_if::cfg_if! {
+  if #[cfg(feature = "api")] {
+    macro_rules! impl_topgg_idstruct(
+      ($($t:ty),+) => {$(
+        impl_snowflake!(self, &$t, (*self).id);
+      )+}
+    );
+
+    impl_topgg_idstruct!(
+      crate::bot::Bot,
+      crate::user::User,
+      crate::user::Voter
+    );
   }
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "api")] {
-    use crate::{
-      bot::Bot,
-      user::{User, Voter},
-    };
+  if #[cfg(feature = "serenity")] {
+    impl_snowflake!(
+      self,
+      &serenity::model::guild::Member,
+      (*self).user.id.get()
+    );
 
-    macro_rules! impl_idstruct(
+    impl_snowflake!(
+      self,
+      &serenity::model::guild::PartialMember,
+      (*self).user.as_ref().expect("user property in PartialMember is None").id.get()
+    );
+
+    macro_rules! impl_serenity_id(
+      ($($t:ty),+) => {$(
+        impl_snowflake!(self, $t, (*self).get());
+      )+}
+    );
+
+    impl_serenity_id!(
+      serenity::model::id::GenericId,
+      serenity::model::id::UserId
+    );
+
+    macro_rules! impl_serenity_idstruct(
+      ($($t:ty),+) => {$(
+        impl_snowflake!(self, &$t, (*self).id.get());
+      )+}
+    );
+
+    impl_serenity_idstruct!(
+      serenity::model::gateway::PresenceUser,
+      serenity::model::user::CurrentUser,
+      serenity::model::user::User
+    );
+  }
+}
+
+cfg_if::cfg_if! {
+  if #[cfg(feature = "serenity-cached")] {
+    use core::ops::Deref;
+
+    macro_rules! impl_serenity_cacheref(
       ($($t:ty),+) => {$(
         impl Snowflake for $t {}
 
         impl SnowflakeSealed for $t {
           #[inline(always)]
           fn as_snowflake(&self) -> u64 {
-            self.id
-          }
-        }
-
-        impl Snowflake for &$t {}
-
-        impl SnowflakeSealed for &$t {
-          #[inline(always)]
-          fn as_snowflake(&self) -> u64 {
-            (*self).id
+            SnowflakeSealed::as_snowflake(&self.deref())
           }
         }
       )+}
     );
 
-    impl_idstruct!(Bot, User, Voter);
+    impl_serenity_cacheref!(
+      serenity::cache::UserRef<'_>,
+      serenity::cache::MemberRef<'_>,
+      serenity::cache::CurrentUserRef<'_>
+    );
   }
 }

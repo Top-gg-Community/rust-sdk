@@ -1,15 +1,14 @@
 use crate::{
   bot::{Bot, Bots, IsWeekend, Stats},
   user::{User, Voted, Voter},
-  util, Error, Query, Result, Snowflake,
+  util, Query, Result, Snowflake,
 };
-use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
-use serde::{de::DeserializeOwned, Deserialize};
+use reqwest::{IntoUrl, Method};
+use serde::de::DeserializeOwned;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
-    use core::time::Duration;
-    use crate::Autoposter;
+    use crate::autoposter;
     use std::sync::Arc;
 
     type SyncedClient = Arc<InnerClient>;
@@ -18,75 +17,13 @@ cfg_if::cfg_if! {
   }
 }
 
-#[derive(Deserialize)]
-#[serde(rename = "kebab-case")]
-pub(crate) struct Ratelimit {
-  pub(crate) retry_after: u16,
-}
-
-macro_rules! api {
-  ($e:literal) => {
-    concat!("https://top.gg/api", $e)
-  };
-
-  ($e:literal, $($rest:tt)*) => {
-    format!(api!($e), $($rest)*)
-  };
-}
-
-pub(crate) struct InnerClient {
+pub struct InnerClient {
   http: reqwest::Client,
   token: String,
 }
 
 // this is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
-  async fn send_inner(&self, method: Method, url: impl IntoUrl, body: Vec<u8>) -> Result<Response> {
-    match self
-      .http
-      .execute(
-        self
-          .http
-          .request(method, url)
-          .header(header::AUTHORIZATION, &self.token)
-          .header(header::CONNECTION, "close")
-          .header(header::CONTENT_LENGTH, body.len())
-          .header(header::CONTENT_TYPE, "application/json")
-          .header(
-            header::USER_AGENT,
-            "topgg (https://github.com/top-gg/rust-sdk) Rust",
-          )
-          .version(Version::HTTP_11)
-          .body(body)
-          .build()
-          .unwrap(),
-      )
-      .await
-    {
-      Ok(response) => {
-        let status = response.status();
-
-        if status.is_success() {
-          Ok(response)
-        } else {
-          Err(match status {
-            StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
-            StatusCode::NOT_FOUND => Error::NotFound,
-            StatusCode::TOO_MANY_REQUESTS => match util::parse_json::<Ratelimit>(response).await {
-              Ok(ratelimit) => Error::Ratelimit {
-                retry_after: ratelimit.retry_after,
-              },
-              _ => Error::InternalServerError,
-            },
-            _ => Error::InternalServerError,
-          })
-        }
-      }
-
-      Err(err) => Err(Error::InternalClientError(err)),
-    }
-  }
-
   #[inline(always)]
   pub(crate) async fn send<T>(
     &self,
@@ -97,21 +34,23 @@ impl InnerClient {
   where
     T: DeserializeOwned,
   {
-    match self.send_inner(method, url, body.unwrap_or_default()).await {
+    match util::request(
+      &self.http,
+      &self.token,
+      method,
+      url,
+      body.unwrap_or_default(),
+    )
+    .await
+    {
       Ok(response) => util::parse_json(response).await,
       Err(err) => Err(err),
     }
   }
 
+  #[inline(always)]
   pub(crate) async fn post_stats(&self, new_stats: &Stats) -> Result<()> {
-    self
-      .send_inner(
-        Method::POST,
-        api!("/bots/stats"),
-        serde_json::to_vec(new_stats).unwrap(),
-      )
-      .await
-      .map(|_| ())
+    util::post_stats(&self.http, &self.token, new_stats).await
   }
 }
 
@@ -161,7 +100,11 @@ impl Client {
   {
     self
       .inner
-      .send(Method::GET, api!("/users/{}", id.as_snowflake()), None)
+      .send(
+        Method::GET,
+        util::api!("/users/{}", id.as_snowflake()),
+        None,
+      )
       .await
   }
 
@@ -186,7 +129,7 @@ impl Client {
   {
     self
       .inner
-      .send(Method::GET, api!("/bots/{}", id.as_snowflake()), None)
+      .send(Method::GET, util::api!("/bots/{}", id.as_snowflake()), None)
       .await
   }
 
@@ -205,7 +148,7 @@ impl Client {
   pub async fn get_stats(&self) -> Result<Stats> {
     self
       .inner
-      .send(Method::GET, api!("/bots/stats"), None)
+      .send(Method::GET, util::api!("/bots/stats"), None)
       .await
   }
 
@@ -226,47 +169,6 @@ impl Client {
     self.inner.post_stats(&new_stats).await
   }
 
-  /// Creates a new autoposter instance for this client which lets you automate the process of posting your Discord bot's statistics to [Top.gg](https://top.gg) in intervals.
-  ///
-  /// # Panics
-  ///
-  /// Panics if any of the following conditions are met:
-  /// - An autoposter thread is already running
-  /// - The interval argument is shorter than 15 minutes (900 seconds)
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use core::time::Duration;
-  /// use topgg::{Client, Stats};
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
-  /// // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
-  /// // the autopost thread will stop once it's dropped.
-  /// let autoposter = client.new_autoposter(Duration::from_secs(1800));
-  ///
-  /// // ... then in some on ready/new guild event ...
-  /// let server_count = 12345;
-  /// autoposter.feed(Stats::from(server_count)).await;
-  /// ```
-  #[cfg(feature = "autoposter")]
-  #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
-  pub fn new_autoposter(&self, interval: Duration) -> Autoposter {
-    assert!(
-      Arc::strong_count(&self.inner) < 2,
-      "An autoposter thread is already running."
-    );
-    assert!(
-      interval.as_secs() >= 900,
-      "The interval mustn't be shorter than 15 minutes."
-    );
-
-    Autoposter::new(Arc::clone(&self.inner), interval)
-  }
-
   /// Fetches your Discord bot's last 1000 voters.
   ///
   /// # Panics
@@ -282,7 +184,7 @@ impl Client {
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
     self
       .inner
-      .send(Method::GET, api!("/bots/votes"), None)
+      .send(Method::GET, util::api!("/bots/votes"), None)
       .await
   }
 
@@ -333,7 +235,7 @@ impl Client {
       .inner
       .send::<Bots>(
         Method::GET,
-        api!("/bots{}", query.into().query_string()),
+        util::api!("/bots{}", query.into().query_string()),
         None,
       )
       .await
@@ -362,7 +264,7 @@ impl Client {
       .inner
       .send::<Voted>(
         Method::GET,
-        api!("/bots/votes?userId={}", user_id.as_snowflake()),
+        util::api!("/bots/votes?userId={}", user_id.as_snowflake()),
         None,
       )
       .await
@@ -384,8 +286,29 @@ impl Client {
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
-      .send::<IsWeekend>(Method::GET, api!("/weekend"), None)
+      .send::<IsWeekend>(Method::GET, util::api!("/weekend"), None)
       .await
       .map(|res| res.is_weekend)
+  }
+}
+
+cfg_if::cfg_if! {
+  if #[cfg(feature = "autoposter")] {
+    #[async_trait::async_trait]
+    impl autoposter::IntoClientSealed for Client {
+      type ArcInner = InnerClient;
+
+      #[inline(always)]
+      fn get_arc(&self) -> Arc<Self::ArcInner> {
+        Arc::clone(&self.inner)
+      }
+
+      #[inline(always)]
+      async fn post_stats(arc: &Self::ArcInner, stats: &Stats) {
+        let _ = arc.post_stats(stats).await;
+      }
+    }
+
+    impl autoposter::IntoClient for Client {}
   }
 }

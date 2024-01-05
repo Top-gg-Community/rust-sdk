@@ -211,7 +211,7 @@ pub(crate) struct Bots {
 ///
 /// let server_count = 12345;
 /// let shard_count = 10;
-/// let _stats = Stats::count_based(server_count, Some(shard_count));
+/// let _stats = Stats::from_count(server_count, Some(shard_count));
 /// ```
 ///
 /// Solely from shards information:
@@ -220,22 +220,33 @@ pub(crate) struct Bots {
 /// use topgg::Stats;
 ///
 /// // the shard posting this data has 456 servers.
-/// let _stats = Stats::shards_based([123, 456, 789], Some(1));
+/// let _stats = Stats::from_shards([123, 456, 789], Some(1));
 /// ```
 #[must_use]
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Stats {
   #[serde(default, deserialize_with = "util::deserialize_default")]
   shards: Option<Vec<usize>>,
-  shard_count: Option<usize>,
-  server_count: Option<usize>,
+  pub(crate) shard_count: Option<usize>,
+  pub(crate) server_count: Option<usize>,
   #[serde(default, deserialize_with = "util::deserialize_default")]
   shard_id: Option<usize>,
 }
 
 impl Stats {
+  /// Creates a [`Stats`] struct from a serenity [`Context`][serenity::client::Context].
+  #[inline(always)]
+  #[cfg(feature = "serenity")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
+  pub fn from_context(context: &serenity::client::Context) -> Self {
+    Self::from_count(
+      context.cache.guilds().len(),
+      Some(context.cache.shard_count() as _),
+    )
+  }
+
   /// Creates a [`Stats`] struct based on total server and optionally, shard count data.
-  pub const fn count_based(server_count: usize, shard_count: Option<usize>) -> Self {
+  pub const fn from_count(server_count: usize, shard_count: Option<usize>) -> Self {
     Self {
       server_count: Some(server_count),
       shard_count,
@@ -258,9 +269,9 @@ impl Stats {
   /// use topgg::Stats;
   ///
   /// // the shard posting this data has 456 servers.
-  /// let _stats = Stats::shards_based([123, 456, 789], Some(1));
+  /// let _stats = Stats::from_shards([123, 456, 789], Some(1));
   /// ```
-  pub fn shards_based<A>(shards: A, shard_index: Option<usize>) -> Self
+  pub fn from_shards<A>(shards: A, shard_index: Option<usize>) -> Self
   where
     A: IntoIterator<Item = usize>,
   {
@@ -324,7 +335,7 @@ impl Stats {
 impl From<usize> for Stats {
   #[inline(always)]
   fn from(server_count: usize) -> Self {
-    Self::count_based(server_count, None)
+    Self::from_count(server_count, None)
   }
 }
 
