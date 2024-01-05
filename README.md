@@ -14,7 +14,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then [view this tutorial on how to retrieve yours](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff). After that, add the following line to the `dependencies` section of your `Cargo.toml`:
 
 ```toml
-topgg = "1.2"
+topgg = "1.3"
 ```
 
 ## Features
@@ -28,6 +28,10 @@ This library provides several feature flags that can be enabled/disabled in `Car
   - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
   - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
+- **`serenity`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching disabled).
+  - **`serenity-cached`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching enabled).
+- **`twilight`**: Extra helpers for working with [`twilight`](https://crates.io/crates/twilight) library (with bot caching disabled).
+  - **`twilight-cached`**: Extra helpers for working with [`twilight`](https://crates.io/crates/serenity) library (with bot caching enabled).
 
 ## Examples
 
@@ -137,32 +141,65 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b>: Automating the process of periodically posting your Discord bot's statistics</summary>
+<summary><b><code>autoposter</code></b> and <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i>serenity</i> library</summary>
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.2", features = ["autoposter"] }
+# using serenity with guild caching disabled
+topgg = { version = "1.3", features = ["autoposter", "serenity"] }
+
+# using serenity with guild caching enabled
+topgg = { version = "1.3", features = ["autoposter", "serenity-cached"] }
 ```
 
 In your code:
 
 ```rust,no_run
 use core::time::Duration;
-use topgg::{Client, Stats};
+use serenity::{client::{Client, Context}, model::{channel::Message, gateway::Ready}};
+use topgg::{Autoposter, Client, Stats};
+
+struct Handler;
+
+#[serenity::async_trait]
+impl EventHandler for Handler {
+  async fn message(&self, ctx: Context, msg: Message) {
+    if msg.content == "!ping" {
+      if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
+        println!("Error sending message: {why:?}");
+      }
+    }
+  }
+
+  async fn ready(&self, _: Context, ready: Ready) {
+    println!("{} is connected!", ready.user.name);
+  }
+}
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  // if you also want to communicate with the Top.gg API, you can do this
+  let topgg_client = Client::new(env!("TOPGG_TOKEN").to_string());
+  let autoposter = Autoposter::serenity(&topgg_client, Duration::from_secs(1800));
+  
+  // otherwise you can do this
+  let topgg_token = env!("TOPGG_TOKEN").to_string();
+  let autoposter = Autoposter::serenity(&topgg_token, Duration::from_secs(1800));
+  
+  let bot_token = env!("DISCORD_TOKEN").to_string();
+  let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;
 
-  // creates an autoposter that posts data to Top.gg every 1800 seconds (30 minutes).
-  // the autopost thread will stop once it's dropped.
-  let autoposter = client.new_autoposter(Duration::from_secs(1800));
+  let mut client = Client::builder(&bot_token, intents)
+    .event_handler(Handler)
+    .event_handler_arc(autoposter.handler())
+    .await
+    .unwrap();
 
-  // ... then in some on ready/new guild event ...
-  let server_count = 12345;
-  autoposter.feed(Stats::from(server_count)).await;
+  if let Err(why) = client.start().await {
+    println!("Client error: {why:?}");
+  }
 }
 ```
 
@@ -174,7 +211,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.2", default-features = false, features = ["actix-web"] }
+topgg = { version = "1.3", default-features = false, features = ["actix-web"] }
 ```
 
 In your code:
@@ -221,7 +258,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.2", default-features = false, features = ["axum"] }
+topgg = { version = "1.3", default-features = false, features = ["axum"] }
 ```
 
 In your code:
@@ -270,7 +307,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.2", default-features = false, features = ["rocket"] }
+topgg = { version = "1.3", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -317,7 +354,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.2", default-features = false, features = ["warp"] }
+topgg = { version = "1.3", default-features = false, features = ["warp"] }
 ```
 
 In your code:
