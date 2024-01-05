@@ -134,7 +134,7 @@ where
 
             let stats = handler.stats().stats.read().await;
 
-            <C as ClientSealed>::post_stats(client.deref(), stats.deref()).await;
+            <C as IntoClientSealed>::post_stats(client.deref(), stats.deref()).await;
           };
 
           sleep(interval).await;

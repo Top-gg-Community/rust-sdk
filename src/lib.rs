@@ -9,6 +9,8 @@ cfg_if::cfg_if! {
     mod error;
     mod util;
 
+    pub(crate) use client::InnerClient;
+
     /// Bot-related traits and structs.
     pub mod bot;
 

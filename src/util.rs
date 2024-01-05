@@ -1,21 +1,9 @@
-use crate::{Error, Stats};
+use crate::Error;
 use chrono::{DateTime, TimeZone, Utc};
-use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
+use reqwest::Response;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 
 const DISCORD_EPOCH: u64 = 1_420_070_400_000;
-
-macro_rules! api {
-  ($e:literal) => {
-    concat!("https://top.gg/api", $e)
-  };
-
-  ($e:literal, $($rest:tt)*) => {
-    format!(crate::util::api!($e), $($rest)*)
-  };
-}
-
-pub(crate) use api;
 
 #[inline(always)]
 pub(crate) fn deserialize_optional_string<'de, D>(
@@ -79,76 +67,4 @@ pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
       (id >> 22) % 5
     ),
   }
-}
-
-#[derive(Deserialize)]
-#[serde(rename = "kebab-case")]
-struct Ratelimit {
-  retry_after: u16,
-}
-
-pub(crate) async fn request(
-  client: &reqwest::Client,
-  token: &str,
-  method: Method,
-  url: impl IntoUrl,
-  body: Vec<u8>,
-) -> crate::Result<Response> {
-  match client
-    .execute(
-      client
-        .request(method, url)
-        .header(header::AUTHORIZATION, token)
-        .header(header::CONNECTION, "close")
-        .header(header::CONTENT_LENGTH, body.len())
-        .header(header::CONTENT_TYPE, "application/json")
-        .header(
-          header::USER_AGENT,
-          "topgg (https://github.com/top-gg/rust-sdk) Rust",
-        )
-        .version(Version::HTTP_11)
-        .body(body)
-        .build()
-        .unwrap(),
-    )
-    .await
-  {
-    Ok(response) => {
-      let status = response.status();
-
-      if status.is_success() {
-        Ok(response)
-      } else {
-        Err(match status {
-          StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
-          StatusCode::NOT_FOUND => Error::NotFound,
-          StatusCode::TOO_MANY_REQUESTS => match parse_json::<Ratelimit>(response).await {
-            Ok(ratelimit) => Error::Ratelimit {
-              retry_after: ratelimit.retry_after,
-            },
-            _ => Error::InternalServerError,
-          },
-          _ => Error::InternalServerError,
-        })
-      }
-    }
-
-    Err(err) => Err(Error::InternalClientError(err)),
-  }
-}
-
-pub(crate) async fn post_stats(
-  client: &reqwest::Client,
-  token: &str,
-  new_stats: &Stats,
-) -> crate::Result<()> {
-  request(
-    client,
-    token,
-    Method::POST,
-    api!("/bots/stats"),
-    serde_json::to_vec(new_stats).unwrap(),
-  )
-  .await
-  .map(|_| ())
 }
