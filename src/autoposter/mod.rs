@@ -23,7 +23,15 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A write-only struct representing a thread-safe form of the [`Stats`] struct to be used in autoposter [`Handler`]s.
+cfg_if::cfg_if! {
+  if #[cfg(feature = "twilight")] {
+    mod twilight_impl;
+
+    pub use twilight_impl::Twilight;
+  }
+}
+
+/// A struct representing a thread-safe form of the [`Stats`] struct to be used in autoposter [`Handler`]s.
 pub struct SharedStats {
   sem: Semaphore,
   stats: RwLock<Stats>,
@@ -33,6 +41,20 @@ pub struct SharedStats {
 pub struct SharedStatsGuard<'a> {
   sem: &'a Semaphore,
   guard: RwLockWriteGuard<'a, Stats>,
+}
+
+impl SharedStatsGuard<'_> {
+  /// Sets the current [`Stats`] server count.
+  #[inline(always)]
+  pub fn set_server_count(&mut self, server_count: usize) {
+    self.guard.server_count = Some(server_count);
+  }
+
+  /// Sets the current [`Stats`] shard count.
+  #[inline(always)]
+  pub fn set_shard_count(&mut self, shard_count: usize) {
+    self.guard.shard_count = Some(shard_count);
+  }
 }
 
 impl Deref for SharedStatsGuard<'_> {
@@ -96,6 +118,7 @@ pub trait Handler: Send + Sync + 'static {
 /// A struct that lets you automate the process of posting bot statistics to [Top.gg](https://top.gg) in intervals.
 ///
 /// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once this struct is dropped.
+#[must_use]
 pub struct Autoposter<H> {
   handler: Arc<H>,
   thread: JoinHandle<()>,
@@ -129,9 +152,9 @@ where
       handler: Arc::clone(&handler),
       thread: spawn(async move {
         loop {
-          {
-            handler.stats().wait().await;
+          handler.stats().wait().await;
 
+          {
             let stats = handler.stats().stats.read().await;
 
             <C as IntoClientSealed>::post_stats(client.deref(), stats.deref()).await;
@@ -150,6 +173,15 @@ where
   }
 }
 
+impl<H> Deref for Autoposter<H> {
+  type Target = H;
+
+  #[inline(always)]
+  fn deref(&self) -> &Self::Target {
+    self.handler.deref()
+  }
+}
+
 #[cfg(feature = "serenity")]
 impl Autoposter<Serenity> {
   /// Creates an [`Autoposter`] struct from an existing built-in *[serenity]* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
@@ -165,6 +197,24 @@ impl Autoposter<Serenity> {
     C: IntoClient,
   {
     Self::new(into_client, interval, Serenity::new())
+  }
+}
+
+#[cfg(feature = "twilight")]
+impl Autoposter<Twilight> {
+  /// Creates an [`Autoposter`] struct from an existing built-in *twilight* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  ///
+  /// - `into_client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
+  ///
+  /// # Panics
+  ///
+  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
+  #[inline(always)]
+  pub fn twilight<C>(into_client: &C, interval: Duration) -> Self
+  where
+    C: IntoClient,
+  {
+    Self::new(into_client, interval, Twilight::new())
   }
 }
 

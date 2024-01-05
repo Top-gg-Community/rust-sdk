@@ -31,6 +31,7 @@ pub struct Serenity {
 macro_rules! serenity_handler(
   (
     $self:ident,
+    $context:ident,
     $(
       $(#[$attr:meta])?
       [
@@ -56,7 +57,7 @@ macro_rules! serenity_handler(
       }
 
       /// Handles an entire *[serenity]* [`FullEvent`] enum. This can be used in *[serenity]* frameworks.
-      pub async fn handle(&$self, event: &FullEvent) {
+      pub async fn handle(&$self, $context: &Context, event: &FullEvent) {
         match event {
           $(
             $(#[$attr])?
@@ -84,7 +85,7 @@ macro_rules! serenity_handler(
       $(
         #[inline(always)]
         $(#[$attr])?
-        async fn $event_handler_func_name(&$self, _ctx: Context, $($handle_arg_name: $handle_arg_type),*) $map_expr
+        async fn $event_handler_func_name(&$self, $context: Context, $($handle_arg_name: $handle_arg_type),*) $map_expr
       )*
     }
   }
@@ -92,6 +93,7 @@ macro_rules! serenity_handler(
 
 serenity_handler! {
   self,
+  context,
   [
     Ready,
     ready,
@@ -102,7 +104,7 @@ serenity_handler! {
     handle(guilds: &[UnavailableGuild]) {
       let mut stats = self.stats.write().await;
 
-      stats.server_count = Some(guilds.len());
+      stats.set_server_count(guilds.len());
 
       cfg_if::cfg_if! {
         if #[cfg(not(feature = "serenity-cached"))] {
@@ -124,7 +126,7 @@ serenity_handler! {
     handle(guild_count: usize) {
       let mut stats = self.stats.write().await;
 
-      stats.server_count = Some(guild_count);
+      stats.set_server_count(guild_count);
     }
   ],
   #[cfg(not(feature = "serenity-cached"))]
@@ -139,7 +141,7 @@ serenity_handler! {
     handle(shard_count: u32) {
       let mut stats = self.stats.write().await;
 
-      stats.shard_count = Some(shard_count as _);
+      stats.set_shard_count(shard_count as _);
     }
   ],
   [
@@ -149,24 +151,30 @@ serenity_handler! {
     map(guild: Guild, is_new: Option<bool>) {
       self.handle_guild_create(
         #[cfg(not(feature = "serenity-cached"))] guild.id,
+        #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
         #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the discord bot doesn't cache guilds"),
       ).await
     },
     handle(
       #[cfg(not(feature = "serenity-cached"))] guild_id: GuildId,
+      #[cfg(feature = "serenity-cached")] guild_count: usize,
       #[cfg(feature = "serenity-cached")] is_new: bool) {
       cfg_if::cfg_if! {
-        if #[cfg(not(feature = "serenity-cached"))] {
+        if #[cfg(feature = "serenity-cached")] {
+          if is_new {
+            let mut stats = self.stats.write().await;
+
+            stats.set_server_count(guild_count);
+          }
+        } else {
           let mut cache = self.cache.lock().await;
 
-          let is_new = cache.guilds.insert(guild_id);
+          if cache.guilds.insert(guild_id) {
+            let mut stats = self.stats.write().await;
+
+            stats.set_server_count(cache.guilds.len());
+          }
         }
-      }
-
-      if is_new {
-        let mut stats = self.stats.write().await;
-
-        stats.server_count = Some(stats.server_count.unwrap_or_default() + 1);
       }
     }
   ],
@@ -176,19 +184,26 @@ serenity_handler! {
     handle_guild_delete,
     map(incomplete: UnavailableGuild, full: Option<Guild>) {
       self.handle_guild_delete(
+        #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
         #[cfg(not(feature = "serenity-cached"))] incomplete.id
       ).await
     },
-    handle(#[cfg(not(feature = "serenity-cached"))] guild_id: GuildId) {
-      let mut stats = self.stats.write().await;
-
-      stats.server_count = Some(stats.server_count.unwrap_or_default() - 1);
-
+    handle(
+      #[cfg(feature = "serenity-cached")] guild_count: usize,
+      #[cfg(not(feature = "serenity-cached"))] guild_id: GuildId) {
       cfg_if::cfg_if! {
-        if #[cfg(not(feature = "serenity-cached"))] {
+        if #[cfg(feature = "serenity-cached")] {
+          let mut stats = self.stats.write().await;
+
+          stats.set_server_count(guild_count);
+        } else {
           let mut cache = self.cache.lock().await;
 
-          cache.guilds.remove(&guild_id);
+          if cache.guilds.remove(&guild_id) {
+            let mut stats = self.stats.write().await;
+
+            stats.set_server_count(cache.guilds.len());
+          }
         }
       }
     }

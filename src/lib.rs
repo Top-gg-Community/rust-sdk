@@ -9,6 +9,7 @@ cfg_if::cfg_if! {
     mod error;
     mod util;
 
+    #[cfg(feature = "autoposter")]
     pub(crate) use client::InnerClient;
 
     /// Bot-related traits and structs.

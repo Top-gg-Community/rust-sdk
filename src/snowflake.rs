@@ -127,3 +127,41 @@ cfg_if::cfg_if! {
     );
   }
 }
+
+cfg_if::cfg_if! {
+  if #[cfg(feature = "twilight")] {
+    impl<I> Snowflake for twilight_model::id::Id<I> {}
+
+    impl<I> SnowflakeSealed for twilight_model::id::Id<I> {
+      #[inline(always)]
+      fn as_snowflake(&self) -> u64 {
+        self.get()
+      }
+    }
+
+    impl_snowflake!(self, twilight_model::gateway::presence::UserOrId, match self {
+      twilight_model::gateway::presence::UserOrId::User(user) => user.id.get(),
+      twilight_model::gateway::presence::UserOrId::UserId { id } => id.get(),
+    });
+
+    macro_rules! impl_twilight_idstruct(
+      ($($t:ty),+) => {$(
+        impl_snowflake!(self, &$t, (*self).id.get());
+      )+}
+    );
+
+    impl_twilight_idstruct!(
+      twilight_model::user::CurrentUser,
+      twilight_model::user::User,
+      twilight_model::user::UserProfile,
+      twilight_model::gateway::payload::incoming::invite_create::PartialUser
+    );
+  }
+}
+
+#[cfg(feature = "twilight-cached")]
+impl_snowflake!(
+  self,
+  &twilight_cache_inmemory::model::CachedMember,
+  (*self).user_id().get()
+);
