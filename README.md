@@ -141,7 +141,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b> and <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i>serenity</i> library</summary>
+<summary><b><code>autoposter</code></b>, <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i>serenity</i> library</summary>
 
 In your `Cargo.toml`:
 
@@ -158,7 +158,7 @@ In your code:
 
 ```rust,no_run
 use core::time::Duration;
-use serenity::{client::{Client, Context}, model::{channel::Message, gateway::Ready}};
+use serenity::{client::{Client, Context, EventHandler}, model::{channel::Message, gateway::Ready}};
 use topgg::{Autoposter, Stats};
 
 struct Handler;
