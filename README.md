@@ -212,7 +212,7 @@ topgg = { version = "1.3", features = ["autoposter", "twilight-cached"] }
 
 In your code:
 
-```rs,no_run
+```rust,no_run
 use core::time::Duration;
 use topgg::Autoposter;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
