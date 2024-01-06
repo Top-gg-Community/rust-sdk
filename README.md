@@ -138,7 +138,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>autoposter</code></b>, <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i>serenity</i> library</summary>
+<summary><b><code>autoposter</code></b>, <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://crates.io/crates/serenity">serenity</a></i> library</summary>
 
 In your `Cargo.toml`:
 
@@ -156,7 +156,7 @@ In your code:
 ```rust,no_run
 use core::time::Duration;
 use serenity::{client::{Client, Context, EventHandler}, model::{channel::Message, gateway::Ready}};
-use topgg::{Autoposter, Stats};
+use topgg::Autoposter;
 
 struct Handler;
 
@@ -191,6 +191,64 @@ async fn main() {
 
   if let Err(why) = client.start().await {
     println!("Client error: {why:?}");
+  }
+}
+```
+
+</details>
+<details>
+<summary><b><code>autoposter</code></b>, <b><code>twilight</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://twilight.rs">twilight</a></i> library</summary>
+
+In your `Cargo.toml`:
+
+```toml
+[dependencies]
+# using twilight with guild caching disabled
+topgg = { version = "1.3", features = ["autoposter", "twilight"] }
+
+# using twilight with guild caching enabled
+topgg = { version = "1.3", features = ["autoposter", "twilight-cached"] }
+```
+
+In your code:
+
+```rs,no_run
+use core::time::Duration;
+use topgg::Autoposter;
+use twilight_gateway::{Event, Intents, Shard, ShardId};
+
+#[tokio::main]
+async fn main() {
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+
+  let mut shard = Shard::new(
+    ShardId::ONE,
+    env!("DISCORD_TOKEN").to_string(),
+    Intents::GUILD_MEMBERS | Intents::GUILDS,
+  );
+
+  loop {
+    let event = match shard.next_event().await {
+      Ok(event) => event,
+      Err(source) => {
+        if source.is_fatal() {
+          break;
+        }
+
+        continue;
+      }
+    };
+    
+    
+
+    match event {
+      Event::Ready(_) => {
+        println!("Bot is ready!");
+      }
+
+      _ => {}
+    }
   }
 }
 ```
