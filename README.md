@@ -180,13 +180,8 @@ impl EventHandler for Handler {
 
 #[tokio::main]
 async fn main() {
-  // if you also want to communicate with the Top.gg API, you can do this
   let topgg_client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
   let autoposter = Autoposter::serenity(&topgg_client, Duration::from_secs(1800));
-  
-  // otherwise you can do this
-  let topgg_token = env!("TOPGG_TOKEN").to_string();
-  let autoposter = Autoposter::serenity(&topgg_token, Duration::from_secs(1800));
   
   let bot_token = env!("DISCORD_TOKEN").to_string();
   let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;

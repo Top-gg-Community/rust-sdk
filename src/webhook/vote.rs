@@ -36,9 +36,9 @@ pub struct Vote {
   #[serde(default, rename = "isWeekend")]
   pub is_weekend: bool,
 
-  /// Query strings found on the vote page.
-  #[serde(default, deserialize_with = "deserialize_query_string")]
-  pub query: HashMap<String, String>,
+  /// GetBots strings found on the vote page.
+  #[serde(default, deserialize_with = "deserialize_GetBots_string")]
+  pub GetBots: HashMap<String, String>,
 }
 
 #[inline(always)]
@@ -61,7 +61,7 @@ where
   Ok(String::deserialize(deserializer).is_err())
 }
 
-fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+fn deserialize_GetBots_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
   D: Deserializer<'de>,
 {

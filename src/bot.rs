@@ -1,10 +1,12 @@
-use crate::{snowflake, util};
+use crate::{snowflake, util, Client};
 use chrono::{DateTime, Utc};
 use core::{
   cmp::min,
   fmt::{self, Debug, Formatter},
+  future::{Future, IntoFuture},
 };
 use serde::{Deserialize, Deserializer, Serialize};
+use std::pin::Pin;
 
 /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
 #[must_use]
@@ -234,10 +236,10 @@ pub struct Stats {
 }
 
 impl Stats {
-  /// Creates a [`Stats`] struct from a serenity [`Context`][serenity::client::Context].
+  /// Creates a [`Stats`] struct from the cache of a serenity [`Context`][serenity::client::Context].
   #[inline(always)]
-  #[cfg(feature = "serenity")]
-  #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
+  #[cfg(feature = "serenity-cached")]
+  #[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))]
   pub fn from_context(context: &serenity::client::Context) -> Self {
     Self::from_count(
       context.cache.guilds().len(),
@@ -355,145 +357,80 @@ pub(crate) struct IsWeekend {
   pub(crate) is_weekend: bool,
 }
 
-/// A struct for configuring the query in [`get_bots`][crate::Client::get_bots].
-///
-/// # Examples
-///
-/// Basic usage:
-///
-/// ```rust,no_run
-/// use topgg::Query;
-///
-/// let _query = Query::new()
-///   .limit(250)
-///   .skip(50)
-///   .username("shiro")
-///   .certified(true);
-/// ```
+/// A struct for configuring the query for [`get_bots`][crate::Client::get_bots] before being sent to the [Top.gg API](https://docs.top.gg) by `await`ing it.
 #[must_use]
-#[derive(Clone)]
-pub struct Query {
+pub struct GetBots<'a> {
+  client: &'a Client,
   query: String,
   search: String,
 }
 
-impl Query {
-  /// Initiates a new empty querying struct.
+macro_rules! get_bots_method {
+  ($(
+    $(#[doc = $doc:literal])*
+    $input_name:ident: $input_type:ty = $property:ident($($format:tt)*);
+  )*) => {$(
+    $(#[doc = $doc])*
+    pub fn $input_name(mut self, $input_name: $input_type) -> Self {
+      self.$property.push_str(&format!($($format)*));
+      self
+    }
+  )*};
+}
+
+impl<'a> GetBots<'a> {
   #[inline(always)]
-  pub fn new() -> Self {
+  pub(crate) fn new(client: &'a Client) -> Self {
     Self {
+      client,
       query: String::from('?'),
       search: String::new(),
     }
   }
 
-  /// Sets the maximum amount of bots to be queried.
-  pub fn limit(mut self, new_limit: u16) -> Self {
-    self
-      .query
-      .push_str(&format!("limit={}&", min(new_limit, 500)));
-    self
-  }
+  get_bots_method! {
+    /// Sets the maximum amount of bots to be queried.
+    limit: u16 = query("limit={}&", min(limit, 500));
 
-  /// Sets the amount of bots to be skipped during the query.
-  pub fn skip(mut self, skip_by: u16) -> Self {
-    self
-      .query
-      .push_str(&format!("offset={}&", min(skip_by, 499)));
-    self
-  }
+    /// Sets the amount of bots to be skipped during the GetBots.
+    skip: u16 = query("offset={}&", min(skip, 499));
 
-  /// Queries only Discord bots that matches this username.
-  pub fn username(mut self, new_username: &str) -> Self {
-    self.search.push_str(&format!(
-      "username%3A%20{}%20",
-      urlencoding::encode(new_username)
-    ));
-    self
-  }
+    /// Queries only Discord bots that matches this username.
+    username: &str = search("username%3A%20{}%20", urlencoding::encode(username));
 
-  /// Queries only Discord bots that matches this discriminator.
-  pub fn discriminator(mut self, new_discriminator: &str) -> Self {
-    self
-      .search
-      .push_str(&format!("discriminator%3A%20{new_discriminator}%20"));
-    self
-  }
+    /// Queries only Discord bots that matches this discriminator.
+    discriminator: &str = search("discriminator%3A%20{discriminator}%20");
 
-  /// Queries only Discord bots that matches this prefix.
-  pub fn prefix(mut self, new_prefix: &str) -> Self {
-    self.search.push_str(&format!(
-      "prefix%3A%20{}%20",
-      urlencoding::encode(new_prefix)
-    ));
-    self
-  }
+    /// Queries only Discord bots that matches this prefix.
+    prefix: &str = search("prefix%3A%20{}%20", urlencoding::encode(prefix));
 
-  /// Queries only Discord bots that has this vote count.
-  pub fn votes(mut self, new_votes: usize) -> Self {
-    self.search.push_str(&format!("points%3A%20{new_votes}%20"));
-    self
-  }
+    /// Queries only Discord bots that has this vote count.
+    votes: usize = search("points%3A%20{votes}%20");
 
-  /// Queries only Discord bots that has this monthly vote count.
-  pub fn monthly_votes(mut self, new_monthly_votes: usize) -> Self {
-    self
-      .search
-      .push_str(&format!("monthlyPoints%3A%20{new_monthly_votes}%20"));
-    self
-  }
+    /// Queries only Discord bots that has this monthly vote count.
+    monthly_votes: usize = search("monthlyPoints%3A%20{monthly_votes}%20");
 
-  /// Queries only [Top.gg](https://top.gg) certified Discord bots or not.
-  pub fn certified(mut self, is_certified: bool) -> Self {
-    self
-      .search
-      .push_str(&format!("certifiedBot%3A%20{is_certified}%20"));
-    self
-  }
+    /// Queries only [Top.gg](https://top.gg) certified Discord bots or not.
+    certified: bool = search("certifiedBot%3A%20{certified}%20");
 
-  /// Queries only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
-  pub fn vanity(mut self, new_vanity: &str) -> Self {
-    self.search.push_str(&format!(
-      "vanity%3A%20{}%20",
-      urlencoding::encode(new_vanity)
-    ));
-    self
+    /// Queries only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
+    vanity: &str = search("vanity%3A%20{}%20", urlencoding::encode(vanity));
   }
+}
 
-  pub(crate) fn query_string(mut self) -> String {
+impl<'a> IntoFuture for GetBots<'a> {
+  type Output = crate::Result<Vec<Bot>>;
+  type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'a>>;
+
+  fn into_future(self) -> Self::IntoFuture {
+    let mut query = self.query;
+
     if !self.search.is_empty() {
-      self.query.push_str(&format!("search={}", self.search));
+      query.push_str(&format!("search={}", self.search));
     } else {
-      self.query.pop();
+      query.pop();
     }
 
-    self.query
-  }
-}
-
-impl Default for Query {
-  #[inline(always)]
-  fn default() -> Self {
-    Self::new()
-  }
-}
-
-impl<S> From<&S> for Query
-where
-  S: AsRef<str> + ?Sized,
-{
-  #[inline(always)]
-  fn from(other: &S) -> Self {
-    Self {
-      search: format!("username%3A%20{}", urlencoding::encode(other.as_ref())),
-      ..Default::default()
-    }
-  }
-}
-
-impl From<String> for Query {
-  #[inline(always)]
-  fn from(other: String) -> Self {
-    Self::from(&other)
+    Box::pin(self.client.get_bots_inner(query))
   }
 }

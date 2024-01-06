@@ -19,7 +19,7 @@ cfg_if::cfg_if! {
     pub mod user;
 
     #[doc(inline)]
-    pub use bot::{Stats, Query};
+    pub use bot::Stats;
     pub use client::Client;
     pub use error::{Error, Result};
     pub use snowflake::Snowflake; // for doc purposes
@@ -27,9 +27,9 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(all(feature = "autoposter", any(feature = "serenity", feature = "twilight")))] {
+  if #[cfg(feature = "autoposter")] {
     /// Autoposter-related traits and structs.
-    #[cfg_attr(docsrs, doc(cfg(all(feature = "autoposter", any(feature = "serenity", feature = "twilight")))))]
+    #[cfg_attr(docsrs, doc(cfg(feature = "autoposter")))]
     pub mod autoposter;
 
     #[doc(inline)]

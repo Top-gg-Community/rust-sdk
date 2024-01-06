@@ -40,7 +40,7 @@ rustc-args = ["--cfg", "docsrs"]
 [features]
 default = ["api"]
 api = ["chrono", "reqwest", "serde_json", "urlencoding"]
-autoposter = ["api", "async-trait", "tokio"]
+autoposter = ["api", "tokio"]
 
 serenity = ["dep:serenity"]
 serenity-cached = ["serenity", "serenity/cache"]

@@ -1,7 +1,7 @@
 use crate::{
-  bot::{Bot, Bots, IsWeekend, Stats},
+  bot::{Bot, Bots, GetBots, IsWeekend},
   user::{User, Voted, Voter},
-  util, Error, Query, Result, Snowflake,
+  util, Error, Result, Snowflake, Stats,
 };
 use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
@@ -248,6 +248,14 @@ impl Client {
       .await
   }
 
+  pub(crate) async fn get_bots_inner(&self, query: String) -> Result<Vec<Bot>> {
+    self
+      .inner
+      .send::<Bots>(Method::GET, api!("/bots{}", query), None)
+      .await
+      .map(|res| res.results)
+  }
+
   /// Queries/searches through the [Top.gg](https://top.gg) database to look for matching listed Discord bots.
   ///
   /// # Panics
@@ -268,38 +276,24 @@ impl Client {
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, Query};
+  /// use topgg::{Client, GetBots};
   ///
   /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  /// // inputting a string searches a bot that matches that username.
-  /// for bot in client.get_bots("shiro").await.unwrap() {
-  ///   println!("{:?}", bot);
-  /// }
-  ///
-  /// let query = Query::new()
+  /// let bots = client.get_bots()
   ///   .limit(250)
   ///   .skip(50)
   ///   .username("shiro")
-  ///   .certified(true);
+  ///   .certified(true)
+  ///   .await;
   ///
-  /// for bot in client.get_bots(query).await.unwrap() {
+  /// for bot in bots {
   ///   println!("{:?}", bot);
   /// }
   /// ```
-  pub async fn get_bots<Q>(&self, query: Q) -> Result<Vec<Bot>>
-  where
-    Q: Into<Query>,
-  {
-    self
-      .inner
-      .send::<Bots>(
-        Method::GET,
-        api!("/bots{}", query.into().query_string()),
-        None,
-      )
-      .await
-      .map(|res| res.results)
+  #[inline(always)]
+  pub fn get_bots<'a>(&'a self) -> GetBots<'a> {
+    GetBots::new(self)
   }
 
   /// Checks if the specified user has voted for your Discord bot.
@@ -354,21 +348,13 @@ impl Client {
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "autoposter")] {
-    #[async_trait::async_trait]
-    impl autoposter::IntoClientSealed for Client {
-      type ArcInner = InnerClient;
-
+    impl autoposter::AsClientSealed for Client {
       #[inline(always)]
-      fn get_arc(&self) -> Arc<Self::ArcInner> {
+      fn as_client(&self) -> Arc<InnerClient> {
         Arc::clone(&self.inner)
-      }
-
-      #[inline(always)]
-      async fn post_stats(arc: &Self::ArcInner, stats: &Stats) {
-        let _ = arc.post_stats(stats).await;
       }
     }
 
-    impl autoposter::IntoClient for Client {}
+    impl autoposter::AsClient for Client {}
   }
 }

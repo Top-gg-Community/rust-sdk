@@ -12,8 +12,8 @@ use tokio::{
 
 mod client;
 
-pub use client::IntoClient;
-pub(crate) use client::IntoClientSealed;
+pub use client::AsClient;
+pub(crate) use client::AsClientSealed;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "serenity")] {
@@ -44,6 +44,13 @@ pub struct SharedStatsGuard<'a> {
 }
 
 impl SharedStatsGuard<'_> {
+  /// Directly replaces the current [`Stats`] inside with the other.
+  #[inline(always)]
+  pub fn replace(&mut self, other: Stats) {
+    let ref_mut = self.guard.deref_mut();
+    *ref_mut = other;
+  }
+
   /// Sets the current [`Stats`] server count.
   #[inline(always)]
   pub fn set_server_count(&mut self, server_count: usize) {
@@ -130,22 +137,22 @@ where
 {
   /// Creates an [`Autoposter`] struct as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///
-  /// - `into_client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
   /// - `handler` is a struct that handles the *retrieving stats* part before being sent to the [`Autoposter`]. This datatype is essentially the bridge between an external third-party Discord Bot library between this library.
   ///
   /// # Panics
   ///
   /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
-  pub fn new<C>(into_client: &C, interval: Duration, handler: H) -> Self
+  pub fn new<C>(client: &C, interval: Duration, handler: H) -> Self
   where
-    C: IntoClient,
+    C: AsClient,
   {
     assert!(
       interval.as_secs() >= 900,
       "The interval mustn't be shorter than 15 minutes."
     );
 
-    let client = into_client.get_arc();
+    let client = client.as_client();
     let handler = Arc::new(handler);
 
     Self {
@@ -157,7 +164,7 @@ where
           {
             let stats = handler.stats().stats.read().await;
 
-            <C as IntoClientSealed>::post_stats(client.deref(), stats.deref()).await;
+            let _ = client.post_stats(&stats).await;
           };
 
           sleep(interval).await;
@@ -186,17 +193,17 @@ impl<H> Deref for Autoposter<H> {
 impl Autoposter<Serenity> {
   /// Creates an [`Autoposter`] struct from an existing built-in *[serenity]* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///
-  /// - `into_client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
   ///
   /// # Panics
   ///
   /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
   #[inline(always)]
-  pub fn serenity<C>(into_client: &C, interval: Duration) -> Self
+  pub fn serenity<C>(client: &C, interval: Duration) -> Self
   where
-    C: IntoClient,
+    C: AsClient,
   {
-    Self::new(into_client, interval, Serenity::new())
+    Self::new(client, interval, Serenity::new())
   }
 }
 
@@ -204,17 +211,17 @@ impl Autoposter<Serenity> {
 impl Autoposter<Twilight> {
   /// Creates an [`Autoposter`] struct from an existing built-in *twilight* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///
-  /// - `into_client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
   ///
   /// # Panics
   ///
   /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
   #[inline(always)]
-  pub fn twilight<C>(into_client: &C, interval: Duration) -> Self
+  pub fn twilight<C>(client: &C, interval: Duration) -> Self
   where
-    C: IntoClient,
+    C: AsClient,
   {
-    Self::new(into_client, interval, Twilight::new())
+    Self::new(client, interval, Twilight::new())
   }
 }
 
