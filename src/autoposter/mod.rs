@@ -209,7 +209,7 @@ impl Autoposter<Serenity> {
 
 #[cfg(feature = "twilight")]
 impl Autoposter<Twilight> {
-  /// Creates an [`Autoposter`] struct from an existing built-in *twilight* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates an [`Autoposter`] struct from an existing built-in *[twilight](https://twilight.rs)* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///
   /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
   ///

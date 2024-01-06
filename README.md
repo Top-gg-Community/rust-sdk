@@ -30,8 +30,8 @@ This library provides several feature flags that can be enabled/disabled in `Car
   - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
 - **`serenity`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching disabled).
   - **`serenity-cached`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching enabled).
-- **`twilight`**: Extra helpers for working with [`twilight`](https://crates.io/crates/twilight) library (with bot caching disabled).
-  - **`twilight-cached`**: Extra helpers for working with [`twilight`](https://crates.io/crates/serenity) library (with bot caching enabled).
+- **`twilight`**: Extra helpers for working with [`twilight`](https://twilight.rs) library (with bot caching disabled).
+  - **`twilight-cached`**: Extra helpers for working with [`twilight`](https://twilight.rs) library (with bot caching enabled).
 
 ## Examples
 
