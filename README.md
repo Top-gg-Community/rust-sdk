@@ -240,12 +240,10 @@ async fn main() {
       }
     };
     
-    
-
     match event {
       Event::Ready(_) => {
         println!("Bot is ready!");
-      }
+      },
 
       _ => {}
     }
