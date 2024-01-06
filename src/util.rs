@@ -5,6 +5,77 @@ use serde::{de::DeserializeOwned, Deserialize, Deserializer};
 
 const DISCORD_EPOCH: u64 = 1_420_070_400_000;
 
+macro_rules! debug_struct {
+  (
+    $(#[$struct_attr:meta])*
+    $struct_name:ident {
+      $(public {
+        $(
+          $(#[$pub_prop_attr:meta])*
+          $pub_prop_name:ident: $pub_prop_type:ty,
+        )*
+      })?
+      $(protected {
+        $(
+          $(#[$protected_prop_attr:meta])*
+          $protected_prop_name:ident: $protected_prop_type:ty,
+        )*
+      })?
+      $(private {
+        $(
+          $(#[$priv_prop_attr:meta])*
+          $priv_prop_name:ident: $priv_prop_type:ty,
+        )*
+      })?
+      $(getters($self:ident) {
+        $(
+          $(#[$getter_attr:meta])*
+          $getter_name:ident: $getter_type:ty => $getter_code:tt
+        )*
+      })?
+    }
+  ) => {
+    $(#[$struct_attr])*
+    pub struct $struct_name {
+      $($(
+        $(#[$pub_prop_attr])*
+        pub $pub_prop_name: $pub_prop_type,
+      )*)?
+      $($(
+        $(#[$protected_prop_attr])*
+        pub(crate) $protected_prop_name: $protected_prop_type,
+      )*)?
+      $($(
+        $(#[$priv_prop_attr])*
+        $priv_prop_name: $priv_prop_type,
+      )*)?
+    }
+
+    $(impl $struct_name {
+      $(
+        $(#[$getter_attr])*
+        pub fn $getter_name(&$self) -> $getter_type $getter_code
+      )*
+    })?
+
+    impl core::fmt::Debug for $struct_name {
+      fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+        fmt
+          .debug_struct(stringify!($struct_name))
+          $($(
+            .field(stringify!($pub_prop_name), &self.$pub_prop_name)
+          )*)?
+          $($(
+            .field(stringify!($getter_name), &self.$getter_name())
+          )*)?
+          .finish()
+      }
+    }
+  };
+}
+
+pub(crate) use debug_struct;
+
 #[inline(always)]
 pub(crate) fn deserialize_optional_string<'de, D>(
   deserializer: D,
