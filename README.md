@@ -219,7 +219,7 @@ use twilight_gateway::{Event, Intents, Shard, ShardId};
 
 #[tokio::main]
 async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
   let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
 
   let mut shard = Shard::new(
