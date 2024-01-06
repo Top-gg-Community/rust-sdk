@@ -260,9 +260,7 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if any of the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// Panics if any of the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized).
   ///
   /// # Errors
   ///

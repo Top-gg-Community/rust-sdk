@@ -80,24 +80,20 @@ async fn main() {
 <summary><b><code>api</code></b>: Querying several Discord bots</summary>
 
 ```rust,no_run
-use topgg::{Client, Query};
+use topgg::Client;
 
 #[tokio::main]
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-
-  // inputting a string searches a bot that matches that username.
-  for bot in client.get_bots("shiro").await.unwrap() {
-    println!("{:?}", bot);
-  }
-
-  let query = Query::new()
+  
+  let bots = client.get_bots()
     .limit(250)
     .skip(50)
     .username("shiro")
-    .certified(true);
-
-  for bot in client.get_bots(query).await.unwrap() {
+    .certified(true)
+    .await;
+  
+  for bot in bots {
     println!("{:?}", bot);
   }
 }
