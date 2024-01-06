@@ -2,12 +2,12 @@
 #![cfg_attr(docsrs, feature(doc_cfg))]
 
 mod snowflake;
+mod util;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "api")] {
     mod client;
     mod error;
-    mod util;
 
     #[cfg(feature = "autoposter")]
     pub(crate) use client::InnerClient;
@@ -41,6 +41,7 @@ cfg_if::cfg_if! {
   if #[cfg(feature = "webhook")] {
     mod webhook;
 
+    #[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
     pub use webhook::*;
   }
 }

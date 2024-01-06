@@ -16,7 +16,7 @@ cfg-if = "1"
 reqwest = { version = "0.11", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
-urlencoding = { version = "2", optional = true }
+urlencoding = "2"
 
 serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
@@ -39,7 +39,7 @@ rustc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["api"]
-api = ["chrono", "reqwest", "serde_json", "urlencoding"]
+api = ["chrono", "reqwest", "serde_json"]
 autoposter = ["api", "tokio"]
 
 serenity = ["dep:serenity"]

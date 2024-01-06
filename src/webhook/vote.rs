@@ -1,45 +1,6 @@
-use crate::snowflake;
+use crate::{snowflake, util};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
-
-/// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
-#[must_use]
-#[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
-#[derive(Clone, Debug, Deserialize)]
-pub struct Vote {
-  /// The ID of the bot/server that received a vote.
-  #[serde(
-    deserialize_with = "snowflake::deserialize",
-    alias = "bot",
-    alias = "guild"
-  )]
-  pub receiver_id: u64,
-
-  /// The ID of the user who voted.
-  #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
-  pub voter_id: u64,
-
-  /// Whether this vote's receiver is a server or not (bot otherwise).
-  #[serde(
-    default = "_true",
-    deserialize_with = "deserialize_is_server",
-    rename = "bot"
-  )]
-  pub is_server: bool,
-
-  /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
-  #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
-  pub is_test: bool,
-
-  /// Whether the weekend multiplier is active or not, meaning a single vote counts as two.
-  /// If the dispatched event came from a server being voted, this will always be `false`.
-  #[serde(default, rename = "isWeekend")]
-  pub is_weekend: bool,
-
-  /// GetBots strings found on the vote page.
-  #[serde(default, deserialize_with = "deserialize_GetBots_string")]
-  pub GetBots: HashMap<String, String>,
-}
 
 #[inline(always)]
 fn deserialize_is_test<'de, D>(deserializer: D) -> Result<bool, D::Error>
@@ -61,7 +22,7 @@ where
   Ok(String::deserialize(deserializer).is_err())
 }
 
-fn deserialize_GetBots_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
+fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
   D: Deserializer<'de>,
 {
@@ -82,6 +43,49 @@ where
       })
       .unwrap_or_default(),
   )
+}
+
+util::debug_struct! {
+  /// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
+  #[must_use]
+  #[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
+  #[derive(Clone, Deserialize)]
+  Vote {
+    public {
+      /// The ID of the bot/server that received a vote.
+      #[serde(
+        deserialize_with = "snowflake::deserialize",
+        alias = "bot",
+        alias = "guild"
+      )]
+      receiver_id: u64,
+
+      /// The ID of the user who voted.
+      #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
+      voter_id: u64,
+
+      /// Whether this vote's receiver is a server or not (bot otherwise).
+      #[serde(
+        default = "_true",
+        deserialize_with = "deserialize_is_server",
+        rename = "bot"
+      )]
+      is_server: bool,
+
+      /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
+      #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
+      is_test: bool,
+
+      /// Whether the weekend multiplier is active or not, meaning a single vote counts as two.
+      /// If the dispatched event came from a server being voted, this will always be `false`.
+      #[serde(default, rename = "isWeekend")]
+      is_weekend: bool,
+
+      /// query strings found on the vote page.
+      #[serde(default, deserialize_with = "deserialize_query_string")]
+      query: HashMap<String, String>,
+    }
+  }
 }
 
 cfg_if::cfg_if! {

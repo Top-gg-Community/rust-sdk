@@ -365,7 +365,7 @@ impl<'a> GetBots<'a> {
     /// Sets the maximum amount of bots to be queried.
     limit: u16 = query("limit={}&", min(limit, 500));
 
-    /// Sets the amount of bots to be skipped during the GetBots.
+    /// Sets the amount of bots to be skipped during the query.
     skip: u16 = query("offset={}&", min(skip, 499));
 
     /// Queries only Discord bots that matches this username.
