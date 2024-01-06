@@ -19,6 +19,7 @@ cfg_if::cfg_if! {
   if #[cfg(feature = "serenity")] {
     mod serenity_impl;
 
+    #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
     pub use serenity_impl::Serenity;
   }
 }
@@ -27,6 +28,7 @@ cfg_if::cfg_if! {
   if #[cfg(feature = "twilight")] {
     mod twilight_impl;
 
+    #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
     pub use twilight_impl::Twilight;
   }
 }
@@ -190,6 +192,7 @@ impl<H> Deref for Autoposter<H> {
 }
 
 #[cfg(feature = "serenity")]
+#[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
 impl Autoposter<Serenity> {
   /// Creates an [`Autoposter`] struct from an existing built-in *[serenity]* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///
@@ -208,6 +211,7 @@ impl Autoposter<Serenity> {
 }
 
 #[cfg(feature = "twilight")]
+#[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
 impl Autoposter<Twilight> {
   /// Creates an [`Autoposter`] struct from an existing built-in *[twilight](https://twilight.rs)* [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
   ///

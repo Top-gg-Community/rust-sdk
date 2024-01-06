@@ -26,7 +26,8 @@ pub trait SnowflakeSealed {
 pub trait Snowflake: SnowflakeSealed {}
 
 macro_rules! impl_snowflake(
-  ($self:ident,$t:ty,$body:expr) => {
+  ($(#[$attr:meta] )?$self:ident,$t:ty,$body:expr) => {
+    $(#[$attr])?
     impl Snowflake for $t {}
 
     impl SnowflakeSealed for $t {
@@ -67,20 +68,20 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "serenity")] {
     impl_snowflake!(
-      self,
+      #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))] self,
       &serenity::model::guild::Member,
       (*self).user.id.get()
     );
 
     impl_snowflake!(
-      self,
+      #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))] self,
       &serenity::model::guild::PartialMember,
       (*self).user.as_ref().expect("user property in PartialMember is None").id.get()
     );
 
     macro_rules! impl_serenity_id(
       ($($t:ty),+) => {$(
-        impl_snowflake!(self, $t, (*self).get());
+        impl_snowflake!(#[cfg_attr(docsrs, doc(cfg(feature = "serenity")))] self, $t, (*self).get());
       )+}
     );
 
@@ -91,7 +92,7 @@ cfg_if::cfg_if! {
 
     macro_rules! impl_serenity_idstruct(
       ($($t:ty),+) => {$(
-        impl_snowflake!(self, &$t, (*self).id.get());
+        impl_snowflake!(#[cfg_attr(docsrs, doc(cfg(feature = "serenity")))] self, &$t, (*self).id.get());
       )+}
     );
 
@@ -109,6 +110,7 @@ cfg_if::cfg_if! {
 
     macro_rules! impl_serenity_cacheref(
       ($($t:ty),+) => {$(
+        #[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))]
         impl Snowflake for $t {}
 
         impl SnowflakeSealed for $t {
@@ -130,6 +132,7 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "twilight")] {
+    #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
     impl<I> Snowflake for twilight_model::id::Id<I> {}
 
     impl<I> SnowflakeSealed for twilight_model::id::Id<I> {
@@ -139,14 +142,14 @@ cfg_if::cfg_if! {
       }
     }
 
-    impl_snowflake!(self, twilight_model::gateway::presence::UserOrId, match self {
+    impl_snowflake!(#[cfg_attr(docsrs, doc(cfg(feature = "twilight")))] self, twilight_model::gateway::presence::UserOrId, match self {
       twilight_model::gateway::presence::UserOrId::User(user) => user.id.get(),
       twilight_model::gateway::presence::UserOrId::UserId { id } => id.get(),
     });
 
     macro_rules! impl_twilight_idstruct(
       ($($t:ty),+) => {$(
-        impl_snowflake!(self, &$t, (*self).id.get());
+        impl_snowflake!(#[cfg_attr(docsrs, doc(cfg(feature = "twilight")))] self, &$t, (*self).id.get());
       )+}
     );
 
@@ -159,9 +162,12 @@ cfg_if::cfg_if! {
   }
 }
 
-#[cfg(feature = "twilight-cached")]
-impl_snowflake!(
-  self,
-  &twilight_cache_inmemory::model::CachedMember,
-  (*self).user_id().get()
-);
+cfg_if::cfg_if! {
+  if #[cfg(feature = "twilight-cached")] {
+    impl_snowflake!(
+      #[cfg_attr(docsrs, doc(cfg(feature = "twilight-cached")))] self,
+      &twilight_cache_inmemory::model::CachedMember,
+      (*self).user_id().get()
+    );
+  }
+}
