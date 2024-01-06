@@ -86,7 +86,8 @@ use topgg::Client;
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   
-  let bots = client.get_bots()
+  let bots = client
+    .get_bots()
     .limit(250)
     .skip(50)
     .username("shiro")
