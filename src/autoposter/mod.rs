@@ -143,7 +143,7 @@ where
   /// # Panics
   ///
   /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
-  pub fn new<C>(client: &C, interval: Duration, handler: H) -> Self
+  pub fn new<C>(client: &C, handler: H, interval: Duration) -> Self
   where
     C: AsClient,
   {
@@ -203,7 +203,7 @@ impl Autoposter<Serenity> {
   where
     C: AsClient,
   {
-    Self::new(client, interval, Serenity::new())
+    Self::new(client, Serenity::new(), interval)
   }
 }
 
@@ -221,7 +221,7 @@ impl Autoposter<Twilight> {
   where
     C: AsClient,
   {
-    Self::new(client, interval, Twilight::new())
+    Self::new(client, Twilight::new(), interval)
   }
 }
 
