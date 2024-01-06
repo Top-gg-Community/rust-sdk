@@ -240,6 +240,8 @@ async fn main() {
       }
     };
     
+    autoposter.handle(&event).await;
+    
     match event {
       Event::Ready(_) => {
         println!("Bot is ready!");
