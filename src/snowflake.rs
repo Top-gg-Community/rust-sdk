@@ -18,19 +18,15 @@ where
     .map(|s: Vec<String>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
 }
 
-pub trait SnowflakeSealed {
+/// A trait that represents any datatype that can be interpreted as a Discord snowflake/ID.
+pub trait Snowflake {
   fn as_snowflake(&self) -> u64;
 }
-
-/// A private trait that represents any datatype that can be interpreted as a Discord snowflake/ID.
-pub trait Snowflake: SnowflakeSealed {}
 
 macro_rules! impl_snowflake(
   ($(#[$attr:meta] )?$self:ident,$t:ty,$body:expr) => {
     $(#[$attr])?
-    impl Snowflake for $t {}
-
-    impl SnowflakeSealed for $t {
+    impl Snowflake for $t {
       #[inline(always)]
       fn as_snowflake(&$self) -> u64 {
         $body
@@ -110,15 +106,7 @@ cfg_if::cfg_if! {
 
     macro_rules! impl_serenity_cacheref(
       ($($t:ty),+) => {$(
-        #[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))]
-        impl Snowflake for $t {}
-
-        impl SnowflakeSealed for $t {
-          #[inline(always)]
-          fn as_snowflake(&self) -> u64 {
-            SnowflakeSealed::as_snowflake(&self.deref())
-          }
-        }
+        impl_snowflake!(#[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))] self, $t, Snowflake::as_snowflake(&self.deref()));
       )+}
     );
 
@@ -133,9 +121,7 @@ cfg_if::cfg_if! {
 cfg_if::cfg_if! {
   if #[cfg(feature = "twilight")] {
     #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
-    impl<I> Snowflake for twilight_model::id::Id<I> {}
-
-    impl<I> SnowflakeSealed for twilight_model::id::Id<I> {
+    impl<I> Snowflake for twilight_model::id::Id<I> {
       #[inline(always)]
       fn as_snowflake(&self) -> u64 {
         self.get()
