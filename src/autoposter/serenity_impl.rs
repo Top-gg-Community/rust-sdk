@@ -115,7 +115,7 @@ serenity_handler! {
       }
     }
   ],
-  #[cfg(not(feature = "serenity-cached"))]
+  #[cfg(feature = "serenity-cached")]
   [
     CacheReady,
     cache_ready,
@@ -129,7 +129,7 @@ serenity_handler! {
       stats.set_server_count(guild_count);
     }
   ],
-  #[cfg(not(feature = "serenity-cached"))]
+  #[cfg(feature = "serenity-cached")]
   [
     ShardsReady,
     shards_ready,
