@@ -14,6 +14,7 @@ struct WebhookState<T> {
 }
 
 impl<T> Clone for WebhookState<T> {
+  #[inline(always)]
   fn clone(&self) -> Self {
     Self {
       state: Arc::clone(&self.state),
