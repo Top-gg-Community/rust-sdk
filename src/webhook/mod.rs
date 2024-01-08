@@ -1,4 +1,5 @@
 mod vote;
+#[cfg_attr(docsrs, doc(cfg(feature = "webhook")))]
 pub use vote::*;
 
 #[cfg(feature = "actix-web")]
