@@ -4,13 +4,13 @@ use serenity::{
   model::{
     gateway::Ready,
     guild::{Guild, UnavailableGuild},
+    id::GuildId,
   },
 };
 
 cfg_if::cfg_if! {
   if #[cfg(not(feature = "serenity-cached"))] {
     use core::ops::Add;
-    use serenity::model::id::GuildId;
     use std::collections::HashSet;
     use tokio::sync::Mutex;
 

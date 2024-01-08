@@ -20,6 +20,7 @@ where
 
 /// A trait that represents any datatype that can be interpreted as a Discord snowflake/ID.
 pub trait Snowflake {
+  /// The method that converts this value to a [`u64`].
   fn as_snowflake(&self) -> u64;
 }
 

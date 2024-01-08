@@ -40,7 +40,6 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///   warp::serve(routes).run(addr).await
 /// }
 /// ```
-#[cfg_attr(docsrs, doc(cfg(feature = "warp")))]
 pub fn webhook<T>(
   endpoint: &'static str,
   password: String,

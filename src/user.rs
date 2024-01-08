@@ -2,32 +2,28 @@ use crate::{snowflake, util};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-util::debug_struct! {
-  /// A struct representing a user's social links.
-  #[derive(Clone, Deserialize)]
-  Socials {
-    public {
-      /// A URL of this user's GitHub account.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      github: Option<String>,
+/// A struct representing a user's social links.
+#[derive(Clone, Debug, Deserialize)]
+pub struct Socials {
+  /// A URL of this user's GitHub account.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  pub github: Option<String>,
 
-      /// A URL of this user's Instagram account.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      instagram: Option<String>,
+  /// A URL of this user's Instagram account.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  pub instagram: Option<String>,
 
-      /// A URL of this user's Reddit account.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      reddit: Option<String>,
+  /// A URL of this user's Reddit account.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  pub reddit: Option<String>,
 
-      /// A URL of this user's Twitter account.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      twitter: Option<String>,
+  /// A URL of this user's Twitter account.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  pub twitter: Option<String>,
 
-      /// A URL of this user's YouTube channel.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      youtube: Option<String>,
-    }
-  }
+  /// A URL of this user's YouTube channel.
+  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  pub youtube: Option<String>,
 }
 
 util::debug_struct! {
