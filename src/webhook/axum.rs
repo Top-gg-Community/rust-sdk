@@ -88,6 +88,7 @@ where
 /// }
 /// ```
 #[inline(always)]
+#[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
 pub fn webhook<T>(password: String, state: Arc<T>) -> Router
 where
   T: VoteHandler,

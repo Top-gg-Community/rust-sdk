@@ -120,7 +120,7 @@ impl SharedStats {
 ///
 /// The struct implementing this trait should own an [`SharedStats`] struct and update it accordingly whenever Discord updates them with new data regarding guild/shard count.
 pub trait Handler: Send + Sync + 'static {
-  /// A method that borrows [`SharedStats`] to the [`Autoposter`].
+  /// The method that borrows [`SharedStats`] to the [`Autoposter`].
   fn stats(&self) -> &SharedStats;
 }
 
