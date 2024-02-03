@@ -291,7 +291,7 @@ impl Client {
   /// }
   /// ```
   #[inline(always)]
-  pub fn get_bots<'a>(&'a self) -> GetBots<'a> {
+  pub fn get_bots(&self) -> GetBots<'_> {
     GetBots::new(self)
   }
 
