@@ -1,12 +1,9 @@
-# [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url] [![license][github-license-image]][github-license-url] [![BLAZINGLY FAST!!!][blazingly-fast-image]][blazingly-fast-url]
+# [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url]
 
 [crates-io-image]: https://img.shields.io/crates/v/topgg?style=flat-square
 [crates-io-downloads-image]: https://img.shields.io/crates/d/topgg?style=flat-square
 [crates-io-url]: https://crates.io/crates/topgg
-[github-license-image]: https://img.shields.io/github/license/top-gg/rust-sdk?style=flat-square
-[github-license-url]: https://github.com/top-gg/rust-sdk/blob/main/LICENSE
-[blazingly-fast-image]: https://img.shields.io/badge/speed-BLAZINGLY%20FAST!!!%20%F0%9F%94%A5%F0%9F%9A%80%F0%9F%92%AA%F0%9F%98%8E-brightgreen.svg?style=flat-square
-[blazingly-fast-url]: https://twitter.com/acdlite/status/974390255393505280
+
 The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
