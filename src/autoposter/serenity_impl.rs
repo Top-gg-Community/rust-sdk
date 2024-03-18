@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A built-in [`Handler`] for the [`serenity`] library.
+/// A built-in [`Handler`] for the [serenity] library.
 #[must_use]
 pub struct Serenity {
   #[cfg(not(feature = "serenity-cached"))]
@@ -53,7 +53,7 @@ macro_rules! serenity_handler {
           }
         }
 
-        /// Handles an entire *[serenity]* [`FullEvent`] enum. This can be used in *[serenity]* frameworks.
+        /// Handles an entire [serenity] [`FullEvent`] enum. This can be used in [serenity] frameworks.
         pub async fn handle(&$self, $context: &Context, event: &FullEvent) {
           match event {
             $(
