@@ -7,7 +7,7 @@ pub trait AsClientSealed {
 
 /// A private trait that represents any datatype that can be interpreted as a [Top.gg API](https://docs.top.gg) Client.
 ///
-/// This can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][core::str] representing a [Top.gg API](https://docs.top.gg) token.
+/// This can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
 pub trait AsClient: AsClientSealed {}
 
 impl AsClientSealed for str {

@@ -45,5 +45,5 @@ impl error::Error for Error {
   }
 }
 
-/// The [`Result`][core::result::Result] type primarily used in this SDK.
+/// The [`Result`][std::result::Result] type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;

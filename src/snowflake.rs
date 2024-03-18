@@ -103,7 +103,7 @@ cfg_if::cfg_if! {
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "serenity-cached")] {
-    use core::ops::Deref;
+    use std::ops::Deref;
 
     macro_rules! impl_serenity_cacheref(
       ($($t:ty),+) => {$(

@@ -58,8 +58,8 @@ macro_rules! debug_struct {
       )*
     })?
 
-    impl core::fmt::Debug for $struct_name {
-      fn fmt(&self, fmt: &mut core::fmt::Formatter) -> core::fmt::Result {
+    impl std::fmt::Debug for $struct_name {
+      fn fmt(&self, fmt: &mut std::fmt::Formatter) -> std::fmt::Result {
         fmt
           .debug_struct(stringify!($struct_name))
           $($(

@@ -1,6 +1,6 @@
 use crate::autoposter::{Handler, SharedStats};
-use core::ops::DerefMut;
 use std::collections::HashSet;
+use std::ops::DerefMut;
 use tokio::sync::Mutex;
 use twilight_model::gateway::event::Event;
 
