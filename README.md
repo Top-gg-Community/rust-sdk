@@ -14,6 +14,8 @@ Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then 
 topgg = "1.3"
 ```
 
+For more information, please read [the documentation](https://docs.rs/topgg)!
+
 ## Features
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
