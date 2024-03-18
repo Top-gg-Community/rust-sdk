@@ -66,7 +66,7 @@ async fn main() {
 }
 ```
 
-#### Checking if a user has voted for your Discord bot
+#### Checking if a user has voted your Discord bot
 
 ```rust,no_run
 use topgg::Client;

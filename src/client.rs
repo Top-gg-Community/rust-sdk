@@ -248,7 +248,7 @@ impl Client {
       .await
   }
 
-  /// Checks if the specified user has voted for your Discord bot.
+  /// Checks if the specified user has voted your Discord bot.
   ///
   /// # Panics
   ///
