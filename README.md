@@ -32,7 +32,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 
 ## Examples
 
-#### Fetching a single Discord user from it's Discord ID
+### Fetching a single Discord user from it's Discord ID
 
 ```rust,no_run
 use topgg::Client;
@@ -49,7 +49,7 @@ async fn main() {
 }
 ```
 
-#### Posting your Discord bot's statistics
+### Posting your Discord bot's statistics
 
 ```rust,no_run
 use topgg::{Client, Stats};
@@ -66,7 +66,7 @@ async fn main() {
 }
 ```
 
-#### Checking if a user has voted your Discord bot
+### Checking if a user has voted your Discord bot
 
 ```rust,no_run
 use topgg::Client;
@@ -81,7 +81,7 @@ async fn main() {
 }
 ```
 
-#### Automating the process of periodically posting your Discord bot's statistics with the [serenity](https://crates.io/crates/serenity) library
+### Automating the process of periodically posting your Discord bot's statistics with the [serenity](https://crates.io/crates/serenity) library
 
 In your `Cargo.toml`:
 
@@ -138,7 +138,7 @@ async fn main() {
 }
 ```
 
-#### Automating the process of periodically posting your Discord bot's statistics with the [twilight](https://twilight.rs) library
+### Automating the process of periodically posting your Discord bot's statistics with the [twilight](https://twilight.rs) library
 
 In your `Cargo.toml`:
 
@@ -194,7 +194,7 @@ async fn main() {
 }
 ```
 
-#### Writing an [actix-web](https://actix.rs) webhook for listening to your bot/server's vote events
+### Writing an [actix-web](https://actix.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -239,7 +239,7 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-#### Writing an [axum](https://crates.io/crates/axum) webhook for listening to your bot/server's vote events
+### Writing an [axum](https://crates.io/crates/axum) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -286,7 +286,7 @@ async fn main() {
 }
 ```
 
-#### Writing a [rocket](https://rocket.rs) webhook for listening to your bot/server's vote events
+### Writing a [rocket](https://rocket.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -331,7 +331,7 @@ fn main() {
 }
 ```
 
-#### Writing a [warp](https://crates.io/crates/warp) webhook for listening to your bot/server's vote events
+### Writing a [warp](https://crates.io/crates/warp) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
