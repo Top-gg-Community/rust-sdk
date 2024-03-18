@@ -11,7 +11,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then [view this tutorial on how to retrieve yours](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff). After that, add the following line to the `dependencies` section of your `Cargo.toml`:
 
 ```toml
-topgg = "1.3"
+topgg = "1.4"
 ```
 
 For more information, please read [the documentation](https://docs.rs/topgg)!
@@ -34,7 +34,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 
 ## Examples
 
-### Fetching a single Discord user from it's Discord ID
+#### Fetching a single Discord user from it's Discord ID
 
 ```rust,no_run
 use topgg::Client;
@@ -51,7 +51,7 @@ async fn main() {
 }
 ```
 
-### Posting your Discord bot's statistics
+#### Posting your Discord bot's statistics
 
 ```rust,no_run
 use topgg::{Client, Stats};
@@ -68,7 +68,7 @@ async fn main() {
 }
 ```
 
-### Checking if a user has voted your Discord bot
+#### Checking if a user has voted your Discord bot
 
 ```rust,no_run
 use topgg::Client;
@@ -83,17 +83,17 @@ async fn main() {
 }
 ```
 
-### Automating the process of periodically posting your Discord bot's statistics with the [serenity](https://crates.io/crates/serenity) library
+#### Automating the process of periodically posting your Discord bot's statistics with the [serenity](https://crates.io/crates/serenity) library
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
 # using serenity with guild caching disabled
-topgg = { version = "1.3", features = ["autoposter", "serenity"] }
+topgg = { version = "1.4", features = ["autoposter", "serenity"] }
 
 # using serenity with guild caching enabled
-topgg = { version = "1.3", features = ["autoposter", "serenity-cached"] }
+topgg = { version = "1.4", features = ["autoposter", "serenity-cached"] }
 ```
 
 In your code:
@@ -140,17 +140,17 @@ async fn main() {
 }
 ```
 
-### Automating the process of periodically posting your Discord bot's statistics with the [twilight](https://twilight.rs) library
+#### Automating the process of periodically posting your Discord bot's statistics with the [twilight](https://twilight.rs) library
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
 # using twilight with guild caching disabled
-topgg = { version = "1.3", features = ["autoposter", "twilight"] }
+topgg = { version = "1.4", features = ["autoposter", "twilight"] }
 
 # using twilight with guild caching enabled
-topgg = { version = "1.3", features = ["autoposter", "twilight-cached"] }
+topgg = { version = "1.4", features = ["autoposter", "twilight-cached"] }
 ```
 
 In your code:
@@ -196,13 +196,13 @@ async fn main() {
 }
 ```
 
-### Writing an [actix-web](https://actix.rs) webhook for listening to your bot/server's vote events
+#### Writing an [actix-web](https://actix.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.3", default-features = false, features = ["actix-web"] }
+topgg = { version = "1.4", default-features = false, features = ["actix-web"] }
 ```
 
 In your code:
@@ -241,13 +241,13 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-### Writing an [axum](https://crates.io/crates/axum) webhook for listening to your bot/server's vote events
+#### Writing an [axum](https://crates.io/crates/axum) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.3", default-features = false, features = ["axum"] }
+topgg = { version = "1.4", default-features = false, features = ["axum"] }
 ```
 
 In your code:
@@ -288,13 +288,13 @@ async fn main() {
 }
 ```
 
-### Writing a [rocket](https://rocket.rs) webhook for listening to your bot/server's vote events
+#### Writing a [rocket](https://rocket.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.3", default-features = false, features = ["rocket"] }
+topgg = { version = "1.4", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -333,13 +333,13 @@ fn main() {
 }
 ```
 
-### Writing a [warp](https://crates.io/crates/warp) webhook for listening to your bot/server's vote events
+#### Writing a [warp](https://crates.io/crates/warp) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.3", default-features = false, features = ["warp"] }
+topgg = { version = "1.4", default-features = false, features = ["warp"] }
 ```
 
 In your code:
