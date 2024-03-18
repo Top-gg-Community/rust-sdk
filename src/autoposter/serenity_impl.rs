@@ -7,10 +7,10 @@ use serenity::{
     id::GuildId,
   },
 };
+use std::ops::Add;
 
 cfg_if::cfg_if! {
   if #[cfg(not(feature = "serenity-cached"))] {
-    use core::ops::Add;
     use std::collections::HashSet;
     use tokio::sync::Mutex;
 
