@@ -1,5 +1,5 @@
 use crate::{
-  bot::{Bot, Bots, IsWeekend},
+  bot::{Bot, IsWeekend},
   user::{User, Voted, Voter},
   util, Error, Result, Snowflake, Stats,
 };
@@ -246,14 +246,6 @@ impl Client {
       .inner
       .send(Method::GET, api!("/bots/votes"), None)
       .await
-  }
-
-  pub(crate) async fn get_bots_inner(&self, query: String) -> Result<Vec<Bot>> {
-    self
-      .inner
-      .send::<Bots>(Method::GET, api!("/bots{}", query), None)
-      .await
-      .map(|res| res.results)
   }
 
   /// Checks if the specified user has voted for your Discord bot.

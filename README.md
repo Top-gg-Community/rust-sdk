@@ -54,51 +54,6 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>api</code></b>: Fetching a single Discord bot from it's Discord ID</summary>
-
-```rust,no_run
-use topgg::Client;
-
-#[tokio::main]
-async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  let bot = client.get_bot(264811613708746752).await.unwrap();
-  
-  assert_eq!(bot.username, "Luca");
-  assert_eq!(bot.discriminator, "1375");
-  assert_eq!(bot.id, 264811613708746752);
-  
-  println!("{:?}", bot);
-}
-```
-
-</details>
-<details>
-<summary><b><code>api</code></b>: Querying several Discord bots</summary>
-
-```rust,no_run
-use topgg::Client;
-
-#[tokio::main]
-async fn main() {
-  let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  
-  let bots = client
-    .get_bots()
-    .limit(250)
-    .skip(50)
-    .username("shiro")
-    .certified(true)
-    .await;
-  
-  for bot in bots {
-    println!("{:?}", bot);
-  }
-}
-```
-
-</details>
-<details>
 <summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run

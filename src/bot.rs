@@ -1,11 +1,6 @@
-use crate::{snowflake, util, Client};
+use crate::{snowflake, util};
 use chrono::{DateTime, Utc};
-use core::{
-  cmp::min,
-  future::{Future, IntoFuture},
-};
 use serde::{Deserialize, Deserializer, Serialize};
-use std::pin::Pin;
 
 #[inline(always)]
 pub(crate) fn deserialize_support_server<'de, D>(
@@ -162,11 +157,6 @@ util::debug_struct! {
       }
     }
   }
-}
-
-#[derive(Deserialize)]
-pub(crate) struct Bots {
-  pub(crate) results: Vec<Bot>,
 }
 
 util::debug_struct! {
