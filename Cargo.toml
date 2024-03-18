@@ -13,6 +13,7 @@ exclude = [".gitattributes", ".github/", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
 cfg-if = "1"
+paste = { version = "1", optional = true }
 reqwest = { version = "0.11", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
@@ -42,7 +43,7 @@ default = ["api"]
 api = ["chrono", "reqwest", "serde_json"]
 autoposter = ["api", "tokio"]
 
-serenity = ["dep:serenity"]
+serenity = ["dep:serenity", "paste"]
 serenity-cached = ["serenity", "serenity/cache"]
 
 twilight = ["twilight-model"]
