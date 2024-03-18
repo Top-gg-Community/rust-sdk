@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A built-in [`Handler`] for the *[serenity]* library.
+/// A built-in [`Handler`] for the [`serenity`] library.
 #[must_use]
 pub struct Serenity {
   #[cfg(not(feature = "serenity-cached"))]

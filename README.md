@@ -32,10 +32,7 @@ This library provides several feature flags that can be enabled/disabled in `Car
 
 ## Examples
 
-More things can be read in the [documentation](https://docs.rs/topgg).
-
-<details>
-<summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>
+#### Fetching a single Discord user from it's Discord ID
 
 ```rust,no_run
 use topgg::Client;
@@ -52,9 +49,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
+#### Posting your Discord bot's statistics
 
 ```rust,no_run
 use topgg::{Client, Stats};
@@ -71,9 +66,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>api</code></b>: Checking if a user has voted for your Discord bot</summary>
+#### Checking if a user has voted for your Discord bot
 
 ```rust,no_run
 use topgg::Client;
@@ -88,9 +81,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>autoposter</code></b>, <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://crates.io/crates/serenity">serenity</a></i> library</summary>
+#### Automating the process of periodically posting your Discord bot's statistics with the [`serenity`](https://crates.io/crates/serenity) library
 
 In your `Cargo.toml`:
 
@@ -147,9 +138,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>autoposter</code></b>, <b><code>twilight</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://twilight.rs">twilight</a></i> library</summary>
+#### Automating the process of periodically posting your Discord bot's statistics with the [`twilight`](https://twilight.rs) library
 
 In your `Cargo.toml`:
 
@@ -205,9 +194,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>actix-web</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+#### Writing an [`actix-web`](https://actix.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -252,9 +239,7 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>axum</code></b>: Writing an <a href="https://crates.io/crates/axum"><code>axum</code></a> webhook for listening to your bot/server's vote events</summary>
+#### Writing an [`axum`](https://crates.io/crates/axum) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -301,9 +286,7 @@ async fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>rocket</code></b>: Writing a <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
+#### Writing a [`rocket`](https://rocket.rs) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -348,9 +331,7 @@ fn main() {
 }
 ```
 
-</details>
-<details>
-<summary><b><code>warp</code></b>: Writing a <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
+#### Writing a [`warp`](https://crates.io/crates/warp) webhook for listening to your bot/server's vote events
 
 In your `Cargo.toml`:
 
@@ -393,5 +374,3 @@ async fn main() {
   warp::serve(routes).run(addr).await
 }
 ```
-
-</details>
