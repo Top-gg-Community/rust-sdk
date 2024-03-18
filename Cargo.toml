@@ -17,7 +17,7 @@ paste = { version = "1", optional = true }
 reqwest = { version = "0.11", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
-urlencoding = "2"
+urlencoding = { version = "2", optional = true }
 
 serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
@@ -49,7 +49,7 @@ serenity-cached = ["serenity", "serenity/cache"]
 twilight = ["twilight-model"]
 twilight-cached = ["twilight", "twilight-cache-inmemory"]
 
-webhook = []
+webhook = ["urlencoding"]
 rocket = ["webhook", "dep:rocket"]
 axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
 warp = ["webhook", "async-trait", "dep:warp"]
