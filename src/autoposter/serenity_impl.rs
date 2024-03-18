@@ -8,7 +8,6 @@ use serenity::{
     id::GuildId,
   },
 };
-use std::ops::Add;
 
 cfg_if::cfg_if! {
   if #[cfg(not(feature = "serenity-cached"))] {
@@ -18,6 +17,8 @@ cfg_if::cfg_if! {
     struct Cache {
       guilds: HashSet<GuildId>,
     }
+  } else {
+    use std::ops::Add;
   }
 }
 
