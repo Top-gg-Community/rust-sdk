@@ -1,8 +1,3 @@
----
-title: Rust
-description: Top.gg Rust library
----
-
 # [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url]
 
 [crates-io-image]: https://img.shields.io/crates/v/topgg?style=flat-square
