@@ -270,7 +270,7 @@ impl Client {
       .inner
       .send::<Voted>(
         Method::GET,
-        api!("/bots/votes?userId={}", user_id.as_snowflake()),
+        api!("/bots/check?userId={}", user_id.as_snowflake()),
         None,
       )
       .await
