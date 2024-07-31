@@ -33,6 +33,7 @@ macro_rules! api {
   };
 }
 
+#[derive(Debug)]
 pub struct InnerClient {
   http: reqwest::Client,
   token: String,
@@ -125,6 +126,7 @@ impl InnerClient {
 
 /// A struct representing a [Top.gg API](https://docs.top.gg) client instance.
 #[must_use]
+#[derive(Debug)]
 pub struct Client {
   inner: SyncedClient,
 }
