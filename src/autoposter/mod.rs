@@ -194,7 +194,7 @@ where
   
   /// Takes the receiver responsible for [`recv`]. Subsequent calls to this function and [`recv`] after this call will panic.
   #[inline(always)]
-  pub async fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
+  pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
     self.receiver.take().expect("receiver() can only be called once.")
   }
 }
