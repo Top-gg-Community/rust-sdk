@@ -194,14 +194,16 @@ util::debug_struct! {
   #[derive(Clone, Serialize, Deserialize)]
   Stats {
     protected {
+      #[serde(skip_serializing_if = "Option::is_none")]
       shard_count: Option<usize>,
+      #[serde(skip_serializing_if = "Option::is_none")]
       server_count: Option<usize>,
     }
 
     private {
-      #[serde(default, deserialize_with = "util::deserialize_default")]
+      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
       shards: Option<Vec<usize>>,
-      #[serde(default, deserialize_with = "util::deserialize_default")]
+      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
       shard_id: Option<usize>,
     }
 
