@@ -1,11 +1,11 @@
-use crate::Stats;
+use crate::{Result, Stats};
 use core::{
   ops::{Deref, DerefMut},
   time::Duration,
 };
 use std::sync::Arc;
 use tokio::{
-  sync::{RwLock, RwLockWriteGuard, Semaphore},
+  sync::{mpsc, RwLock, RwLockWriteGuard, Semaphore},
   task::{spawn, JoinHandle},
   time::sleep,
 };
@@ -131,6 +131,7 @@ pub trait Handler: Send + Sync + 'static {
 pub struct Autoposter<H> {
   handler: Arc<H>,
   thread: JoinHandle<()>,
+  receiver: mpsc::UnboundedReceiver<Result<()>>,
 }
 
 impl<H> Autoposter<H>
@@ -156,6 +157,7 @@ where
 
     let client = client.as_client();
     let handler = Arc::new(handler);
+    let (sender, receiver) = mpsc::unbounded_channel();
 
     Self {
       handler: Arc::clone(&handler),
@@ -166,12 +168,15 @@ where
           {
             let stats = handler.stats().stats.read().await;
 
-            let _ = client.post_stats(&stats).await;
+            if sender.send(client.post_stats(&stats).await).is_err() {
+              break;
+            }
           };
 
           sleep(interval).await;
         }
       }),
+      receiver,
     }
   }
 
@@ -179,6 +184,12 @@ where
   #[inline(always)]
   pub fn handler(&self) -> Arc<H> {
     Arc::clone(&self.handler)
+  }
+  
+  /// Returns a future that resolves every time the [`Autoposter`] has attempted to post the bot's stats.
+  #[inline(always)]
+  pub async fn posted_recv(&mut self) -> Option<Result<()>> {
+    self.receiver.recv().await
   }
 }
 
