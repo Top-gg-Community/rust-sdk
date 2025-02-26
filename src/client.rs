@@ -1,5 +1,5 @@
 use crate::{
-  bot::{Bot, Bots, GetBots, IsWeekend, Stats},
+  bot::{Bot, BotQuery, Bots, IsWeekend, Stats},
   util,
   voter::{Voted, Voter},
   Error, Result, Snowflake,
@@ -114,10 +114,14 @@ impl InnerClient {
   }
 
   pub(crate) async fn post_server_count(&self, server_count: usize) -> Result<()> {
+    if server_count == 0 {
+      return Err(Error::InvalidRequest);
+    }
+
     self
       .send_inner(
         Method::POST,
-        api!("/bots/stats"),
+        api!("/bots/{}/stats", self.id),
         serde_json::to_vec(&Stats {
           server_count: Some(server_count),
         })
@@ -149,21 +153,21 @@ impl Client {
     Self { inner }
   }
 
-  /// Fetches a listed bot from a Discord ID.
+  /// Fetches a Discord bot from its ID.
   ///
   /// # Panics
   ///
   /// Panics if any of the following conditions are met:
-  /// - The ID argument is a string but not numeric
-  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// - The provided ID is not numeric.
+  /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested bot does not exist. ([`NotFound`][crate::Error::NotFound])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: Snowflake,
@@ -178,51 +182,52 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_server_count(&self) -> Result<Option<usize>> {
     self
       .inner
-      .send(Method::GET, api!("/bots/stats"), None)
+      .send(Method::GET, api!("/bots/{}/stats", self.inner.id), None)
       .await
       .map(|stats: Stats| stats.server_count)
   }
 
-  /// Posts your bot's server count.
+  /// Posts your Discord bot's server count to the API. This will update the server count in your bot's Top.gg page.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - The bot is currently in zero servers. ([`InvalidRequest`][crate::Error::InvalidRequest])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   #[inline(always)]
   pub async fn post_server_count(&self, server_count: usize) -> Result<()> {
     self.inner.post_server_count(server_count).await
   }
 
-  /// Fetches your bot's last 1000 voters.
+  /// Fetches your bot's last 1000 unique voters.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_voters(&self) -> Result<Vec<Voter>> {
     self
       .inner
@@ -230,10 +235,10 @@ impl Client {
       .await
   }
 
-  pub(crate) async fn get_bots_inner(&self, query: String) -> Result<Vec<Bot>> {
+  pub(crate) async fn get_bots_inner(&self, path: String) -> Result<Vec<Bot>> {
     self
       .inner
-      .send::<Bots>(Method::GET, api!("/bots{}", query), None)
+      .send::<Bots>(Method::GET, api!("{}", path), None)
       .await
       .map(|res| res.results)
   }
@@ -242,21 +247,21 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if any of the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized).
+  /// Panics if any of The client uses an invalid API token..
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
   /// Basic usage:
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, GetBots};
+  /// use topgg::{Client, BotQuery};
   ///
   /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
   ///
@@ -264,7 +269,7 @@ impl Client {
   ///   .get_bots()
   ///   .limit(250)
   ///   .skip(50)
-  ///   .username("shiro")
+  ///   .name("shiro")
   ///   .sort_by_monthly_votes()
   ///   .await;
   ///
@@ -273,24 +278,24 @@ impl Client {
   /// }
   /// ```
   #[inline(always)]
-  pub fn get_bots(&self) -> GetBots<'_> {
-    GetBots::new(self)
+  pub fn get_bots(&self) -> BotQuery<'_> {
+    BotQuery::new(self)
   }
 
-  /// Checks if the specified user has voted your bot.
+  /// Checks if the specified Discord user has voted your Discord bot.
   ///
   /// # Panics
   ///
   /// Panics if any of the following conditions are met:
-  /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
-  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// - The provided ID is not numeric.
+  /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,
@@ -314,14 +319,14 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner

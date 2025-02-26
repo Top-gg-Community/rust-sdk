@@ -1,49 +1,39 @@
 use crate::{snowflake, util, Client};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
   cmp::min,
+  collections::HashMap,
   future::{Future, IntoFuture},
   pin::Pin,
 };
 
-#[inline(always)]
-pub(crate) fn deserialize_support_server<'de, D>(
-  deserializer: D,
-) -> Result<Option<String>, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  util::deserialize_optional_string(deserializer)
-    .map(|inner| inner.map(|support| format!("https://discord.com/invite/{support}")))
-}
-
 util::debug_struct! {
-  /// A struct representing a bot listed on [Top.gg](https://top.gg).
+  /// Represents a Discord bot listed on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
   Bot {
     public {
-      /// The application ID of this bot.
+      /// This bot's Discord ID.
       #[serde(rename = "clientid", deserialize_with = "snowflake::deserialize")]
       id: u64,
 
-      /// The Top.gg user ID of this bot.
+      /// This bot's Top.gg ID.
       #[serde(rename = "id", deserialize_with = "snowflake::deserialize")]
       topgg_id: u64,
 
-      /// The username of this bot.
+      /// This bot's username.
       #[serde(rename = "username")]
       name: String,
 
-      /// The prefix of this bot.
+      /// This bot's prefix.
       prefix: String,
 
-      /// The short description of this bot.
+      /// This bot's short description.
       #[serde(rename = "shortdesc")]
       short_description: String,
 
-      /// The long description of this bot. It can contain HTML and/or Markdown.
+      /// This bot's long description. It can contain HTML and/or Markdown.
       #[serde(
         default,
         deserialize_with = "util::deserialize_optional_string",
@@ -51,88 +41,64 @@ util::debug_struct! {
       )]
       long_description: Option<String>,
 
-      /// The tags of this bot.
-      #[serde(default, deserialize_with = "util::deserialize_default")]
+      /// This bot's tags.
+      #[serde(deserialize_with = "util::deserialize_default")]
       tags: Vec<String>,
 
-      /// The website URL of this bot.
+      /// This bot's website URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       website: Option<String>,
 
-      /// The link to this bot's GitHub repository.
+      /// This bot's GitHub repository URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       github: Option<String>,
 
-      /// A list of IDs of this bot's owners. The main owner is the first ID in the array.
+      /// This bot's owners IDs.
       #[serde(deserialize_with = "snowflake::deserialize_vec")]
       owners: Vec<u64>,
 
-      /// The URL for this bot's banner image.
-      #[serde(
-        default,
-        deserialize_with = "util::deserialize_optional_string",
-        rename = "bannerUrl"
-      )]
-      banner_url: Option<String>,
-
-      /// The date when this bot was approved on [Top.gg](https://top.gg).
+      /// This bot's submission date.
       #[serde(rename = "date")]
-      approved_at: DateTime<Utc>,
+      submitted_at: DateTime<Utc>,
 
-      /// The amount of upvotes this bot has.
+      /// The amount of votes this bot has.
       #[serde(rename = "points")]
       votes: usize,
 
-      /// The amount of upvotes this bot has this month.
+      /// The amount of votes this bot has this month.
       #[serde(rename = "monthlyPoints")]
       monthly_votes: usize,
 
-      /// The support server invite URL of this bot.
-      #[serde(default, deserialize_with = "deserialize_support_server")]
-      support: Option<String>,
-    }
-
-    private {
+      /// This bot's support URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      avatar: Option<String>,
+      support: Option<String>,
 
+      /// This bot's avatar URL.
+      avatar: String,
+
+      /// This bot's invite URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       invite: Option<String>,
 
+      /// This bot's posted server count.
+      #[serde(default)]
+      server_count: Option<usize>,
+    }
+
+    private {
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       vanity: Option<String>,
     }
 
     getters(self) {
-      /// Retrieves the creation date of this bot.
+      /// This bot's creation date.
       #[must_use]
       #[inline(always)]
       created_at: DateTime<Utc> => {
         util::get_creation_date(self.id)
       }
 
-      /// Retrieves the avatar URL of this bot.
-      ///
-      /// Its format will either be PNG or GIF if animated.
-      #[must_use]
-      #[inline(always)]
-      avatar: String => {
-        util::get_avatar(&self.avatar, self.id)
-      }
-
-      /// The invite URL of this bot.
-      #[must_use]
-      invite: String => {
-        match &self.invite {
-          Some(inv) => inv.to_owned(),
-          _ => format!(
-            "https://discord.com/oauth2/authorize?scope=bot&client_id={}",
-            self.id
-          ),
-        }
-      }
-
-      /// Retrieves the URL of this bot's [Top.gg](https://top.gg) page.
+      /// This bot's Top.gg page URL.
       #[must_use]
       #[inline(always)]
       url: String => {
@@ -161,23 +127,23 @@ pub(crate) struct IsWeekend {
   pub(crate) is_weekend: bool,
 }
 
-/// A struct for configuring the query in [`get_bots`][crate::Client::get_bots] before being sent to the [Top.gg API](https://docs.top.gg) by `await`ing it.
+/// A struct for configuring the query in [`get_bots`][crate::Client::get_bots] before being sent to the API.
 #[must_use]
-pub struct GetBots<'a> {
+pub struct BotQuery<'a> {
   client: &'a Client,
-  query: String,
-  search: String,
+  query: HashMap<&'static str, String>,
+  search: HashMap<&'static str, String>,
   sort: Option<&'static str>,
 }
 
 macro_rules! get_bots_method {
   ($(
     $(#[doc = $doc:literal])*
-    $input_name:ident: $input_type:ty = $property:ident($($format:tt)*);
+    $lib_name:ident: $lib_type:ty = $property:ident($api_name:ident, $lib_value:expr);
   )*) => {$(
     $(#[doc = $doc])*
-    pub fn $input_name(mut self, $input_name: $input_type) -> Self {
-      self.$property.push_str(&format!($($format)*));
+    pub fn $lib_name(mut self, $lib_name: $lib_type) -> Self {
+      self.$property.insert(stringify!($api_name), $lib_value);
       self
     }
   )*};
@@ -196,13 +162,13 @@ macro_rules! get_bots_sort {
   )*};
 }
 
-impl<'a> GetBots<'a> {
+impl<'a> BotQuery<'a> {
   #[inline(always)]
   pub(crate) fn new(client: &'a Client) -> Self {
     Self {
       client,
-      query: String::from('?'),
-      search: String::new(),
+      query: HashMap::new(),
+      search: HashMap::new(),
       sort: None,
     }
   }
@@ -211,8 +177,8 @@ impl<'a> GetBots<'a> {
     /// Sorts results based on each bot's ID.
     sort_by_id: id,
 
-    /// Sorts results based on each bot's approval date.
-    sort_by_approval_date: date,
+    /// Sorts results based on each bot's submission date.
+    sort_by_submission_date: date,
 
     /// Sorts results based on each bot's monthly vote count.
     sort_by_monthly_votes: monthlyPoints,
@@ -220,45 +186,59 @@ impl<'a> GetBots<'a> {
 
   get_bots_method! {
     /// Sets the maximum amount of bots to be queried. This cannot be more than 500.
-    limit: u16 = query("limit={}&", min(limit, 500));
+    limit: u16 = query(limit, min(limit, 500).to_string());
 
     /// Sets the amount of bots to be skipped during the query. This cannot be more than 499.
-    skip: u16 = query("offset={}&", min(skip, 499));
+    skip: u16 = query(offset, min(skip, 499).to_string());
 
     /// Queries only Discord bots that has this username.
-    username: &str = search("username%3A%20{}%20", urlencoding::encode(username));
+    name: &str = search(username, urlencoding::encode(name).to_string());
 
     /// Queries only Discord bots that has this prefix.
-    prefix: &str = search("prefix%3A%20{}%20", urlencoding::encode(prefix));
+    prefix: &str = search(prefix, urlencoding::encode(prefix).to_string());
 
     /// Queries only Discord bots that has this vote count.
-    votes: usize = search("points%3A%20{votes}%20");
+    votes: usize = search(points, votes.to_string());
 
     /// Queries only Discord bots that has this monthly vote count.
-    monthly_votes: usize = search("monthlyPoints%3A%20{monthly_votes}%20");
+    monthly_votes: usize = search(monthlyPoints, monthly_votes.to_string());
 
-    /// Queries only Discord bots that has this [Top.gg](https://top.gg) vanity URL.
-    vanity: &str = search("vanity%3A%20{}%20", urlencoding::encode(vanity));
+    /// Queries only Discord bots that has this Top.gg vanity URL.
+    vanity: &str = search(vanity, urlencoding::encode(vanity).to_string());
   }
 }
 
-impl<'a> IntoFuture for GetBots<'a> {
+impl<'a> IntoFuture for BotQuery<'a> {
   type Output = crate::Result<Vec<Bot>>;
   type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'a>>;
 
   fn into_future(self) -> Self::IntoFuture {
-    let mut query = self.query;
+    let mut path = String::from("/bots?");
 
     if let Some(sort) = self.sort {
-      query.push_str(&format!("sort={sort}&"));
+      path.push_str(&format!("sort={sort}&"));
     }
 
     if !self.search.is_empty() {
-      query.push_str(&format!("search={}", self.search));
-    } else {
-      query.pop();
+      let mut search = String::new();
+
+      for (key, value) in self.search {
+        search.push_str(&format!("{key}%3A%20{value}%20"));
+      }
+
+      if !search.is_empty() {
+        search.truncate(search.len() - 3);
+      }
+
+      path.push_str(&format!("search={search}&"));
     }
 
-    Box::pin(self.client.get_bots_inner(query))
+    for (key, value) in self.query {
+      path.push_str(&format!("{key}={value}&"));
+    }
+
+    path.pop();
+
+    Box::pin(self.client.get_bots_inner(path))
   }
 }

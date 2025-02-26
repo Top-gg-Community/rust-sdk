@@ -44,7 +44,7 @@ async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
   let bot = client.get_bot(264811613708746752).await.unwrap();
   
-  assert_eq!(bot.username, "Luca");
+  assert_eq!(bot.name, "Luca");
   assert_eq!(bot.id, 264811613708746752);
   
   println!("{:?}", bot);
@@ -64,7 +64,7 @@ async fn main() {
     .get_bots()
     .limit(250)
     .skip(50)
-    .username("shiro")
+    .name("shiro")
     .sort_by_monthly_votes()
     .await;
   

@@ -13,33 +13,24 @@ util::debug_struct! {
   #[derive(Clone, Deserialize)]
   Voter {
     public {
-      /// The Discord ID of this user.
+      /// This voter's Discord ID.
       #[serde(deserialize_with = "snowflake::deserialize")]
       id: u64,
 
-      /// The username of this user.
-      username: String,
-    }
+      /// This voter's username.
+      #[serde(rename = "username")]
+      name: String,
 
-    private {
-      avatar: Option<String>,
+      /// This voter's avatar URL.
+      avatar: String,
     }
 
     getters(self) {
-      /// Retrieves the creation date of this user.
+      /// This voter's creation date.
       #[must_use]
       #[inline(always)]
       created_at: DateTime<Utc> => {
         util::get_creation_date(self.id)
-      }
-
-      /// Retrieves the Discord avatar URL of this user.
-      ///
-      /// Its format will either be PNG or GIF if animated.
-      #[must_use]
-      #[inline(always)]
-      avatar: String => {
-        util::get_avatar(&self.avatar, self.id)
       }
     }
   }

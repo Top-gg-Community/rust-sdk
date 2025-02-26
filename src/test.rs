@@ -15,7 +15,7 @@ async fn api() {
   delayed! {
     let bot = client.get_bot(264811613708746752).await.unwrap();
 
-    assert_eq!(bot.username, "Luca");
+    assert_eq!(bot.name, "Luca");
     assert_eq!(bot.id, 264811613708746752);
   }
 
@@ -24,22 +24,22 @@ async fn api() {
       .get_bots()
       .limit(250)
       .skip(50)
-      .username("shiro")
+      .name("shiro")
       .sort_by_monthly_votes()
       .await
       .unwrap();
   }
 
-  // delayed! {
-  //   client
-  //   .post_server_count(2)
-  //   .await
-  //   .unwrap();
-  // } ERROR
+  delayed! {
+    client
+    .post_server_count(2)
+    .await
+    .unwrap();
+  }
 
-  // delayed! {
-  //   assert_eq!(client.get_server_count().await.unwrap().unwrap(), 2);
-  // } ERROR
+  delayed! {
+    assert_eq!(client.get_server_count().await.unwrap().unwrap(), 2);
+  }
 
   delayed! {
     let _voters = client.get_voters().await.unwrap();

@@ -127,20 +127,6 @@ where
   Err(Error::InternalServerError)
 }
 
-pub(crate) fn get_avatar(hash: &Option<String>, id: u64) -> String {
-  match hash {
-    Some(hash) => {
-      let ext = if hash.starts_with("a_") { "gif" } else { "png" };
-
-      format!("https://cdn.discordapp.com/avatars/{id}/{hash}.{ext}?size=1024")
-    }
-    _ => format!(
-      "https://cdn.discordapp.com/embed/avatars/{}.png",
-      (id >> 22) % 6,
-    ),
-  }
-}
-
 #[derive(Deserialize)]
 struct TokenInformation {
   #[serde(deserialize_with = "snowflake::deserialize")]
@@ -164,5 +150,5 @@ pub(crate) fn id_from_token(token: &str) -> u64 {
     }
   }
 
-  panic!("Got malformed Top.gg API token.");
+  panic!("Got a malformed Top.gg API token.");
 }
