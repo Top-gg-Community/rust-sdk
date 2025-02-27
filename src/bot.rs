@@ -9,6 +9,22 @@ use std::{
 };
 
 util::debug_struct! {
+  /// Represents a Discord bot's reviews on Top.gg.
+  #[must_use]
+  #[derive(Clone, Deserialize)]
+  BotReviews {
+    public {
+      /// This bot's average review score out of 5.
+      #[serde(rename = "averageScore")]
+      score: f64,
+
+      /// This bot's review count.
+      count: usize,
+    }
+  }
+}
+
+util::debug_struct! {
   /// Represents a Discord bot listed on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
@@ -83,6 +99,10 @@ util::debug_struct! {
       /// This bot's posted server count.
       #[serde(default)]
       server_count: Option<usize>,
+
+      /// This bot's reviews.
+      #[serde(rename = "reviews")]
+      review: BotReviews,
     }
 
     private {
