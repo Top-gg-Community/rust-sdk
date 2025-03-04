@@ -18,9 +18,9 @@ where
     .map(|s: Vec<String>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
 }
 
-/// A trait that represents any datatype that can be interpreted as a Discord snowflake/ID.
+/// Any datatype that can be interpreted as a Discord ID.
 pub trait Snowflake {
-  /// The method that converts this value to a [`u64`].
+  /// Converts this value to a [`u64`].
   fn as_snowflake(&self) -> u64;
 }
 
@@ -40,7 +40,7 @@ impl_snowflake!(self, u64, *self);
 
 macro_rules! impl_string(
   ($($t:ty),+) => {$(
-    impl_snowflake!(self, $t, self.parse().expect("invalid snowflake as it's not numeric"));
+    impl_snowflake!(self, $t, self.parse().expect("Invalid snowflake as it's not numeric."));
   )+}
 );
 
@@ -72,7 +72,7 @@ cfg_if::cfg_if! {
     impl_snowflake!(
       #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))] self,
       &serenity::model::guild::PartialMember,
-      self.user.as_ref().expect("user property in PartialMember is None").id.get()
+      self.user.as_ref().expect("User property in PartialMember is None.").id.get()
     );
 
     macro_rules! impl_serenity_id(

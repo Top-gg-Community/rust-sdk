@@ -1,7 +1,7 @@
 use core::{fmt, result};
 use std::error;
 
-/// A struct representing an error coming from this SDK.
+/// An error coming from this SDK.
 #[derive(Debug)]
 pub enum Error {
   /// An unexpected client-side error has occurred.
@@ -13,12 +13,12 @@ pub enum Error {
   /// Attempted to send an invalid request to the API.
   InvalidRequest,
 
-  /// The requested resource does not exist.
+  /// Such query does not exist.
   NotFound,
 
-  /// The client exceeded the API's ratelimits.
+  /// Ratelimited from sending more requests.
   Ratelimit {
-    /// How long the client should wait (in seconds) until it can make a request to the API again.
+    /// How long the client should wait (in seconds) before it can make a request to the API again.
     retry_after: u16,
   },
 }
@@ -48,5 +48,5 @@ impl error::Error for Error {
   }
 }
 
-/// The [`Result`][std::result::Result] type primarily used in this SDK.
+/// The result type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;

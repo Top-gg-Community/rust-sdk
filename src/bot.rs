@@ -9,7 +9,7 @@ use std::{
 };
 
 util::debug_struct! {
-  /// Represents a Discord bot's reviews on Top.gg.
+  /// A Discord bot's reviews on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
   BotReviews {
@@ -25,7 +25,7 @@ util::debug_struct! {
 }
 
 util::debug_struct! {
-  /// Represents a Discord bot listed on Top.gg.
+  /// A Discord bot listed on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
   Bot {
@@ -69,7 +69,7 @@ util::debug_struct! {
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       github: Option<String>,
 
-      /// This bot's owners IDs.
+      /// This bot's owner IDs.
       #[serde(deserialize_with = "snowflake::deserialize_vec")]
       owners: Vec<u64>,
 
@@ -147,7 +147,7 @@ pub(crate) struct IsWeekend {
   pub(crate) is_weekend: bool,
 }
 
-/// A struct for configuring the query in [`get_bots`][crate::Client::get_bots] before being sent to the API.
+/// Configure a Discord bot query before sending it to the API.
 #[must_use]
 pub struct BotQuery<'a> {
   client: &'a Client,
@@ -208,22 +208,22 @@ impl<'a> BotQuery<'a> {
     /// Sets the maximum amount of bots to be queried. This cannot be more than 500.
     limit: u16 = query(limit, min(limit, 500).to_string());
 
-    /// Sets the amount of bots to be skipped during the query. This cannot be more than 499.
+    /// Sets the amount of bots to be skipped. This cannot be more than 499.
     skip: u16 = query(offset, min(skip, 499).to_string());
 
-    /// Queries only Discord bots that has this username.
+    /// Queries only bots that has this username.
     name: &str = search(username, urlencoding::encode(name).to_string());
 
-    /// Queries only Discord bots that has this prefix.
+    /// Queries only bots that has this prefix.
     prefix: &str = search(prefix, urlencoding::encode(prefix).to_string());
 
-    /// Queries only Discord bots that has this vote count.
+    /// Queries only bots that has this vote count.
     votes: usize = search(points, votes.to_string());
 
-    /// Queries only Discord bots that has this monthly vote count.
+    /// Queries only bots that has this monthly vote count.
     monthly_votes: usize = search(monthlyPoints, monthly_votes.to_string());
 
-    /// Queries only Discord bots that has this Top.gg vanity URL.
+    /// Queries only bots that has this Top.gg vanity URL.
     vanity: &str = search(vanity, urlencoding::encode(vanity).to_string());
   }
 }

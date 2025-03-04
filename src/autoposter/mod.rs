@@ -30,17 +30,17 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A trait for handling events from third-party bot libraries.
+/// Handle events from third-party bot libraries.
 ///
-/// The struct implementing this trait ideally should own a `RwLock<usize>` struct and update it accordingly whenever Discord updates them with new data regarding guild/shard count.
+/// Structs that implement this ideally should own a `RwLock<usize>` instance and update it accordingly whenever Discord sends them new data regarding their server count.
 pub trait Handler: Send + Sync + 'static {
-  /// The method that borrows `RwLock<usize>` to the [`Autoposter`].
+  /// Borrows the instance to the [`Autoposter`].
   fn server_count(&self) -> &RwLock<usize>;
 }
 
-/// A struct that lets you automate the process of posting bot statistics to [Top.gg](https://top.gg) in intervals.
+/// Automate the process of posting your bot's server count to the API.
 ///
-/// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once this struct is dropped.
+/// **NOTE**: This struct owns the thread that does the autoposting. It will stop once it gets dropped.
 #[must_use]
 pub struct Autoposter<H> {
   handler: Arc<H>,
@@ -52,22 +52,18 @@ impl<H> Autoposter<H>
 where
   H: Handler,
 {
-  /// Creates an [`Autoposter`] struct as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates an autoposter instance and immediately starts up the thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
-  /// - `handler` is a struct that handles the *retrieving stats* part before being sent to the [`Autoposter`]. This datatype is essentially the bridge between an external third-party bot library between this library.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
-  pub fn new<C>(client: &C, handler: H, interval: Duration) -> Self
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
+  /// - `handler` is any struct that gives out server count information.
+  /// - `interval` is the interval between posting. Defaults to 15 minutes.
+  pub fn new<C>(client: &C, handler: H, mut interval: Duration) -> Self
   where
     C: AsClient,
   {
-    assert!(
-      interval.as_secs() >= 900,
-      "The interval mustn't be shorter than 15 minutes."
-    );
+    if interval.as_secs() < 900 {
+      interval = Duration::from_secs(900);
+    }
 
     let client = client.as_client();
     let handler = Arc::new(handler);
@@ -95,19 +91,23 @@ where
     }
   }
 
-  /// Retrieves the [`Handler`] inside in the form of a [cloned][Arc::clone] [`Arc<H>`][Arc].
+  /// Retrieves this autoposter's handler.
   #[inline(always)]
   pub fn handler(&self) -> Arc<H> {
     Arc::clone(&self.handler)
   }
 
-  /// Returns a future that resolves every time the [`Autoposter`] has attempted to post the bot's stats. If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
+  /// Returns a future that resolves every time the autoposter posts your bot's server count.
+  ///
+  /// If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
   #[inline(always)]
   pub async fn recv(&mut self) -> Option<Result<()>> {
-    self.receiver.as_mut().expect("receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
+    self.receiver.as_mut().expect("Receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
   }
 
-  /// Takes the receiver responsible for [`recv`][Autoposter::recv]. Subsequent calls to this function and [`recv`][Autoposter::recv] after this call will panic.
+  /// Takes the receiver responsible for [`recv`][Autoposter::recv].
+  ///
+  /// Subsequent calls to this method and [`recv`][Autoposter::recv] after this will panic.
   #[inline(always)]
   pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
     self
@@ -129,13 +129,10 @@ impl<H> Deref for Autoposter<H> {
 #[cfg(feature = "serenity")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
 impl Autoposter<Serenity> {
-  /// Creates an [`Autoposter`] struct from an existing built-in [serenity] [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates a serenity-based autoposter instance and immediately starts up the thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
+  /// - `interval` is the interval between posting. Defaults to 15 minutes.
   #[inline(always)]
   pub fn serenity<C>(client: &C, interval: Duration) -> Self
   where
@@ -148,13 +145,10 @@ impl Autoposter<Serenity> {
 #[cfg(feature = "twilight")]
 #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
 impl Autoposter<Twilight> {
-  /// Creates an [`Autoposter`] struct from an existing built-in [twilight](https://twilight.rs) [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates a twilight-based autoposter instance and immediately starts up the thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
+  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
+  /// - `interval` is the interval between posting. Defaults to 15 minutes.
   #[inline(always)]
   pub fn twilight<C>(client: &C, interval: Duration) -> Self
   where

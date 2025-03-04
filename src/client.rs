@@ -41,7 +41,7 @@ pub struct InnerClient {
   token: String,
 }
 
-// this is implemented here because autoposter needs to access this struct from a different thread.
+// This is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
   pub(crate) fn new(token: String) -> Self {
     Self {
@@ -80,7 +80,7 @@ impl InnerClient {
           Ok(response)
         } else {
           Err(match status {
-            StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
+            StatusCode::UNAUTHORIZED => panic!("Invalid API token."),
             StatusCode::NOT_FOUND => Error::NotFound,
             StatusCode::TOO_MANY_REQUESTS => match util::parse_json::<Ratelimit>(response).await {
               Ok(ratelimit) => Error::Ratelimit {
@@ -132,7 +132,7 @@ impl InnerClient {
   }
 }
 
-/// A struct representing a [Top.gg API](https://docs.top.gg) client instance.
+/// Interact with the API's endpoints.
 #[must_use]
 #[derive(Debug)]
 pub struct Client {
@@ -140,9 +140,9 @@ pub struct Client {
 }
 
 impl Client {
-  /// Creates a brand new client instance from a [Top.gg](https://top.gg) token.
+  /// Creates a new instance.
   ///
-  /// To get your [Top.gg](https://top.gg) token, [view this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
+  /// To retrieve your API token, [see this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient::new(token);
@@ -167,7 +167,7 @@ impl Client {
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The requested bot does not exist. ([`NotFound`][crate::Error::NotFound])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: Snowflake,
@@ -189,7 +189,7 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_server_count(&self) -> Result<Option<usize>> {
     self
       .inner
@@ -210,13 +210,13 @@ impl Client {
   /// - The bot is currently in zero servers. ([`InvalidRequest`][crate::Error::InvalidRequest])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   #[inline(always)]
   pub async fn post_server_count(&self, server_count: usize) -> Result<()> {
     self.inner.post_server_count(server_count).await
   }
 
-  /// Fetches your Discord bot's recent unique voters.
+  /// Fetches your Discord bot's recent 100 unique voters.
   ///
   /// The amount of voters returned can't exceed 100, so you would need to use the `page` argument for this.
   ///
@@ -229,7 +229,7 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_voters(&self, mut page: usize) -> Result<Vec<Voter>> {
     if page < 1 {
       page = 1;
@@ -253,18 +253,18 @@ impl Client {
       .map(|res| res.results)
   }
 
-  /// Queries/searches through the [Top.gg](https://top.gg) database to look for matching listed Discord bots.
+  /// Returns a [`BotQuery`] instance that allows you to configure a bot query before sending it to the API.
   ///
   /// # Panics
   ///
-  /// Panics if any of The client uses an invalid API token..
+  /// Panics if any of The client uses an invalid API token.
   ///
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   ///
   /// # Examples
   ///
@@ -305,7 +305,7 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,
@@ -325,7 +325,7 @@ impl Client {
       .map(|res| res.voted != 0)
   }
 
-  /// Checks if the weekend multiplier is active.
+  /// Checks if the weekend multiplier is active, where a single vote counts as two.
   ///
   /// # Panics
   ///
@@ -336,7 +336,7 @@ impl Client {
   /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner

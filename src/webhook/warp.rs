@@ -2,7 +2,7 @@ use crate::{Vote, VoteHandler};
 use std::sync::Arc;
 use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 
-/// Creates a new `warp` [`Filter`] for adding an on-vote event handler to your application logic.
+/// Creates a new `warp` [`Filter`] for receiving vote events.
 ///
 /// # Examples
 ///

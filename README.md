@@ -4,11 +4,13 @@
 [crates-io-downloads-image]: https://img.shields.io/crates/d/topgg?style=flat-square
 [crates-io-url]: https://crates.io/crates/topgg
 
-The official Rust SDK for the [Top.gg API](https://docs.top.gg).
+A simple API wrapper for [Top.gg](https://top.gg) written in Rust.
 
-## Getting Started
+## Getting started
 
-Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then [view this tutorial on how to retrieve yours](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff). After that, add the following line to the `dependencies` section of your `Cargo.toml`:
+Make sure you already have an API token handy. See [this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff) on how to retrieve it.
+
+After that, add the following line to the `dependencies` section of your `Cargo.toml`:
 
 ```toml
 topgg = "1.4"
@@ -20,17 +22,17 @@ For more information, please read [the documentation](https://docs.rs/topgg)!
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
 
-- **`api`**: Interacting with the [Top.gg API](https://docs.top.gg) and accessing the `top.gg/api/*` endpoints. (enabled by default)
-  - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg API](https://docs.top.gg).
+- **`api`**: Interact with the API's endpoints.
+  - **`autoposter`**: Automate the process of posting your bot's server count to the API.
 - **`webhook`**: Accessing the [serde deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
-  - **`actix-web`**: Wrapper for working with the [actix-web](https://actix.rs/) web framework.
-  - **`axum`**: Wrapper for working with the [axum](https://crates.io/crates/axum) web framework.
-  - **`rocket`**: Wrapper for working with the [rocket](https://rocket.rs/) web framework.
-  - **`warp`**: Wrapper for working with the [warp](https://crates.io/crates/warp) web framework.
-- **`serenity`**: Extra helpers for working with [serenity](https://crates.io/crates/serenity) library (with bot caching disabled).
-  - **`serenity-cached`**: Extra helpers for working with [serenity](https://crates.io/crates/serenity) library (with bot caching enabled).
-- **`twilight`**: Extra helpers for working with [twilight](https://twilight.rs) library (with bot caching disabled).
-  - **`twilight-cached`**: Extra helpers for working with [twilight](https://twilight.rs) library (with bot caching enabled).
+  - **`actix-web`**: Extra helpers for working with actix-web.
+  - **`axum`**: Extra helpers for working with axum.
+  - **`rocket`**: Extra helpers for working with rocket.
+  - **`warp`**: Extra helpers for working with warp.
+- **`serenity`**: Extra helpers for working with serenity (with bot caching disabled).
+  - **`serenity-cached`**: Extra helpers for working with serenity (with bot caching enabled).
+- **`twilight`**: Extra helpers for working with twilight (with bot caching disabled).
+  - **`twilight-cached`**: Extra helpers for working with twilight (with bot caching enabled).
 
 ## Examples
 
@@ -74,7 +76,7 @@ async fn main() {
 }
 ```
 
-### Posting your bot's statistics
+### Posting your bot's server count
 
 ```rust,no_run
 use topgg::{Client, Stats};
@@ -106,7 +108,7 @@ async fn main() {
 }
 ```
 
-### Autoposting with [serenity](https://crates.io/crates/serenity)
+### Autoposting with serenity
 
 In your `Cargo.toml`:
 
@@ -163,7 +165,7 @@ async fn main() {
 }
 ```
 
-### Autoposting with [twilight](https://twilight.rs)
+### Autoposting with twilight
 
 In your `Cargo.toml`:
 
@@ -264,7 +266,7 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-### Writing an [axum](https://crates.io/crates/axum) webhook for listening to votes
+### Writing an axum webhook for listening to votes
 
 In your `Cargo.toml`:
 
@@ -311,7 +313,7 @@ async fn main() {
 }
 ```
 
-### Writing a [rocket](https://rocket.rs) webhook for listening to votes
+### Writing a rocket webhook for listening to votes
 
 In your `Cargo.toml`:
 
@@ -356,7 +358,7 @@ fn main() {
 }
 ```
 
-### Writing a [warp](https://crates.io/crates/warp) webhook for listening to votes
+### Writing a warp webhook for listening to votes
 
 In your `Cargo.toml`:
 

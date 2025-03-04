@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A built-in [`Handler`] for the [serenity] library.
+/// Autoposter handler for working with the serenity library.
 #[must_use]
 pub struct Serenity {
   #[cfg(not(feature = "serenity-cached"))]
@@ -53,7 +53,7 @@ macro_rules! serenity_handler {
           }
         }
 
-        /// Handles an entire [serenity] [`FullEvent`] enum. This can be used in [serenity] frameworks.
+        /// Handles an entire serenity [`FullEvent`] enum. This can be used in serenity frameworks.
         pub async fn handle(&$self, $context: &Context, event: &FullEvent) {
           match event {
             $(
@@ -129,7 +129,7 @@ serenity_handler! {
         self.handle_guild_create(
           #[cfg(not(feature = "serenity-cached"))] guild.id,
           #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
-          #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the bot doesn't cache guilds"),
+          #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the bot doesn't cache guilds."),
         ).await
       }
 

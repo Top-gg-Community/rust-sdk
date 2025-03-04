@@ -3,7 +3,7 @@ use std::{collections::HashSet, ops::DerefMut};
 use tokio::sync::{Mutex, RwLock};
 use twilight_model::gateway::event::Event;
 
-/// A built-in [`Handler`] for the [twilight](https://twilight.rs) library.
+/// Autoposter handler for working with the twilight.
 pub struct Twilight {
   cache: Mutex<HashSet<u64>>,
   server_count: RwLock<usize>,
@@ -18,7 +18,7 @@ impl Twilight {
     }
   }
 
-  /// Handles an entire [twilight](https://twilight.rs) [`Event`] enum.
+  /// Handles an entire twilight [`Event`] enum.
   pub async fn handle(&self, event: &Event) {
     match event {
       Event::Ready(ready) => {

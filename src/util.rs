@@ -150,5 +150,5 @@ pub(crate) fn id_from_token(token: &str) -> u64 {
     }
   }
 
-  panic!("Got a malformed Top.gg API token.");
+  panic!("Got a malformed API token.");
 }
