@@ -178,7 +178,7 @@ impl Client {
       .await
   }
 
-  /// Fetches your bot's posted server count.
+  /// Fetches your Discord bot's posted server count.
   ///
   /// # Panics
   ///
@@ -216,7 +216,9 @@ impl Client {
     self.inner.post_server_count(server_count).await
   }
 
-  /// Fetches your bot's last 1000 unique voters.
+  /// Fetches your Discord bot's recent unique voters.
+  ///
+  /// The amount of voters returned can't exceed 100, so you would need to use the `page` argument for this.
   ///
   /// # Panics
   ///
@@ -228,10 +230,18 @@ impl Client {
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - The client exceeded the API's ratelimits. ([`Ratelimit`][crate::Error::Ratelimit])
-  pub async fn get_voters(&self) -> Result<Vec<Voter>> {
+  pub async fn get_voters(&self, mut page: usize) -> Result<Vec<Voter>> {
+    if page < 1 {
+      page = 1;
+    }
+
     self
       .inner
-      .send(Method::GET, api!("/bots/{}/votes", self.inner.id), None)
+      .send(
+        Method::GET,
+        api!("/bots/{}/votes?page={}", self.inner.id, page),
+        None,
+      )
       .await
   }
 

@@ -42,7 +42,7 @@ async fn api() {
   }
 
   delayed! {
-    let _voters = client.get_voters().await.unwrap();
+    let _voters = client.get_voters(1).await.unwrap();
   }
 
   delayed! {
