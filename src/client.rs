@@ -164,9 +164,9 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
+  /// - The requested bot does not exist. ([`NotFound`][crate::Error::NotFound])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - The requested bot does not exist. ([`NotFound`][crate::Error::NotFound])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
@@ -303,6 +303,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
+  /// - The specified user has not logged in to Top.gg. ([`NotFound`][crate::Error::NotFound])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
