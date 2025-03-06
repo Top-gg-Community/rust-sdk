@@ -157,13 +157,11 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if any of the following conditions are met:
   /// - The provided ID is not numeric.
   /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - The specified bot does not exist. ([`NotFound`][crate::Error::NotFound])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
@@ -182,11 +180,10 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
@@ -202,11 +199,10 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - The bot is currently in zero servers. ([`InvalidRequest`][crate::Error::InvalidRequest])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
@@ -222,11 +218,10 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
@@ -257,11 +252,10 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if any of The client uses an invalid API token.
+  /// The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
@@ -296,13 +290,11 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if any of the following conditions are met:
   /// - The provided ID is not numeric.
   /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - The specified user has not logged in to Top.gg. ([`NotFound`][crate::Error::NotFound])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
@@ -330,11 +322,10 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// The client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// Errors if any of the following conditions are met:
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
