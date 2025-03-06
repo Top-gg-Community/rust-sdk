@@ -164,7 +164,7 @@ impl Client {
   /// # Errors
   ///
   /// Errors if any of the following conditions are met:
-  /// - The requested bot does not exist. ([`NotFound`][crate::Error::NotFound])
+  /// - The specified bot does not exist. ([`NotFound`][crate::Error::NotFound])
   /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
   /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
