@@ -100,14 +100,20 @@ where
   /// Returns a future that resolves every time the autoposter posts your bot's server count.
   ///
   /// If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
+  ///
+  /// # Panics
+  ///
+  /// Subsequent calls to this method.
   #[inline(always)]
   pub async fn recv(&mut self) -> Option<Result<()>> {
-    self.receiver.as_mut().expect("Receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
+    self.receiver.as_mut().expect("The receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
   }
 
   /// Takes the receiver responsible for [`recv`][Autoposter::recv].
   ///
-  /// Subsequent calls to this method and [`recv`][Autoposter::recv] after this will panic.
+  /// # Panics
+  ///
+  /// Subsequent calls to this method.
   #[inline(always)]
   pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
     self
@@ -122,7 +128,7 @@ impl<H> Deref for Autoposter<H> {
 
   #[inline(always)]
   fn deref(&self) -> &Self::Target {
-    self.handler.deref()
+    &self.handler
   }
 }
 

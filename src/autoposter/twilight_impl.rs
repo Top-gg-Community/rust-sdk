@@ -1,5 +1,5 @@
 use crate::autoposter::Handler;
-use std::{collections::HashSet, ops::DerefMut};
+use std::collections::HashSet;
 use tokio::sync::{Mutex, RwLock};
 use twilight_model::gateway::event::Event;
 
@@ -24,7 +24,7 @@ impl Twilight {
       Event::Ready(ready) => {
         let mut cache: tokio::sync::MutexGuard<'_, HashSet<u64>> = self.cache.lock().await;
         let mut server_count = self.server_count.write().await;
-        let cache_ref = cache.deref_mut();
+        let cache_ref = &mut *cache;
 
         *cache_ref = ready.guilds.iter().map(|guild| guild.id.get()).collect();
         *server_count = cache.len();

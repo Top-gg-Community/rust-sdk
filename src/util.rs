@@ -1,5 +1,4 @@
-use crate::{snowflake, Error};
-use base64::{prelude::BASE64_STANDARD, Engine};
+use crate::Error;
 use chrono::{DateTime, TimeZone, Utc};
 use reqwest::Response;
 use serde::{de::DeserializeOwned, Deserialize, Deserializer};
@@ -102,7 +101,7 @@ where
   T: Default + Deserialize<'de>,
   D: Deserializer<'de>,
 {
-  Option::deserialize(deserializer).map(|res| res.unwrap_or_default())
+  Option::deserialize(deserializer).map(Option::unwrap_or_default)
 }
 
 #[inline(always)]
@@ -125,30 +124,4 @@ where
   }
 
   Err(Error::InternalServerError)
-}
-
-#[derive(Deserialize)]
-struct TokenInformation {
-  #[serde(deserialize_with = "snowflake::deserialize")]
-  id: u64,
-}
-
-pub(crate) fn id_from_token(token: &str) -> u64 {
-  let mut by_dots = token.split('.').skip(1);
-
-  if let Some(slice) = by_dots.next() {
-    let mut portion = String::from(slice);
-
-    for _ in 0..4 - (slice.len() % 4) {
-      portion.push('=');
-    }
-
-    if let Ok(decoded) = BASE64_STANDARD.decode(portion) {
-      if let Ok(decoded_json) = serde_json::from_slice::<TokenInformation>(&decoded) {
-        return decoded_json.id;
-      }
-    }
-  }
-
-  panic!("Got a malformed API token.");
 }

@@ -37,6 +37,23 @@ actix-web = { version = "4", default-features = false, optional = true }
 [dev-dependencies]
 tokio = { version = "1", features = ["rt", "macros"] }
 
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+pedantic = { level = "warn", priority = -1 }
+cast-lossless = "allow"
+cast-possible-truncation = "allow"
+cast-possible-wrap = "allow"
+cast-sign-loss = "allow"
+inline-always = "allow"
+module-name-repetitions = "allow"
+must-use-candidate = "allow"
+return-self-not-must-use = "allow"
+similar-names = "allow"
+single-match-else = "allow"
+too-many-lines = "allow"
+unnecessary-wraps = "allow"
+unreadable-literal = "allow"
+
 [package.metadata.docs.rs]
 all-features = true
 rustdoc-args = ["--cfg", "docsrs"]

@@ -37,7 +37,6 @@ macro_rules! api {
 #[derive(Debug)]
 pub struct InnerClient {
   http: reqwest::Client,
-  id: u64,
   token: String,
 }
 
@@ -46,7 +45,6 @@ impl InnerClient {
   pub(crate) fn new(token: String) -> Self {
     Self {
       http: reqwest::Client::new(),
-      id: util::id_from_token(&token),
       token,
     }
   }
@@ -80,7 +78,7 @@ impl InnerClient {
           Ok(response)
         } else {
           Err(match status {
-            StatusCode::UNAUTHORIZED => panic!("Invalid API token."),
+            StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN => panic!("Invalid API token."),
             StatusCode::NOT_FOUND => Error::NotFound,
             StatusCode::TOO_MANY_REQUESTS => match util::parse_json::<Ratelimit>(response).await {
               Ok(ratelimit) => Error::Ratelimit {
@@ -121,7 +119,7 @@ impl InnerClient {
     self
       .send_inner(
         Method::POST,
-        api!("/bots/{}/stats", self.id),
+        "/bots/stats",
         serde_json::to_vec(&Stats {
           server_count: Some(server_count),
         })
@@ -190,7 +188,7 @@ impl Client {
   pub async fn get_server_count(&self) -> Result<Option<usize>> {
     self
       .inner
-      .send(Method::GET, api!("/bots/{}/stats", self.inner.id), None)
+      .send(Method::GET, "/bots/stats", None)
       .await
       .map(|stats: Stats| stats.server_count)
   }
@@ -232,11 +230,7 @@ impl Client {
 
     self
       .inner
-      .send(
-        Method::GET,
-        api!("/bots/{}/votes?page={}", self.inner.id, page),
-        None,
-      )
+      .send(Method::GET, api!("/bots/votes?page={}", page), None)
       .await
   }
 
@@ -307,11 +301,7 @@ impl Client {
       .inner
       .send::<Voted>(
         Method::GET,
-        api!(
-          "/bots/{}/check?userId={}",
-          self.inner.id,
-          user_id.as_snowflake()
-        ),
+        api!("/bots/check?userId={}", user_id.as_snowflake()),
         None,
       )
       .await

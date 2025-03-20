@@ -54,6 +54,10 @@ macro_rules! serenity_handler {
         }
 
         /// Handles an entire serenity [`FullEvent`] enum. This can be used in serenity frameworks.
+        ///
+        /// # Panics
+        ///
+        /// The `serenity-cached` feature is enabled but the bot doesn't cache guilds.
         pub async fn handle(&$self, $context: &Context, event: &FullEvent) {
           match event {
             $(
@@ -93,7 +97,7 @@ serenity_handler! {
   (self, context) => {
     ready {
       map(data_about_bot: Ready) {
-        self.handle_ready(&data_about_bot.guilds).await
+        self.handle_ready(&data_about_bot.guilds).await;
       }
 
       handle(guilds: &[UnavailableGuild]) {
@@ -114,7 +118,7 @@ serenity_handler! {
     #[cfg(feature = "serenity-cached")]
     cache_ready {
       map(guilds: Vec<GuildId>) {
-        self.handle_cache_ready(guilds.len()).await
+        self.handle_cache_ready(guilds.len()).await;
       }
 
       handle(guild_count: usize) {
@@ -130,7 +134,7 @@ serenity_handler! {
           #[cfg(not(feature = "serenity-cached"))] guild.id,
           #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
           #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the bot doesn't cache guilds."),
-        ).await
+        ).await;
       }
 
       handle(
@@ -162,7 +166,7 @@ serenity_handler! {
         self.handle_guild_delete(
           #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
           #[cfg(not(feature = "serenity-cached"))] incomplete.id
-        ).await
+        ).await;
       }
 
       handle(
