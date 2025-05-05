@@ -96,6 +96,10 @@ util::debug_struct! {
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       invite: Option<String>,
 
+      /// This bot's Top.gg vanity code.
+      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+      vanity: Option<String>,
+
       /// This bot's posted server count.
       #[serde(default)]
       server_count: Option<usize>,
@@ -105,27 +109,12 @@ util::debug_struct! {
       review: BotReviews,
     }
 
-    private {
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      vanity: Option<String>,
-    }
-
     getters(self) {
       /// This bot's creation date.
       #[must_use]
       #[inline(always)]
       created_at: DateTime<Utc> => {
         util::get_creation_date(self.id)
-      }
-
-      /// This bot's Top.gg page URL.
-      #[must_use]
-      #[inline(always)]
-      url: String => {
-        format!(
-          "https://top.gg/bot/{}",
-          self.vanity.as_deref().unwrap_or(&self.id.to_string())
-        )
       }
     }
   }
