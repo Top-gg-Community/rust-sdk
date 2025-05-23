@@ -38,14 +38,18 @@ macro_rules! api {
 pub struct InnerClient {
   http: reqwest::Client,
   token: String,
+  id: u64,
 }
 
 // This is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
   pub(crate) fn new(token: String) -> Self {
+    let id = util::id_from_token(&token);
+
     Self {
       http: reqwest::Client::new(),
       token,
+      id,
     }
   }
 
@@ -141,6 +145,10 @@ impl Client {
   /// Creates a new instance.
   ///
   /// To retrieve your API token, [see this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
+  ///
+  /// # Panics
+  ///
+  /// - The client uses an invalid API token.
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient::new(token);
@@ -188,7 +196,7 @@ impl Client {
   pub async fn get_server_count(&self) -> Result<Option<usize>> {
     self
       .inner
-      .send(Method::GET, "/bots/stats", None)
+      .send(Method::GET, api!("/bots/stats"), None)
       .await
       .map(|stats: Stats| stats.server_count)
   }
@@ -230,7 +238,11 @@ impl Client {
 
     self
       .inner
-      .send(Method::GET, api!("/bots/votes?page={}", page), None)
+      .send(
+        Method::GET,
+        api!("/bots/{}/votes?page={}", self.inner.id, page),
+        None,
+      )
       .await
   }
 
