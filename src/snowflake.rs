@@ -142,7 +142,6 @@ cfg_if::cfg_if! {
     impl_twilight_idstruct!(
       twilight_model::user::CurrentUser,
       twilight_model::user::User,
-      twilight_model::user::UserProfile,
       twilight_model::gateway::payload::incoming::invite_create::PartialUser
     );
   }

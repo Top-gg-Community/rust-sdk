@@ -1,6 +1,5 @@
 use crate::Result;
-use core::{ops::Deref, time::Duration};
-use std::sync::Arc;
+use std::{ops::Deref, time::Duration, sync::Arc};
 use tokio::{
   sync::{mpsc, RwLock},
   task::{spawn, JoinHandle},
@@ -45,7 +44,7 @@ pub trait Handler: Send + Sync + 'static {
 pub struct Autoposter<H> {
   handler: Arc<H>,
   thread: JoinHandle<()>,
-  receiver: Option<mpsc::UnboundedReceiver<Result<()>>>,
+  receiver: Option<mpsc::UnboundedReceiver<Result<usize>>>,
 }
 
 impl<H> Autoposter<H>
@@ -77,7 +76,7 @@ where
             let server_count = handler.server_count().read().await;
 
             if sender
-              .send(client.post_server_count(*server_count).await)
+              .send(client.post_server_count(*server_count).await.map(|_| *server_count))
               .is_err()
             {
               break;
@@ -97,15 +96,15 @@ where
     Arc::clone(&self.handler)
   }
 
-  /// Returns a future that resolves every time the autoposter posts your bot's server count.
+  /// Returns a future that resolves every time the autoposter posts your bot's server count. The value contained inside is the server count that was just posted.
   ///
   /// If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
   ///
   /// # Panics
   ///
-  /// Subsequent calls to this method.
+  /// Subsequent calls to this method after [`receiver`][Autoposter::receiver] is called.
   #[inline(always)]
-  pub async fn recv(&mut self) -> Option<Result<()>> {
+  pub async fn recv(&mut self) -> Option<Result<usize>> {
     self.receiver.as_mut().expect("The receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
   }
 
@@ -115,7 +114,7 @@ where
   ///
   /// Subsequent calls to this method.
   #[inline(always)]
-  pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
+  pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<usize>> {
     self
       .receiver
       .take()

@@ -13,7 +13,7 @@ Make sure you already have an API token handy. See [this tutorial](https://githu
 After that, add the following line to the `dependencies` section of your `Cargo.toml`:
 
 ```toml
-topgg = "1.4"
+topgg = "2"
 ```
 
 For more information, please read [the documentation](https://docs.rs/topgg)!
@@ -66,7 +66,6 @@ async fn main() {
     .get_bots()
     .limit(250)
     .skip(50)
-    .name("shiro")
     .sort_by_monthly_votes()
     .await;
   
@@ -124,22 +123,14 @@ topgg = { version = "1.4", features = ["autoposter", "serenity-cached"] }
 In your code:
 
 ```rust,no_run
-use core::time::Duration;
-use serenity::{client::{Client, Context, EventHandler}, model::{channel::Message, gateway::Ready}};
+use std::time::Duration;
+use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
 use topgg::Autoposter;
 
 struct Handler;
 
 #[serenity::async_trait]
 impl EventHandler for Handler {
-  async fn message(&self, ctx: Context, msg: Message) {
-    if msg.content == "!ping" {
-      if let Err(why) = msg.channel_id.say(&ctx.http, "Pong!").await {
-        println!("Error sending message: {why:?}");
-      }
-    }
-  }
-
   async fn ready(&self, _: Context, ready: Ready) {
     println!("{} is connected!", ready.user.name);
   }
@@ -148,10 +139,10 @@ impl EventHandler for Handler {
 #[tokio::main]
 async fn main() {
   let topgg_client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
-  let autoposter = Autoposter::serenity(&topgg_client, Duration::from_secs(1800));
+  let mut autoposter = Autoposter::serenity(&topgg_client, Duration::from_secs(1800));
   
-  let bot_token = env!("DISCORD_TOKEN").to_string();
-  let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;
+  let bot_token = env!("BOT_TOKEN").to_string();
+  let intents = GatewayIntents::GUILDS;
 
   let mut client = Client::builder(&bot_token, intents)
     .event_handler(Handler)
@@ -159,6 +150,14 @@ async fn main() {
     .await
     .unwrap();
 
+  let mut receiver = autoposter.receiver();
+
+  tokio::spawn(async move {
+    while let Some(result) = receiver.recv().await {
+      println!("Just posted: {result:?}");
+    }
+  });
+  
   if let Err(why) = client.start().await {
     println!("Client error: {why:?}");
   }
@@ -181,7 +180,7 @@ topgg = { version = "1.4", features = ["autoposter", "twilight-cached"] }
 In your code:
 
 ```rust,no_run
-use core::time::Duration;
+use std::time::Duration;
 use topgg::Autoposter;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 

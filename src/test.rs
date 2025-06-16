@@ -24,7 +24,6 @@ async fn api() {
       .get_bots()
       .limit(250)
       .skip(50)
-      .name("shiro")
       .sort_by_monthly_votes()
       .await
       .unwrap();

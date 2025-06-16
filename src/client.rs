@@ -123,7 +123,7 @@ impl InnerClient {
     self
       .send_inner(
         Method::POST,
-        "/bots/stats",
+        api!("/bots/stats"),
         serde_json::to_vec(&Stats {
           server_count: Some(server_count),
         })
@@ -279,7 +279,6 @@ impl Client {
   ///   .get_bots()
   ///   .limit(250)
   ///   .skip(50)
-  ///   .name("shiro")
   ///   .sort_by_monthly_votes()
   ///   .await;
   ///

@@ -33,7 +33,7 @@ impl Twilight {
       Event::GuildCreate(guild_create) => {
         let mut cache = self.cache.lock().await;
 
-        if cache.insert(guild_create.0.id.get()) {
+        if cache.insert(guild_create.id().get()) {
           let mut server_count = self.server_count.write().await;
 
           *server_count = cache.len();

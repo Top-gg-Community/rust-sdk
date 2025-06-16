@@ -1,6 +1,6 @@
 [package]
 name = "topgg"
-version = "1.4.3"
+version = "2.0.0"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
 description = "A simple API wrapper for Top.gg written in Rust."
@@ -20,16 +20,16 @@ serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
 urlencoding = "2"
 
-serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
+serenity = { version = ">=0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
-twilight-model = { version = "0.15", optional = true }
-twilight-cache-inmemory = { version = "0.15", optional = true }
+twilight-model = { version = ">=0.16", optional = true }
+twilight-cache-inmemory = { version = ">=0.16", optional = true }
 
 chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
 
 rocket = { version = "0.5", default-features = false, features = ["json"], optional = true }
-axum = { version = "0.7", default-features = false, optional = true, features = ["http1", "tokio"] }
+axum = { version = "0.8", default-features = false, optional = true, features = ["http1", "tokio"] }
 async-trait = { version = "0.1", optional = true }
 warp = { version = "0.3", default-features = false, optional = true }
 actix-web = { version = "4", default-features = false, optional = true }

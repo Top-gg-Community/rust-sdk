@@ -4,6 +4,7 @@ use serde::{Deserialize, Serialize};
 use std::{
   cmp::min,
   collections::HashMap,
+  fmt::Write,
   future::{Future, IntoFuture},
   pin::Pin,
 };
@@ -141,7 +142,6 @@ pub(crate) struct IsWeekend {
 pub struct BotQuery<'a> {
   client: &'a Client,
   query: HashMap<&'static str, String>,
-  search: HashMap<&'static str, String>,
   sort: Option<&'static str>,
 }
 
@@ -177,7 +177,6 @@ impl<'a> BotQuery<'a> {
     Self {
       client,
       query: HashMap::new(),
-      search: HashMap::new(),
       sort: None,
     }
   }
@@ -199,21 +198,6 @@ impl<'a> BotQuery<'a> {
 
     /// Sets the amount of bots to be skipped. This cannot be more than 499.
     skip: u16 = query(offset, min(skip, 499).to_string());
-
-    /// Queries only bots that has this username.
-    name: &str = search(username, urlencoding::encode(name).to_string());
-
-    /// Queries only bots that has this prefix.
-    prefix: &str = search(prefix, urlencoding::encode(prefix).to_string());
-
-    /// Queries only bots that has this vote count.
-    votes: usize = search(points, votes.to_string());
-
-    /// Queries only bots that has this monthly vote count.
-    monthly_votes: usize = search(monthlyPoints, monthly_votes.to_string());
-
-    /// Queries only bots that has this Top.gg vanity URL.
-    vanity: &str = search(vanity, urlencoding::encode(vanity).to_string());
   }
 }
 
@@ -225,25 +209,11 @@ impl<'a> IntoFuture for BotQuery<'a> {
     let mut path = String::from("/bots?");
 
     if let Some(sort) = self.sort {
-      path.push_str(&format!("sort={sort}&"));
+      write!(&mut path, "sort={sort}&").unwrap();
     }
-
-    if !self.search.is_empty() {
-      let mut search = String::new();
-
-      for (key, value) in self.search {
-        search.push_str(&format!("{key}%3A%20{value}%20"));
-      }
-
-      if !search.is_empty() {
-        search.truncate(search.len() - 3);
-      }
-
-      path.push_str(&format!("search={search}&"));
-    }
-
+    
     for (key, value) in self.query {
-      path.push_str(&format!("{key}={value}&"));
+      write!(&mut path, "{key}={value}&").unwrap();
     }
 
     path.pop();
