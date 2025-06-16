@@ -1,6 +1,7 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
 #![cfg_attr(feature = "webhook", allow(unreachable_patterns))]
+#![allow(clippy::needless_pass_by_value)]
 
 mod snowflake;
 #[cfg(test)]
@@ -8,7 +9,7 @@ mod test;
 
 cfg_if::cfg_if! {
   if #[cfg(feature = "api")] {
-    mod client;
+    pub(crate) mod client;
     mod error;
     mod util;
 
@@ -20,6 +21,9 @@ cfg_if::cfg_if! {
 
     /// Voter-related structs.
     pub mod voter;
+
+    /// Widget generator functions.
+    pub mod widget;
 
     #[doc(inline)]
     pub use client::Client;

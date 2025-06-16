@@ -24,15 +24,18 @@ struct Ratelimit {
   retry_after: u16,
 }
 
+#[macro_export]
 macro_rules! api {
   ($e:literal) => {
-    concat!("https://top.gg/api", $e)
+    concat!("https://top.gg/api/v1", $e)
   };
 
   ($e:literal, $($rest:tt)*) => {
-    format!(api!($e), $($rest)*)
+    format!($crate::client::api!($e), $($rest)*)
   };
 }
+
+pub(crate) use api;
 
 #[derive(Debug)]
 pub struct InnerClient {

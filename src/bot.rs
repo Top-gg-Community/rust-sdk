@@ -211,7 +211,7 @@ impl<'a> IntoFuture for BotQuery<'a> {
     if let Some(sort) = self.sort {
       write!(&mut path, "sort={sort}&").unwrap();
     }
-    
+
     for (key, value) in self.query {
       write!(&mut path, "{key}={value}&").unwrap();
     }

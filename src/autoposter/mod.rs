@@ -1,5 +1,5 @@
 use crate::Result;
-use std::{ops::Deref, time::Duration, sync::Arc};
+use std::{ops::Deref, sync::Arc, time::Duration};
 use tokio::{
   sync::{mpsc, RwLock},
   task::{spawn, JoinHandle},
@@ -76,7 +76,12 @@ where
             let server_count = handler.server_count().read().await;
 
             if sender
-              .send(client.post_server_count(*server_count).await.map(|_| *server_count))
+              .send(
+                client
+                  .post_server_count(*server_count)
+                  .await
+                  .map(|_| *server_count),
+              )
               .is_err()
             {
               break;

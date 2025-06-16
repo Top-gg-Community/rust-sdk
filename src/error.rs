@@ -1,4 +1,4 @@
-use std::{fmt, result, error};
+use std::{error, fmt, result};
 
 /// An error coming from this SDK.
 #[derive(Debug)]
