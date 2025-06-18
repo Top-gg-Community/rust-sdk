@@ -29,6 +29,9 @@ cfg_if::cfg_if! {
     pub use client::Client;
     pub use error::{Error, Result};
     pub use snowflake::Snowflake; // for doc purposes
+
+    #[doc(inline)]
+    pub use widget::WidgetType;
   }
 }
 
