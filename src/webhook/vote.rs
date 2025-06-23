@@ -10,18 +10,6 @@ where
   String::deserialize(deserializer).map(|s| s == "test")
 }
 
-const fn _true() -> bool {
-  true
-}
-
-#[inline(always)]
-fn deserialize_is_server<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  Ok(String::deserialize(deserializer).is_err())
-}
-
 fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
 where
   D: Deserializer<'de>,
@@ -65,14 +53,6 @@ pub struct Vote {
   #[serde(deserialize_with = "snowflake::deserialize", rename = "user")]
   pub voter_id: u64,
 
-  /// Whether this vote's receiver is a Discord server.
-  #[serde(
-    default = "_true",
-    deserialize_with = "deserialize_is_server",
-    rename = "bot"
-  )]
-  pub is_server: bool,
-
   /// Whether this vote is just a test done from the page settings.
   #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
   pub is_test: bool,
@@ -84,68 +64,4 @@ pub struct Vote {
   /// Query strings found on the vote page.
   #[serde(default, deserialize_with = "deserialize_query_string")]
   pub query: HashMap<String, String>,
-}
-
-cfg_if::cfg_if! {
-  if #[cfg(any(feature = "actix-web", feature = "rocket"))] {
-    /// An unauthenticated dispatched Top.gg vote event.
-    #[must_use]
-    #[cfg_attr(docsrs, doc(cfg(any(feature = "actix-web", feature = "rocket"))))]
-    #[derive(Clone)]
-    pub struct IncomingVote {
-      pub(crate) authorization: String,
-      pub(crate) vote: Vote,
-    }
-
-    impl IncomingVote {
-      /// Authenticates a valid password with this request.
-      ///
-      /// # Examples
-      ///
-      /// Basic usage:
-      ///
-      /// ```rust,no_run
-      /// match incoming_vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-      ///   Some(vote) => {
-      ///     println!("{:?}", vote);
-      ///
-      ///     // respond with 200 OK...
-      ///   },
-      ///   _ => {
-      ///     println!("found an unauthorized attacker.");
-      ///
-      ///     // respond with 401 UNAUTHORIZED...
-      ///   }
-      /// }
-      /// ```
-      #[must_use]
-      #[inline(always)]
-      pub fn authenticate(self, password: &str) -> Option<Vote> {
-        if self.authorization == password {
-          Some(self.vote)
-        } else {
-          None
-        }
-      }
-    }
-  }
-}
-
-cfg_if::cfg_if! {
-  if #[cfg(any(feature = "axum", feature = "warp"))] {
-    /// Vote event handler.
-    ///
-    /// It's described as follows (without [`async_trait`]'s macro expansion):
-    /// ```rust,no_run
-    /// #[async_trait::async_trait]
-    /// pub trait VoteHandler: Send + Sync + 'static {
-    ///   async fn voted(&self, vote: Vote);
-    /// }
-    /// ```
-    #[cfg_attr(docsrs, doc(cfg(any(feature = "axum", feature = "warp"))))]
-    #[async_trait::async_trait]
-    pub trait VoteHandler: Send + Sync + 'static {
-      async fn voted(&self, vote: Vote);
-    }
-  }
 }

@@ -1,11 +1,12 @@
-use crate::VoteHandler;
+use super::Webhook;
 use axum::{
   extract::State,
   http::{HeaderMap, StatusCode},
-  response::{IntoResponse, Response},
+  response::IntoResponse,
   routing::post,
   Router,
 };
+use serde::de::DeserializeOwned;
 use std::sync::Arc;
 
 struct WebhookState<T> {
@@ -23,29 +24,6 @@ impl<T> Clone for WebhookState<T> {
   }
 }
 
-async fn handler<T>(
-  headers: HeaderMap,
-  State(webhook): State<WebhookState<T>>,
-  body: String,
-) -> Response
-where
-  T: VoteHandler,
-{
-  if let Some(authorization) = headers.get("Authorization") {
-    if let Ok(authorization) = authorization.to_str() {
-      if authorization == *(webhook.password) {
-        if let Ok(vote) = serde_json::from_str(&body) {
-          webhook.state.voted(vote).await;
-
-          return (StatusCode::OK, ()).into_response();
-        }
-      }
-    }
-  }
-
-  (StatusCode::UNAUTHORIZED, ()).into_response()
-}
-
 /// Creates a new axum [`Router`] for receiving vote events.
 ///
 /// # Examples
@@ -53,48 +31,61 @@ where
 /// Basic usage:
 ///
 /// ```rust,no_run
-/// use axum::{routing::get, Router, Server};
-/// use std::{net::SocketAddr, sync::Arc};
-/// use topgg::{Vote, VoteHandler};
-///
-/// struct MyVoteHandler {}
-///
-/// #[axum::async_trait]
-/// impl VoteHandler for MyVoteHandler {
-///   async fn voted(&self, vote: Vote) {
-///     println!("{:?}", vote);
+/// use axum::{routing::get, Router};
+/// use topgg::{Vote, Webhook};
+/// use tokio::net::TcpListener;
+/// use std::sync::Arc;
+/// 
+/// struct MyVoteListener {}
+/// 
+/// #[async_trait::async_trait]
+/// impl Webhook<Vote> for MyVoteListener {
+///   async fn callback(&self, vote: Vote) {
+///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
 ///   }
 /// }
-///
+/// 
 /// async fn index() -> &'static str {
 ///   "Hello, World!"
 /// }
-///
+/// 
 /// #[tokio::main]
 /// async fn main() {
-///   let state = Arc::new(MyVoteHandler {});
-///
-///   let app = Router::new().route("/", get(index)).nest(
-///     "/webhook",
-///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
+///   let state = Arc::new(MyVoteListener {});
+/// 
+///   let router = Router::new().route("/", get(index)).nest(
+///     "/votes",
+///     topgg::axum::webhook(env!("MY_TOPGG_WEBHOOK_SECRET").to_string(), Arc::clone(&state)),
 ///   );
-///
-///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-///
-///   Server::bind(&addr)
-///     .serve(app.into_make_service())
-///     .await
-///     .unwrap();
+/// 
+///   let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+/// 
+///   axum::serve(listener, router).await.unwrap();
 /// }
 /// ```
 #[inline(always)]
 #[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
-pub fn webhook<T>(password: String, state: Arc<T>) -> Router
+pub fn webhook<D, T>(password: String, state: Arc<T>) -> Router
 where
-  T: VoteHandler,
+  D: DeserializeOwned + Send,
+  T: Webhook<D>,
 {
   Router::new()
-    .route("/", post(handler::<T>))
+    .route("/", post(async |headers: HeaderMap, State(webhook): State<WebhookState<T>>, body: String| {
+      if let Some(authorization) = headers.get("Authorization") {
+        if let Ok(authorization) = authorization.to_str() {
+          if authorization == *(webhook.password) {
+            if let Ok(data) = serde_json::from_str(&body) {
+              webhook.state.callback(data).await;
+    
+              return (StatusCode::NO_CONTENT, ()).into_response();
+            }
+          }
+        }
+      }
+    
+      (StatusCode::UNAUTHORIZED, ()).into_response()
+    }))
     .with_state(WebhookState {
       state,
       password: Arc::new(password),
