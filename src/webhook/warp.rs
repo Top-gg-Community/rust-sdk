@@ -1,6 +1,6 @@
 use super::Webhook;
-use std::sync::Arc;
 use serde::de::DeserializeOwned;
+use std::sync::Arc;
 use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 
 /// Creates a new `warp` [`Filter`] for receiving webhook events.
@@ -13,31 +13,31 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 /// use std::{net::SocketAddr, sync::Arc};
 /// use topgg::{Vote, Webhook};
 /// use warp::Filter;
-/// 
+///
 /// struct MyVoteListener {}
-/// 
+///
 /// #[async_trait::async_trait]
 /// impl Webhook<Vote> for MyVoteListener {
 ///   async fn callback(&self, vote: Vote) {
 ///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
 ///   }
 /// }
-/// 
+///
 /// #[tokio::main]
 /// async fn main() {
 ///   let state = Arc::new(MyVoteListener {});
-/// 
+///
 ///   // POST /votes
 ///   let webhook = topgg::warp::webhook(
 ///     "votes",
 ///     env!("MY_TOPGG_WEBHOOK_SECRET").to_string(),
 ///     Arc::clone(&state),
 ///   );
-/// 
+///
 ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
-/// 
+///
 ///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
-/// 
+///
 ///   warp::serve(routes).run(addr).await
 /// }
 /// ```

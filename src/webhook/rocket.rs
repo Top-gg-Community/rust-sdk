@@ -19,12 +19,13 @@ where
     let headers = request.headers();
 
     if let Some(authorization) = headers.get_one("Authorization") {
-      if let Outcome::Success(data) = <Json<T> as FromData>::from_data(request, data).await {
-        return Outcome::Success(Self {
+      return match <Json<T> as FromData>::from_data(request, data).await {
+        Outcome::Success(data) => Outcome::Success(Self {
           authorization: authorization.to_owned(),
           data: data.into_inner(),
-        });
-      }
+        }),
+        _ => Outcome::Error((Status::BadRequest, ())),
+      };
     }
 
     Outcome::Error((Status::Unauthorized, ()))

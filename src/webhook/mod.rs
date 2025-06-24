@@ -46,7 +46,7 @@ cfg_if::cfg_if! {
         }
       }
     }
-  
+
     impl<T> Clone for Incoming<T>
     where
       T: Clone,
@@ -61,7 +61,6 @@ cfg_if::cfg_if! {
     }
   }
 }
-
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "axum", feature = "warp"))] {

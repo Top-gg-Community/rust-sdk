@@ -1,16 +1,16 @@
 use crate::Incoming;
 use actix_web::{
   dev::Payload,
-  error::{Error, ErrorUnauthorized},
+  error::{Error, ErrorBadRequest, ErrorUnauthorized},
   web::Json,
   FromRequest, HttpRequest,
 };
+use serde::de::DeserializeOwned;
 use std::{
   future::Future,
   pin::Pin,
   task::{ready, Context, Poll},
 };
-use serde::de::DeserializeOwned;
 
 #[doc(hidden)]
 pub struct IncomingFut<T: DeserializeOwned> {
@@ -36,9 +36,11 @@ where
           }));
         }
       }
+
+      return Poll::Ready(Err(ErrorUnauthorized("401")));
     }
 
-    Poll::Ready(Err(ErrorUnauthorized("401")))
+    Poll::Ready(Err(ErrorBadRequest("400")))
   }
 }
 
