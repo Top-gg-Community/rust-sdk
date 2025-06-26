@@ -1,6 +1,6 @@
 #![doc = include_str!("../README.md")]
 #![cfg_attr(docsrs, feature(doc_cfg))]
-#![cfg_attr(feature = "webhook", allow(unreachable_patterns))]
+#![cfg_attr(feature = "webhooks", allow(unreachable_patterns))]
 #![allow(clippy::needless_pass_by_value)]
 
 mod snowflake;
@@ -47,9 +47,9 @@ cfg_if::cfg_if! {
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "webhook")] {
-    mod webhook;
+  if #[cfg(feature = "webhooks")] {
+    mod webhooks;
 
-    pub use webhook::*;
+    pub use webhooks::*;
   }
 }
