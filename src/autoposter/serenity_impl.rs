@@ -8,7 +8,7 @@ use serenity::{
     id::GuildId,
   },
 };
-use tokio::sync::RwLock;
+use tokio::sync::{RwLock, RwLockReadGuard};
 
 cfg_if::cfg_if! {
   if #[cfg(not(feature = "serenity-cached"))] {
@@ -192,9 +192,9 @@ serenity_handler! {
   }
 }
 
-impl Handler for Serenity {
+impl<'a> Handler<'a> for Serenity {
   #[inline(always)]
-  fn server_count(&self) -> &RwLock<usize> {
-    &self.server_count
+  fn server_count(&'a self) -> RwLockReadGuard<'a, usize> {
+    self.server_count.read()
   }
 }

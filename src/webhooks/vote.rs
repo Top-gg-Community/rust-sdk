@@ -37,7 +37,7 @@ where
   )
 }
 
-/// A dispatched Top.gg vote webhook event.
+/// A dispatched Top.gg vote event.
 #[must_use]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {

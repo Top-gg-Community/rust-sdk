@@ -1,5 +1,4 @@
-use crate::{snowflake, util};
-use chrono::{DateTime, Utc};
+use crate::snowflake;
 use serde::Deserialize;
 
 #[derive(Deserialize)]
@@ -7,31 +6,18 @@ pub(crate) struct Voted {
   pub(crate) voted: u8,
 }
 
-util::debug_struct! {
-  /// A Top.gg voter.
-  #[must_use]
-  #[derive(Clone, Deserialize)]
-  Voter {
-    public {
-      /// This voter's Discord ID.
-      #[serde(deserialize_with = "snowflake::deserialize")]
-      id: u64,
+/// A Top.gg voter.
+#[must_use]
+#[derive(Clone, Debug, Deserialize)]
+pub struct Voter {
+  /// This voter's Discord ID.
+  #[serde(deserialize_with = "snowflake::deserialize")]
+  pub id: u64,
 
-      /// This voter's username.
-      #[serde(rename = "username")]
-      name: String,
+  /// This voter's username.
+  #[serde(rename = "username")]
+  pub name: String,
 
-      /// This voter's avatar URL.
-      avatar: String,
-    }
-
-    getters(self) {
-      /// This voter's creation date.
-      #[must_use]
-      #[inline(always)]
-      created_at: DateTime<Utc> => {
-        util::get_creation_date(self.id)
-      }
-    }
-  }
+  /// This voter's avatar URL.
+  pub avatar: String,
 }

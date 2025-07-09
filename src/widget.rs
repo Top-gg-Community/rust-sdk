@@ -17,6 +17,12 @@ impl WidgetType {
 }
 
 /// Generates a large widget URL.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let widget_url = topgg::Widget::large(topgg::WidgetType::DiscordBot, 574652751745777665);
+/// ```
 #[inline(always)]
 pub fn large<I>(ty: WidgetType, id: I) -> String
 where
@@ -26,6 +32,12 @@ where
 }
 
 /// Generates a small widget URL for displaying votes.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let widget_url = topgg::Widget::votes(topgg::WidgetType::DiscordBot, 574652751745777665);
+/// ```
 #[inline(always)]
 pub fn votes<I>(ty: WidgetType, id: I) -> String
 where
@@ -39,6 +51,12 @@ where
 }
 
 /// Generates a small widget URL for displaying an entity's owner.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let widget_url = topgg::Widget::owner(topgg::WidgetType::DiscordBot, 574652751745777665);
+/// ```
 #[inline(always)]
 pub fn owner<I>(ty: WidgetType, id: I) -> String
 where
@@ -52,6 +70,12 @@ where
 }
 
 /// Generates a small widget URL for displaying social stats.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// let widget_url = topgg::Widget::social(topgg::WidgetType::DiscordBot, 574652751745777665);
+/// ```
 #[inline(always)]
 pub fn social<I>(ty: WidgetType, id: I) -> String
 where

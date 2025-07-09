@@ -1,7 +1,7 @@
 use crate::Result;
 use std::{ops::Deref, sync::Arc, time::Duration};
 use tokio::{
-  sync::{mpsc, RwLock},
+  sync::{mpsc, RwLock, RwLockReadGuard},
   task::{spawn, JoinHandle},
   time::sleep,
 };
@@ -29,17 +29,108 @@ cfg_if::cfg_if! {
   }
 }
 
-/// Handle events from third-party bot libraries.
+/// Handle events from third-party Discord bot libraries.
 ///
 /// Structs that implement this ideally should own a `RwLock<usize>` instance and update it accordingly whenever Discord sends them new data regarding their server count.
-pub trait Handler: Send + Sync + 'static {
-  /// Borrows the instance to the [`Autoposter`].
-  fn server_count(&self) -> &RwLock<usize>;
+pub trait Handler<'a>: Send + Sync + 'static {
+  /// Read-only `RwLock<usize>` guard containing the bot's latest server count.
+  fn server_count(&'a self) -> RwLockReadGuard<'a, usize>;
 }
 
-/// Automate the process of posting your bot's server count to the API.
+/// Automatically update the server count in your Discord bot's Top.gg page every few minutes.
 ///
-/// **NOTE**: This struct owns the thread that does the autoposting. It will stop once it gets dropped.
+/// **NOTE**: This struct owns the autoposter thread which means that it will stop once it gets dropped.
+///
+/// # Examples
+///
+/// Serenity:
+///
+/// ```rust,no_run
+/// use std::time::Duration;
+/// use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
+/// use topgg::Autoposter;
+///
+/// struct Handler;
+///
+/// #[serenity::async_trait]
+/// impl EventHandler for Handler {
+///   async fn ready(&self, _: Context, ready: Ready) {
+///     println!("{} is now ready!", ready.user.name);
+///   }
+/// }
+///
+/// #[tokio::main]
+/// async fn main() {
+///   let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
+///
+///   // Posts once every 30 minutes
+///   let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(1800));
+///   
+///   let bot_token = env!("BOT_TOKEN").to_string();
+///   let intents = GatewayIntents::GUILDS;
+///
+///   let mut bot = Client::builder(&bot_token, intents)
+///     .event_handler(Handler)
+///     .event_handler_arc(autoposter.handler())
+///     .await
+///     .unwrap();
+///
+///   let mut receiver = autoposter.receiver();
+///
+///   tokio::spawn(async move {
+///     while let Some(result) = receiver.recv().await {
+///       println!("Just posted: {result:?}");
+///     }
+///   });
+///   
+///   if let Err(why) = bot.start().await {
+///     println!("Client error: {why:?}");
+///   }
+/// }
+/// ```
+///
+/// Twilight:
+///
+/// ```rust,no_run
+/// use std::time::Duration;
+/// use topgg::{Autoposter, Client};
+/// use twilight_gateway::{Event, Intents, Shard, ShardId};
+///
+/// #[tokio::main]
+/// async fn main() {
+///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+///   let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+///
+///   let mut shard = Shard::new(
+///     ShardId::ONE,
+///     env!("DISCORD_TOKEN").to_string(),
+///     Intents::GUILD_MEMBERS | Intents::GUILDS,
+///   );
+///
+///   loop {
+///     let event = match shard.next_event().await {
+///       Ok(event) => event,
+///       Err(source) => {
+///         if source.is_fatal() {
+///           break;
+///         }
+///
+///         continue;
+///       }
+///     };
+///     
+///     autoposter.handle(&event).await;
+///     
+///     match event {
+///       Event::Ready(_) => {
+///         println!("Bot is now ready!");
+///       },
+///
+///       _ => {}
+///     }
+///   }
+/// }
+/// ```
 #[must_use]
 pub struct Autoposter<H> {
   handler: Arc<H>,
@@ -47,15 +138,11 @@ pub struct Autoposter<H> {
   receiver: Option<mpsc::UnboundedReceiver<Result<usize>>>,
 }
 
-impl<H> Autoposter<H>
+impl<'a, H> Autoposter<H>
 where
-  H: Handler,
+  H: Handler<'a>,
 {
-  /// Creates an autoposter instance and immediately starts up the thread.
-  ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
-  /// - `handler` is any struct that gives out server count information.
-  /// - `interval` is the interval between posting. Defaults to 15 minutes.
+  /// Creates and starts an autoposter thread.
   pub fn new<C>(client: &C, handler: H, mut interval: Duration) -> Self
   where
     C: AsClient,
@@ -73,7 +160,7 @@ where
       thread: spawn(async move {
         loop {
           {
-            let server_count = handler.server_count().read().await;
+            let server_count = handler.server_count().await;
 
             if sender
               .send(
@@ -95,19 +182,19 @@ where
     }
   }
 
-  /// Retrieves this autoposter's handler.
+  /// This autoposter's handler.
   #[inline(always)]
   pub fn handler(&self) -> Arc<H> {
     Arc::clone(&self.handler)
   }
 
-  /// Returns a future that resolves every time the autoposter posts your bot's server count. The value contained inside is the server count that was just posted.
+  /// Returns a future that resolves whenever an attempt to update the server count in your bot's Top.gg page has been made. The `usize` in this case is the server count that was just posted.
   ///
-  /// If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
+  /// **NOTE**: If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
   ///
   /// # Panics
   ///
-  /// Subsequent calls to this method after [`receiver`][Autoposter::receiver] is called.
+  /// Panics if this method gets called again after [`receiver`][Autoposter::receiver] is called.
   #[inline(always)]
   pub async fn recv(&mut self) -> Option<Result<usize>> {
     self.receiver.as_mut().expect("The receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
@@ -117,7 +204,7 @@ where
   ///
   /// # Panics
   ///
-  /// Subsequent calls to this method.
+  /// Panics if this method gets called for the second time.
   #[inline(always)]
   pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<usize>> {
     self
@@ -139,10 +226,53 @@ impl<H> Deref for Autoposter<H> {
 #[cfg(feature = "serenity")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
 impl Autoposter<Serenity> {
-  /// Creates a serenity-based autoposter instance and immediately starts up the thread.
+  /// Creates and starts a serenity-based autoposter thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
-  /// - `interval` is the interval between posting. Defaults to 15 minutes.
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// use std::time::Duration;
+  /// use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
+  /// use topgg::Autoposter;
+  ///
+  /// struct Handler;
+  ///
+  /// #[serenity::async_trait]
+  /// impl EventHandler for Handler {
+  ///   async fn ready(&self, _: Context, ready: Ready) {
+  ///     println!("{} is now ready!", ready.user.name);
+  ///   }
+  /// }
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  ///   // Posts once every 30 minutes
+  ///   let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(1800));
+  ///   
+  ///   let bot_token = env!("BOT_TOKEN").to_string();
+  ///   let intents = GatewayIntents::GUILDS;
+  ///
+  ///   let mut bot = Client::builder(&bot_token, intents)
+  ///     .event_handler(Handler)
+  ///     .event_handler_arc(autoposter.handler())
+  ///     .await
+  ///     .unwrap();
+  ///
+  ///   let mut receiver = autoposter.receiver();
+  ///
+  ///   tokio::spawn(async move {
+  ///     while let Some(result) = receiver.recv().await {
+  ///       println!("Just posted: {result:?}");
+  ///     }
+  ///   });
+  ///   
+  ///   if let Err(why) = bot.start().await {
+  ///     println!("Client error: {why:?}");
+  ///   }
+  /// }
+  /// ```
   #[inline(always)]
   pub fn serenity<C>(client: &C, interval: Duration) -> Self
   where
@@ -155,10 +285,50 @@ impl Autoposter<Serenity> {
 #[cfg(feature = "twilight")]
 #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
 impl Autoposter<Twilight> {
-  /// Creates a twilight-based autoposter instance and immediately starts up the thread.
+  /// Creates and starts a twilight-based autoposter thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or an API token ([`&str`][std::str]).
-  /// - `interval` is the interval between posting. Defaults to 15 minutes.
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// use std::time::Duration;
+  /// use topgg::{Autoposter, Client};
+  /// use twilight_gateway::{Event, Intents, Shard, ShardId};
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///   let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+  ///
+  ///   let mut shard = Shard::new(
+  ///     ShardId::ONE,
+  ///     env!("DISCORD_TOKEN").to_string(),
+  ///     Intents::GUILD_MEMBERS | Intents::GUILDS,
+  ///   );
+  ///
+  ///   loop {
+  ///     let event = match shard.next_event().await {
+  ///       Ok(event) => event,
+  ///       Err(source) => {
+  ///         if source.is_fatal() {
+  ///           break;
+  ///         }
+  ///
+  ///         continue;
+  ///       }
+  ///     };
+  ///     
+  ///     autoposter.handle(&event).await;
+  ///     
+  ///     match event {
+  ///       Event::Ready(_) => {
+  ///         println!("Bot is now ready!");
+  ///       },
+  ///
+  ///       _ => {}
+  ///     }
+  ///   }
+  /// }
+  /// ```
   #[inline(always)]
   pub fn twilight<C>(client: &C, interval: Duration) -> Self
   where

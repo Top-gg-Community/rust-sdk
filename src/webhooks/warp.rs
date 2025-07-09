@@ -3,11 +3,9 @@ use serde::de::DeserializeOwned;
 use std::sync::Arc;
 use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 
-/// Creates a new `warp` [`Filter`] for receiving webhook events.
+/// Creates a new warp [`Filter`] for receiving webhook events.
 ///
-/// # Examples
-///
-/// Basic usage:
+/// # Example
 ///
 /// ```rust,no_run
 /// use std::{net::SocketAddr, sync::Arc};

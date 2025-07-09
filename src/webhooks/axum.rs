@@ -26,9 +26,7 @@ impl<T> Clone for WebhookState<T> {
 
 /// Creates a new axum [`Router`] for receiving vote events.
 ///
-/// # Examples
-///
-/// Basic usage:
+/// # Example
 ///
 /// ```rust,no_run
 /// use axum::{routing::get, Router};

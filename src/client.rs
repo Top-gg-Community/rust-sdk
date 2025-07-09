@@ -37,7 +37,6 @@ macro_rules! api {
 
 pub(crate) use api;
 
-#[derive(Debug)]
 pub struct InnerClient {
   http: reqwest::Client,
   token: String,
@@ -139,7 +138,6 @@ impl InnerClient {
 
 /// Interact with the API's endpoints.
 #[must_use]
-#[derive(Debug)]
 pub struct Client {
   inner: SyncedClient,
 }
@@ -147,11 +145,17 @@ pub struct Client {
 impl Client {
   /// Creates a new instance.
   ///
-  /// To retrieve your API token, [see this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
+  /// To retrieve your API token, [see this tutorial](https://github.com/top-gg-community/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
   ///
   /// # Panics
   ///
-  /// - The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
+  /// ```
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient::new(token);
@@ -166,15 +170,23 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// - The provided ID is not numeric.
+  /// Panics if:
+  /// - The specified ID is invalid.
   /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
+  /// Returns [`Err`] if:
   /// - The specified bot does not exist. ([`NotFound`][crate::Error::NotFound])
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// let bot = client.get_bot(264811613708746752).await.unwrap();
+  /// ```
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: Snowflake,
@@ -189,13 +201,20 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// Returns [`Err`] if:
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// let server_count = client.get_server_count().await.unwrap();
+  /// ```
   pub async fn get_server_count(&self) -> Result<Option<usize>> {
     self
       .inner
@@ -204,36 +223,55 @@ impl Client {
       .map(|stats: Stats| stats.server_count)
   }
 
-  /// Posts your Discord bot's server count to the API. This will update the server count in your bot's Top.gg page.
+  /// Updates the server count in your Discord bot's Top.gg page.
   ///
   /// # Panics
   ///
-  /// The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
+  /// Returns [`Err`] if:
   /// - The bot is currently in zero servers. ([`InvalidRequest`][crate::Error::InvalidRequest])
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// client.post_server_count(bot.server_count()).await.unwrap();
+  /// ```
   #[inline(always)]
   pub async fn post_server_count(&self, server_count: usize) -> Result<()> {
     self.inner.post_server_count(server_count).await
   }
 
-  /// Fetches your Discord bot's recent 100 unique voters.
+  /// Fetches your Discord bot's recent unique voters.
   ///
   /// The amount of voters returned can't exceed 100, so you would need to use the `page` argument for this.
   ///
   /// # Panics
   ///
-  /// The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// Returns [`Err`] if:
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// //                             Page number
+  /// let voters = client.get_voters(1).await.unwrap();
+  ///
+  /// for voter in voters {
+  ///   println!("{}", voter.username);
+  /// }
+  /// ```
   pub async fn get_voters(&self, mut page: usize) -> Result<Vec<Voter>> {
     if page < 1 {
       page = 1;
@@ -257,36 +295,32 @@ impl Client {
       .map(|res| res.results)
   }
 
-  /// Returns a [`BotQuery`] instance that allows you to configure a bot query before sending it to the API.
+  /// Fetches Discord bots that matches the specified query.
   ///
   /// # Panics
   ///
-  /// The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// Returns [`Err`] if:
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
   ///
-  /// # Examples
-  ///
-  /// Basic usage:
+  /// # Example
   ///
   /// ```rust,no_run
-  /// use topgg::{Client, BotQuery};
-  ///
-  /// let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  ///
   /// let bots = client
   ///   .get_bots()
   ///   .limit(250)
   ///   .skip(50)
   ///   .sort_by_monthly_votes()
-  ///   .await;
+  ///   .await
+  ///   .unwrap();
   ///
   /// for bot in bots {
-  ///   println!("{:?}", bot);
+  ///   println!("{}", bot.name);
   /// }
   /// ```
   #[inline(always)]
@@ -294,19 +328,27 @@ impl Client {
     BotQuery::new(self)
   }
 
-  /// Checks if the specified Discord user has voted your Discord bot.
+  /// Checks if a Discord user has voted for your Discord bot in the past 12 hours.
   ///
   /// # Panics
   ///
-  /// - The provided ID is not numeric.
+  /// Panics if:
+  /// - The specified ID is invalid.
   /// - The client uses an invalid API token.
   ///
   /// # Errors
   ///
+  /// Returns [`Err`] if:
   /// - The specified user has not logged in to Top.gg. ([`NotFound`][crate::Error::NotFound])
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// let has_voted = client.has_voted(661200758510977084).await.unwrap();
+  /// ```
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,
@@ -326,13 +368,20 @@ impl Client {
   ///
   /// # Panics
   ///
-  /// The client uses an invalid API token.
+  /// Panics if the client uses an invalid API token.
   ///
   /// # Errors
   ///
-  /// - An unexpected client-side error has occurred. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - An unexpected server-side error has occurred. ([`InternalServerError`][crate::Error::InternalServerError])
+  /// Returns [`Err`] if:
+  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
   /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  ///
+  /// # Example
+  ///
+  /// ```rust,no_run
+  /// let is_weekend = client.is_weekend().await.unwrap();
+  /// ```
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner

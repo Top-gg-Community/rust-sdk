@@ -1,6 +1,6 @@
 use crate::autoposter::Handler;
 use std::collections::HashSet;
-use tokio::sync::{Mutex, RwLock};
+use tokio::sync::{Mutex, RwLock, RwLockReadGuard};
 use twilight_model::gateway::event::Event;
 
 /// Autoposter handler for working with the twilight.
@@ -55,9 +55,9 @@ impl Twilight {
   }
 }
 
-impl Handler for Twilight {
+impl<'a> Handler<'a> for Twilight {
   #[inline(always)]
-  fn server_count(&self) -> &RwLock<usize> {
-    &self.server_count
+  fn server_count(&'a self) -> RwLockReadGuard<'a, usize> {
+    self.server_count.read()
   }
 }

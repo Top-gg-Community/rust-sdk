@@ -2,6 +2,23 @@
 
 The community-maintained Rust library for Top.gg.
 
+## Chapters
+
+- [Installation](#installation)
+- [Setting up](#setting-up)
+- [Usage](#usage)
+  - [Getting a bot](#getting-a-bot)
+  - [Getting several bots](#getting-several-bots)
+  - [Getting your bot's voters](#getting-your-bots-voters)
+  - [Check if a user has voted for your bot](#check-if-a-user-has-voted-for-your-bot)
+  - [Getting your bot's server count](#getting-your-bots-server-count)
+  - [Posting your bot's server count](#posting-your-bots-server-count)
+  - [Automatically posting your bot's server count every few minutes](#automatically-posting-your-bots-server-count-every-few-minutes)
+  - [Checking if the weekend vote multiplier is active](#checking-if-the-weekend-vote-multiplier-is-active)
+  - [Generating widget URLs](#generating-widget-urls)
+  - [Webhooks](#webhooks)
+    - [Being notified whenever someone voted for your bot](#being-notified-whenever-someone-voted-for-your-bot)
+
 ## Installation
 
 In your `Cargo.toml`:
@@ -14,9 +31,7 @@ topgg = "2"
 ## Setting up
 
 ```rust,no_run
-use topgg::Client;
-
-let client = Client::new(env!("TOPGG_TOKEN").to_string());
+let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
 ```
 
 ## Usage
@@ -200,33 +215,25 @@ let is_weekend = client.is_weekend().await.unwrap();
 #### Large
 
 ```rust,no_run
-use topgg::{Widget, WidgetType};
-
-let widget_url = Widget::large(WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::Widget::large(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Votes
 
 ```rust,no_run
-use topgg::{Widget, WidgetType};
-
-let widget_url = Widget::votes(WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::Widget::votes(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Owner
 
 ```rust,no_run
-use topgg::{Widget, WidgetType};
-
-let widget_url = Widget::owner(WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::Widget::owner(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Social
 
 ```rust,no_run
-use topgg::{Widget, WidgetType};
-
-let widget_url = Widget::social(WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::Widget::social(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 ### Webhooks

@@ -3,10 +3,10 @@ use std::{error, fmt, result};
 /// An error coming from this SDK.
 #[derive(Debug)]
 pub enum Error {
-  /// An unexpected client-side error has occurred.
+  /// HTTP request failure from the client-side.
   InternalClientError(reqwest::Error),
 
-  /// An unexpected server-side error has occurred.
+  /// HTTP request failure from the server-side.
   InternalServerError,
 
   /// Attempted to send an invalid request to the API.
@@ -17,7 +17,7 @@ pub enum Error {
 
   /// Ratelimited from sending more requests.
   Ratelimit {
-    /// How long the client should wait (in seconds) before it can make a request to the API again.
+    /// How long the client should wait in seconds before it could send requests again without receiving a 429.
     retry_after: u16,
   },
 }
