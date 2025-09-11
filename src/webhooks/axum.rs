@@ -30,15 +30,15 @@ impl<T> Clone for WebhookState<T> {
 ///
 /// ```rust,no_run
 /// use axum::{routing::get, Router};
-/// use topgg::{Vote, Webhook};
+/// use topgg::{VoteEvent, Webhook};
 /// use tokio::net::TcpListener;
 /// use std::sync::Arc;
 ///
 /// struct MyVoteListener {}
 ///
 /// #[async_trait::async_trait]
-/// impl Webhook<Vote> for MyVoteListener {
-///   async fn callback(&self, vote: Vote) {
+/// impl Webhook<VoteEvent> for MyVoteListener {
+///   async fn callback(&self, vote: VoteEvent) {
 ///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
 ///   }
 /// }

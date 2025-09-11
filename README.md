@@ -9,15 +9,16 @@ The community-maintained Rust library for Top.gg.
 - [Usage](#usage)
   - [Getting a bot](#getting-a-bot)
   - [Getting several bots](#getting-several-bots)
-  - [Getting your bot's voters](#getting-your-bots-voters)
-  - [Check if a user has voted for your bot](#check-if-a-user-has-voted-for-your-bot)
+  - [Getting your project's voters](#getting-your-projects-voters)
+  - [Getting your project's vote information of a user](#getting-your-projects-vote-information-of-a-user)
   - [Getting your bot's server count](#getting-your-bots-server-count)
   - [Posting your bot's server count](#posting-your-bots-server-count)
+  - [Posting your bot's application commands list](#posting-your-bots-application-commands-list)
   - [Automatically posting your bot's server count every few minutes](#automatically-posting-your-bots-server-count-every-few-minutes)
   - [Checking if the weekend vote multiplier is active](#checking-if-the-weekend-vote-multiplier-is-active)
   - [Generating widget URLs](#generating-widget-urls)
   - [Webhooks](#webhooks)
-    - [Being notified whenever someone voted for your bot](#being-notified-whenever-someone-voted-for-your-bot)
+    - [Being notified whenever someone voted for your project](#being-notified-whenever-someone-voted-for-your-project)
 
 ## Installation
 
@@ -58,7 +59,7 @@ for bot in bots {
 }
 ```
 
-### Getting your bot's voters
+### Getting your project's voters
 
 ```rust,no_run
 //                             Page number
@@ -69,22 +70,59 @@ for voter in voters {
 }
 ```
 
-### Check if a user has voted for your bot
+### Getting your project's vote information of a user
+
+#### Discord ID
 
 ```rust,no_run
-let has_voted = client.has_voted(661200758510977084).await.unwrap();
+use topgg::UserSource;
+
+let vote = client.get_vote(UserSource::Discord(661200758510977084)).await.unwrap();
+```
+
+#### Top.gg ID
+
+```rust,no_run
+use topgg::UserSource;
+
+let vote = client.get_vote(UserSource::Topgg(8226924471638491136)).await.unwrap();
 ```
 
 ### Getting your bot's server count
 
 ```rust,no_run
-let server_count = client.get_server_count().await.unwrap();
+let server_count = client.get_bot_server_count().await.unwrap();
 ```
 
 ### Posting your bot's server count
 
 ```rust,no_run
-client.post_server_count(bot.server_count()).await.unwrap();
+client.post_bot_server_count(bot.server_count()).await.unwrap();
+```
+
+### Posting your bot's application commands list
+
+#### Serenity
+
+```rust,no_run
+client.post_bot_commands(&ctx).await.unwrap();
+```
+
+#### Twilight
+
+```rust,no_run
+let application_id = bot.current_user_application().await.unwrap().model().await.unwrap().id;
+let interaction = bot.interaction(application_id);
+
+client.post_bot_commands(interaction.global_commands()).await.unwrap();
+```
+
+#### Others
+
+```rust,no_run
+let commands = vec![...]; // Array of application commands that
+                          // can be serialized to Discord API's raw JSON format.
+client.post_bot_commands(commands).await.unwrap();
 ```
 
 ### Automatically posting your bot's server count every few minutes
@@ -96,10 +134,10 @@ In your `Cargo.toml`:
 ```toml
 [dependencies]
 # using serenity with guild caching disabled
-topgg = { version = "2", features = ["autoposter", "serenity"] }
+topgg = { version = "2", features = ["bot-autoposter", "serenity"] }
 
 # using serenity with guild caching enabled
-topgg = { version = "2", features = ["autoposter", "serenity-cached"] }
+topgg = { version = "2", features = ["bot-autoposter", "serenity-cached"] }
 ```
 
 In your code:
@@ -107,12 +145,12 @@ In your code:
 ```rust,no_run
 use std::time::Duration;
 use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
-use topgg::Autoposter;
+use topgg::BotAutoposter;
 
-struct Handler;
+struct BotAutoposterHandler;
 
 #[serenity::async_trait]
-impl EventHandler for Handler {
+impl EventHandler for BotAutoposterHandler {
   async fn ready(&self, _: Context, ready: Ready) {
     println!("{} is now ready!", ready.user.name);
   }
@@ -123,18 +161,18 @@ async fn main() {
   let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
 
   // Posts once every 30 minutes
-  let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(1800));
+  let mut bot_autoposter = BotAutoposter::serenity(&client, Duration::from_secs(1800));
   
   let bot_token = env!("BOT_TOKEN").to_string();
   let intents = GatewayIntents::GUILDS;
 
   let mut bot = Client::builder(&bot_token, intents)
-    .event_handler(Handler)
-    .event_handler_arc(autoposter.handler())
+    .event_handler(BotAutoposterHandler)
+    .event_handler_arc(bot_autoposter.handler())
     .await
     .unwrap();
 
-  let mut receiver = autoposter.receiver();
+  let mut receiver = bot_autoposter.receiver();
 
   tokio::spawn(async move {
     while let Some(result) = receiver.recv().await {
@@ -155,28 +193,28 @@ In your `Cargo.toml`:
 ```toml
 [dependencies]
 # using twilight with guild caching disabled
-topgg = { version = "2", features = ["autoposter", "twilight"] }
+topgg = { version = "2", features = ["bot-autoposter", "twilight"] }
 
 # using twilight with guild caching enabled
-topgg = { version = "2", features = ["autoposter", "twilight-cached"] }
+topgg = { version = "2", features = ["bot-autoposter", "twilight-cached"] }
 ```
 
 In your code:
 
 ```rust,no_run
 use std::time::Duration;
-use topgg::{Autoposter, Client};
+use topgg::{BotAutoposter, Client};
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 
 #[tokio::main]
 async fn main() {
   let client = Client::new(env!("TOPGG_TOKEN").to_string());
-  let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+  let bot_autoposter = BotAutoposter::twilight(&client, Duration::from_secs(1800));
 
   let mut shard = Shard::new(
     ShardId::ONE,
-    env!("DISCORD_TOKEN").to_string(),
-    Intents::GUILD_MEMBERS | Intents::GUILDS,
+    env!("BOT_TOKEN").to_string(),
+    Intents::GUILD_MESSAGES | Intents::GUILDS,
   );
 
   loop {
@@ -191,7 +229,7 @@ async fn main() {
       }
     };
     
-    autoposter.handle(&event).await;
+    bot_autoposter.handle(&event).await;
     
     match event {
       Event::Ready(_) => {
@@ -215,30 +253,30 @@ let is_weekend = client.is_weekend().await.unwrap();
 #### Large
 
 ```rust,no_run
-let widget_url = topgg::Widget::large(topgg::WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::widget::large(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Votes
 
 ```rust,no_run
-let widget_url = topgg::Widget::votes(topgg::WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::widget::votes(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Owner
 
 ```rust,no_run
-let widget_url = topgg::Widget::owner(topgg::WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::widget::owner(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 #### Social
 
 ```rust,no_run
-let widget_url = topgg::Widget::social(topgg::WidgetType::DiscordBot, 574652751745777665);
+let widget_url = topgg::widget::social(topgg::WidgetType::DiscordBot, 574652751745777665);
 ```
 
 ### Webhooks
 
-#### Being notified whenever someone voted for your bot
+#### Being notified whenever someone voted for your project
 
 ##### actix-web
 
@@ -256,11 +294,11 @@ use actix_web::{
   error::{Error, ErrorUnauthorized},
   get, post, App, HttpServer,
 };
-use topgg::{Incoming, Vote};
+use topgg::{Incoming, VoteEvent};
 use std::io;
 
 #[post("/votes")]
-async fn voted(vote: Incoming<Vote>) -> Result<&'static str, Error> {
+async fn voted(vote: Incoming<VoteEvent>) -> Result<&'static str, Error> {
   match vote.authenticate(env!("MY_TOPGG_WEBHOOK_SECRET")) {
     Some(vote) => {
       println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
@@ -298,15 +336,15 @@ In your code:
 
 ```rust,no_run
 use axum::{routing::get, Router};
-use topgg::{Vote, Webhook};
+use topgg::{VoteEvent, Webhook};
 use tokio::net::TcpListener;
 use std::sync::Arc;
 
 struct MyVoteListener {}
 
 #[async_trait::async_trait]
-impl Webhook<Vote> for MyVoteListener {
-  async fn callback(&self, vote: Vote) {
+impl Webhook<VoteEvent> for MyVoteListener {
+  async fn callback(&self, vote: VoteEvent) {
     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
   }
 }
@@ -343,10 +381,10 @@ In your code:
 
 ```rust,no_run
 use rocket::{get, http::Status, launch, post, routes};
-use topgg::{Incoming, Vote};
+use topgg::{Incoming, VoteEvent};
 
 #[post("/votes", data = "<vote>")]
-fn voted(vote: Incoming<Vote>) -> Status {
+fn voted(vote: Incoming<VoteEvent>) -> Status {
   match vote.authenticate(env!("MY_TOPGG_WEBHOOK_SECRET")) {
     Some(vote) => {
       println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
@@ -381,14 +419,14 @@ In your code:
 
 ```rust,no_run
 use std::{net::SocketAddr, sync::Arc};
-use topgg::{Vote, Webhook};
+use topgg::{VoteEvent, Webhook};
 use warp::Filter;
 
 struct MyVoteListener {}
 
 #[async_trait::async_trait]
-impl Webhook<Vote> for MyVoteListener {
-  async fn callback(&self, vote: Vote) {
+impl Webhook<VoteEvent> for MyVoteListener {
+  async fn callback(&self, vote: VoteEvent) {
     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
   }
 }

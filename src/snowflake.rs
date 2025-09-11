@@ -19,10 +19,38 @@ cfg_if::cfg_if! {
         .map(|s: Vec<String>| s.into_iter().filter_map(|next| next.parse().ok()).collect())
     }
 
-    /// Any datatype that can be interpreted as a Discord ID.
+    /// Any data type that can be interpreted as a Discord ID.
     pub trait Snowflake {
       /// Converts this value to a [`u64`].
       fn as_snowflake(&self) -> u64;
+    }
+
+    /// A user account from an external platform that is linked to a Top.gg user account.
+    #[non_exhaustive]
+    pub enum UserSource<I> {
+      Topgg(I),
+      Discord(I),
+    }
+
+    impl<I> UserSource<I> {
+      pub(crate) const fn name(&self) -> &'static str {
+        match self {
+          Self::Topgg(_) => "topgg",
+          Self::Discord(_) => "discord",
+        }
+      }
+    }
+
+    impl<I> Snowflake for UserSource<I>
+    where
+      I: Snowflake,
+    {
+      #[inline(always)]
+      fn as_snowflake(&self) -> u64 {
+        match self {
+          Self::Topgg(id) | Self::Discord(id) => id.as_snowflake(),
+        }
+      }
     }
 
     macro_rules! impl_snowflake(
@@ -56,8 +84,8 @@ cfg_if::cfg_if! {
         );
 
         impl_topgg_idstruct!(
-          crate::bot::Bot,
-          crate::voter::Voter
+          crate::Bot,
+          crate::Voter
         );
       }
     }

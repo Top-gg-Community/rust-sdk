@@ -1,4 +1,4 @@
-use crate::{snowflake, util, Client};
+use crate::{snowflake, util, Client, Reviews};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -8,18 +8,6 @@ use std::{
   future::{Future, IntoFuture},
   pin::Pin,
 };
-
-/// A Discord bot's reviews on Top.gg.
-#[must_use]
-#[derive(Clone, Debug, Deserialize)]
-pub struct BotReviews {
-  /// This bot's average review score out of 5.
-  #[serde(rename = "averageScore")]
-  pub score: f64,
-
-  /// This bot's review count.
-  pub count: usize,
-}
 
 /// A Discord bot listed on Top.gg.
 #[must_use]
@@ -101,11 +89,11 @@ pub struct Bot {
 
   /// This bot's reviews.
   #[serde(rename = "reviews")]
-  pub review: BotReviews,
+  pub review: Reviews,
 }
 
 #[derive(Serialize, Deserialize)]
-pub(crate) struct Stats {
+pub(crate) struct BotStats {
   #[serde(skip_serializing_if = "Option::is_none")]
   pub(crate) server_count: Option<usize>,
 }

@@ -41,18 +41,20 @@ where
 }
 
 #[derive(Deserialize)]
+#[allow(clippy::used_underscore_binding)]
 struct TokenStructure {
   #[serde(deserialize_with = "snowflake::deserialize")]
   id: u64,
+  _t: Option<String>,
 }
 
-pub(crate) fn id_from_token(token: &str) -> u64 {
+pub(crate) fn parse_api_token(token: &str) -> (u64, bool) {
   if let Some(base64_section) = token.split('.').nth(1) {
     if let Ok(decoded_base64) =
       base64::engine::general_purpose::STANDARD_NO_PAD.decode(base64_section)
     {
       if let Ok(token_structure) = serde_json::from_slice::<TokenStructure>(&decoded_base64) {
-        return token_structure.id;
+        return (token_structure.id, token_structure._t.is_none());
       }
     }
   }

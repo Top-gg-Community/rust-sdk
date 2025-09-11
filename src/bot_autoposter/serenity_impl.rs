@@ -1,4 +1,4 @@
-use crate::autoposter::Handler;
+use crate::bot_autoposter::BotAutoposterHandler;
 use paste::paste;
 use serenity::{
   client::{Context, EventHandler, FullEvent},
@@ -8,7 +8,7 @@ use serenity::{
     id::GuildId,
   },
 };
-use tokio::sync::{RwLock, RwLockReadGuard};
+use tokio::sync::RwLock;
 
 cfg_if::cfg_if! {
   if #[cfg(not(feature = "serenity-cached"))] {
@@ -21,7 +21,7 @@ cfg_if::cfg_if! {
   }
 }
 
-/// Autoposter handler for working with the serenity library.
+/// [`BotAutoposter`][crate::BotAutoposter] handler for working with the serenity library.
 #[must_use]
 pub struct Serenity {
   #[cfg(not(feature = "serenity-cached"))]
@@ -192,9 +192,11 @@ serenity_handler! {
   }
 }
 
-impl<'a> Handler<'a> for Serenity {
-  #[inline(always)]
-  fn server_count(&'a self) -> RwLockReadGuard<'a, usize> {
-    self.server_count.read()
+#[async_trait::async_trait]
+impl BotAutoposterHandler for Serenity {
+  async fn server_count(&self) -> usize {
+    let guard = self.server_count.read().await;
+
+    *guard
   }
 }

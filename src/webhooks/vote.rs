@@ -40,8 +40,8 @@ where
 /// A dispatched Top.gg vote event.
 #[must_use]
 #[derive(Clone, Debug, Deserialize)]
-pub struct Vote {
-  /// The ID of the Discord bot/server that received a vote.
+pub struct VoteEvent {
+  /// The ID of the project that received a vote.
   #[serde(
     deserialize_with = "snowflake::deserialize",
     alias = "bot",

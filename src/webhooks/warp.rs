@@ -9,14 +9,14 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///
 /// ```rust,no_run
 /// use std::{net::SocketAddr, sync::Arc};
-/// use topgg::{Vote, Webhook};
+/// use topgg::{VoteEvent, Webhook};
 /// use warp::Filter;
 ///
 /// struct MyVoteListener {}
 ///
 /// #[async_trait::async_trait]
-/// impl Webhook<Vote> for MyVoteListener {
-///   async fn callback(&self, vote: Vote) {
+/// impl Webhook<VoteEvent> for MyVoteListener {
+///   async fn callback(&self, vote: VoteEvent) {
 ///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
 ///   }
 /// }

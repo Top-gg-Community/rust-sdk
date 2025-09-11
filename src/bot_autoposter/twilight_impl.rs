@@ -1,9 +1,9 @@
-use crate::autoposter::Handler;
+use crate::bot_autoposter::BotAutoposterHandler;
 use std::collections::HashSet;
-use tokio::sync::{Mutex, RwLock, RwLockReadGuard};
+use tokio::sync::{Mutex, RwLock};
 use twilight_model::gateway::event::Event;
 
-/// Autoposter handler for working with the twilight.
+/// [`BotAutoposter`][crate::BotAutoposter] handler for working with the twilight.
 pub struct Twilight {
   cache: Mutex<HashSet<u64>>,
   server_count: RwLock<usize>,
@@ -33,7 +33,7 @@ impl Twilight {
       Event::GuildCreate(guild_create) => {
         let mut cache = self.cache.lock().await;
 
-        if cache.insert(guild_create.id().get()) {
+        if cache.insert(guild_create.id.get()) {
           let mut server_count = self.server_count.write().await;
 
           *server_count = cache.len();
@@ -55,9 +55,11 @@ impl Twilight {
   }
 }
 
-impl<'a> Handler<'a> for Twilight {
-  #[inline(always)]
-  fn server_count(&'a self) -> RwLockReadGuard<'a, usize> {
-    self.server_count.read()
+#[async_trait::async_trait]
+impl BotAutoposterHandler for Twilight {
+  async fn server_count(&self) -> usize {
+    let guard = self.server_count.read().await;
+
+    *guard
   }
 }
