@@ -14,29 +14,35 @@ where
 }
 
 util::debug_struct! {
-  /// A struct representing a Discord Bot listed on [Top.gg](https://top.gg).
+  /// A struct representing a Discord Bot listed on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
   Bot {
     public {
-      /// The ID of this Discord bot.
-      #[serde(deserialize_with = "snowflake::deserialize")]
+      /// This bot's Discord ID.
+      #[serde(rename = "clientid", deserialize_with = "snowflake::deserialize")]
       id: u64,
 
-      /// The username of this Discord bot.
+      /// This bot's Top.gg ID.
+      #[serde(rename = "id", deserialize_with = "snowflake::deserialize")]
+      topgg_id: u64,
+
+      /// This bot's username.
       username: String,
 
-      /// The discriminator of this Discord bot.
+      /// This bot's discriminator.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       discriminator: String,
 
-      /// The prefix of this Discord bot.
+      /// This bot's prefix.
       prefix: String,
 
-      /// The short description of this Discord bot.
+      /// This bot's short description.
       #[serde(rename = "shortdesc")]
       short_description: String,
 
-      /// The long description of this Discord bot. It can contain HTML and/or Markdown.
+      /// This bot's HTML/Markdown long description.
       #[serde(
         default,
         deserialize_with = "util::deserialize_optional_string",
@@ -44,90 +50,95 @@ util::debug_struct! {
       )]
       long_description: Option<String>,
 
-      /// The tags of this Discord bot.
+      /// This bot's tags.
       #[serde(default, deserialize_with = "util::deserialize_default")]
       tags: Vec<String>,
 
-      /// The website URL of this Discord bot.
+      /// This bot's website URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       website: Option<String>,
 
-      /// The link to this Discord bot's GitHub repository.
+      /// This bot's GitHub repository URL.
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       github: Option<String>,
 
-      /// A list of IDs of this Discord bot's owners. The main owner is the first ID in the array.
+      /// This bot's owner IDs.
       #[serde(deserialize_with = "snowflake::deserialize_vec")]
       owners: Vec<u64>,
 
-      /// A list of IDs of the guilds featured on this Discord bot's page.
-      #[serde(default, deserialize_with = "snowflake::deserialize_vec")]
+      /// This bot's guild IDs.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       guilds: Vec<u64>,
 
-      /// The URL for this Discord bot's banner image.
-      #[serde(
-        default,
-        deserialize_with = "util::deserialize_optional_string",
-        rename = "bannerUrl"
-      )]
+      /// This bot's banner image URL.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       banner_url: Option<String>,
 
-      /// The date when this Discord bot was approved on [Top.gg](https://top.gg).
-      #[serde(rename = "date")]
+      /// This bot's approval date.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "Actually refers to submission date. Use `submitted_at` instead.")]
       approved_at: DateTime<Utc>,
 
-      /// Whether this Discord bot is [Top.gg](https://top.gg) certified or not.
-      #[serde(rename = "certifiedBot")]
+      /// This bot's submission date.
+      #[serde(rename = "date")]
+      submitted_at: DateTime<Utc>,
+
+      /// Whether this bot is certified or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       is_certified: bool,
 
-      /// A list of this Discord bot's shards.
-      #[serde(default, deserialize_with = "util::deserialize_default")]
+      /// This bot's shards.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shards: Vec<usize>,
 
-      /// The amount of upvotes this Discord bot has.
+      /// The amount of votes this bot has.
       #[serde(rename = "points")]
       votes: usize,
 
-      /// The amount of upvotes this Discord bot has this month.
+      /// The amount of votes this bot has this month.
       #[serde(rename = "monthlyPoints")]
       monthly_votes: usize,
 
-      /// The support server invite URL of this Discord bot.
+      /// This bot's support URL.
       #[serde(default, deserialize_with = "deserialize_support_server")]
       support: Option<String>,
+
+      /// This bot's avatar URL.
+      avatar: String,
+
+      /// This bot's Top.gg vanity code.
+      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+      vanity: Option<String>,
+
+      /// This bot's posted server count.
+      #[serde(default)]
+      server_count: Option<usize>,
     }
 
     private {
       #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      avatar: Option<String>,
-
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       invite: Option<String>,
-
-      shard_count: Option<usize>,
-
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      vanity: Option<String>,
     }
 
     getters(self) {
-      /// Retrieves the creation date of this bot.
+      /// This bot's creation date.
       #[must_use]
       #[inline(always)]
       created_at: DateTime<Utc> => {
         util::get_creation_date(self.id)
       }
 
-      /// Retrieves the avatar URL of this bot.
-      ///
-      /// Its format will either be PNG or GIF if animated.
-      #[must_use]
-      #[inline(always)]
+      /// This bot's avatar URL.
+      #[deprecated(since = "1.5.0", note = "Just directly use the public `avatar` property.")]
       avatar: String => {
-        util::get_avatar(&self.avatar, self.id)
+        self.avatar.clone()
       }
 
-      /// The invite URL of this Discord bot.
+      /// This bot's invite URL.
       #[must_use]
       invite: String => {
         match &self.invite {
@@ -139,14 +150,13 @@ util::debug_struct! {
         }
       }
 
-      /// The amount of shards this Discord bot has according to posted stats.
-      #[must_use]
-      #[inline(always)]
+      /// This bot's shard count.
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shard_count: usize => {
-        self.shard_count.unwrap_or(self.shards.len())
+        0
       }
 
-      /// Retrieves the URL of this Discord bot's [Top.gg](https://top.gg) page.
+      /// This bot's Top.gg page URL.
       #[must_use]
       #[inline(always)]
       url: String => {
@@ -162,84 +172,41 @@ util::debug_struct! {
 util::debug_struct! {
   /// A struct representing a Discord bot's statistics.
   ///
-  /// # Examples
-  ///
-  /// Solely from a server count:
+  /// # Example
   ///
   /// ```rust,no_run
   /// use topgg::Stats;
   ///
-  /// let _stats = Stats::from(12345);
-  /// ```
-  ///
-  /// Server count with a shard count:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Stats;
-  ///
-  /// let server_count = 12345;
-  /// let shard_count = 10;
-  /// let _stats = Stats::from_count(server_count, Some(shard_count));
-  /// ```
-  ///
-  /// Solely from shards information:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Stats;
-  ///
-  /// // the shard posting this data has 456 servers.
-  /// let _stats = Stats::from_shards([123, 456, 789], Some(1));
+  /// let _stats = Stats {
+  ///   server_count: Some(12345),
+  /// };
   /// ```
   #[must_use]
   #[derive(Clone, Serialize, Deserialize)]
   Stats {
-    protected {
-      #[serde(skip_serializing_if = "Option::is_none")]
-      shard_count: Option<usize>,
+    public {
+      /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
       #[serde(skip_serializing_if = "Option::is_none")]
       server_count: Option<usize>,
     }
 
-    private {
-      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
-      shards: Option<Vec<usize>>,
-      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
-      shard_id: Option<usize>,
-    }
-
     getters(self) {
-      /// An array of this Discord bot's server count for each shard.
-      #[must_use]
-      #[inline(always)]
+      /// This bot's list of server count for each shard.
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shards: &[usize] => {
-        match self.shards {
-          Some(ref shards) => shards,
-          None => &[],
-        }
+        &[]
       }
 
-      /// The amount of shards this Discord bot has.
-      #[must_use]
-      #[inline(always)]
+      /// This bot's shard count.
+      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shard_count: usize => {
-        self.shard_count.unwrap_or(match self.shards {
-          Some(ref shards) => shards.len(),
-          None => 0,
-        })
+        0
       }
 
-      /// The amount of servers this bot is in. `None` if such information is publy unavailable.
-      #[must_use]
+      /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
+      #[deprecated(since = "1.5.0", note = "Just directly use the public `server_count` property.")]
       server_count: Option<usize> => {
-        self.server_count.or_else(|| {
-          self.shards.as_ref().and_then(|shards| {
-            if shards.is_empty() {
-              None
-            } else {
-              Some(shards.iter().copied().sum())
-            }
-          })
-        })
+        self.server_count
       }
     }
   }
@@ -251,60 +218,27 @@ impl Stats {
   #[cfg(feature = "serenity-cached")]
   #[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))]
   pub fn from_context(context: &serenity::client::Context) -> Self {
-    Self::from_count(
-      context.cache.guilds().len(),
-      Some(context.cache.shard_count() as _),
-    )
+    Self {
+      server_count: Some(context.cache.guilds().len()),
+    }
   }
 
   /// Creates a [`Stats`] struct based on total server and optionally, shard count data.
-  pub const fn from_count(server_count: usize, shard_count: Option<usize>) -> Self {
+  #[deprecated(since = "1.5.0", note = "Just directly use a struct declaration.")]
+  pub const fn from_count(server_count: usize, _shard_count: Option<usize>) -> Self {
     Self {
       server_count: Some(server_count),
-      shard_count,
-      shards: None,
-      shard_id: None,
     }
   }
 
   /// Creates a [`Stats`] struct based on an array of server count per shard and optionally the index (to the array) of shard posting this data.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the shard_index argument is [`Some`] yet it's out of range of the `shards` array.
-  ///
-  /// # Examples
-  ///
-  /// Basic usage:
-  ///
-  /// ```rust,no_run
-  /// use topgg::Stats;
-  ///
-  /// // the shard posting this data has 456 servers.
-  /// let _stats = Stats::from_shards([123, 456, 789], Some(1));
-  /// ```
-  pub fn from_shards<A>(shards: A, shard_index: Option<usize>) -> Self
+  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+  pub fn from_shards<A>(shards: A, _shard_index: Option<usize>) -> Self
   where
     A: IntoIterator<Item = usize>,
   {
-    let mut total_server_count = 0;
-    let shards = shards.into_iter();
-    let mut shards_list = Vec::with_capacity(shards.size_hint().0);
-
-    for server_count in shards {
-      total_server_count += server_count;
-      shards_list.push(server_count);
-    }
-
-    if let Some(index) = shard_index {
-      assert!(index < shards_list.len(), "Shard index out of range.");
-    }
-
     Self {
-      server_count: Some(total_server_count),
-      shard_count: Some(shards_list.len()),
-      shards: Some(shards_list),
-      shard_id: shard_index,
+      server_count: Some(shards.into_iter().sum()),
     }
   }
 }
@@ -313,7 +247,9 @@ impl Stats {
 impl From<usize> for Stats {
   #[inline(always)]
   fn from(server_count: usize) -> Self {
-    Self::from_count(server_count, None)
+    Self {
+      server_count: Some(server_count),
+    }
   }
 }
 

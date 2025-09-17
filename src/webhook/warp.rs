@@ -2,9 +2,9 @@ use crate::{Vote, VoteHandler};
 use std::sync::Arc;
 use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 
-/// Creates a new `warp` [`Filter`] for adding an on-vote event handler to your application logic.
+/// Creates a new warp [`Filter`] for adding an on-vote event handler to your application logic.
 ///
-/// # Examples
+/// # Example
 ///
 /// Basic usage:
 ///
@@ -63,7 +63,7 @@ where
         if auth == *current_password {
           current_state.voted(vote).await;
 
-          StatusCode::OK
+          StatusCode::NO_CONTENT
         } else {
           StatusCode::UNAUTHORIZED
         }

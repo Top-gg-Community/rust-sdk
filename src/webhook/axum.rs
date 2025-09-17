@@ -37,7 +37,7 @@ where
         if let Ok(vote) = serde_json::from_str(&body) {
           webhook.state.voted(vote).await;
 
-          return (StatusCode::OK, ()).into_response();
+          return (StatusCode::NO_CONTENT, ()).into_response();
         }
       }
     }
@@ -46,9 +46,9 @@ where
   (StatusCode::UNAUTHORIZED, ()).into_response()
 }
 
-/// Creates a new [`axum`] [`Router`] for adding an on-vote event handler to your application logic.
-///
-/// # Examples
+/// Creates a new axum [`Router`] for receiving vote events.
+/// 
+/// # Example
 ///
 /// Basic usage:
 ///

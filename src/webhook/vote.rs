@@ -1,4 +1,4 @@
-use crate::snowflake;
+use crate::{snowflake, util};
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 
@@ -8,18 +8,6 @@ where
   D: Deserializer<'de>,
 {
   String::deserialize(deserializer).map(|s| s == "test")
-}
-
-const fn _true() -> bool {
-  true
-}
-
-#[inline(always)]
-fn deserialize_is_server<'de, D>(deserializer: D) -> Result<bool, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  Ok(String::deserialize(deserializer).is_err())
 }
 
 fn deserialize_query_string<'de, D>(deserializer: D) -> Result<HashMap<String, String>, D::Error>
@@ -45,7 +33,7 @@ where
   )
 }
 
-/// A struct representing a dispatched [Top.gg](https://top.gg) bot/server vote event.
+/// A struct representing a dispatched Top.gg bot/server vote event.
 #[must_use]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
@@ -62,11 +50,8 @@ pub struct Vote {
   pub voter_id: u64,
 
   /// Whether this vote's receiver is a server or not (bot otherwise).
-  #[serde(
-    default = "_true",
-    deserialize_with = "deserialize_is_server",
-    rename = "bot"
-  )]
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[deprecated(since = "1.5.0", note = "No longer supported.")]
   pub is_server: bool,
 
   /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
@@ -99,7 +84,7 @@ cfg_if::cfg_if! {
     impl IncomingVote {
       /// Authenticates a valid password with this request. Returns a [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
       ///
-      /// # Examples
+      /// # Example
       ///
       /// Basic usage:
       ///
@@ -108,7 +93,7 @@ cfg_if::cfg_if! {
       ///   Some(vote) => {
       ///     println!("{:?}", vote);
       ///
-      ///     // respond with 200 OK...
+      ///     // respond with 204 NO CONTENT...
       ///   },
       ///   _ => {
       ///     println!("found an unauthorized attacker.");
@@ -144,7 +129,7 @@ cfg_if::cfg_if! {
     #[cfg_attr(docsrs, doc(cfg(any(feature = "axum", feature = "warp"))))]
     #[async_trait::async_trait]
     pub trait VoteHandler: Send + Sync + 'static {
-      /// Your vote handler's on-vote async callback. The endpoint will always return a 200 (OK) HTTP status code after running this method.
+      /// Your vote handler's on-vote async callback.
       async fn voted(&self, vote: Vote);
     }
   }

@@ -11,7 +11,7 @@ The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then [view this tutorial on how to retrieve yours](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff). After that, add the following line to the `dependencies` section of your `Cargo.toml`:
 
 ```toml
-topgg = "1.4"
+topgg = "1.5"
 ```
 
 For more information, please read [the documentation](https://docs.rs/topgg)!
@@ -90,16 +90,16 @@ In your `Cargo.toml`:
 ```toml
 [dependencies]
 # using serenity with guild caching disabled
-topgg = { version = "1.4", features = ["autoposter", "serenity"] }
+topgg = { version = "1.5", features = ["autoposter", "serenity"] }
 
 # using serenity with guild caching enabled
-topgg = { version = "1.4", features = ["autoposter", "serenity-cached"] }
+topgg = { version = "1.5", features = ["autoposter", "serenity-cached"] }
 ```
 
 In your code:
 
 ```rust,no_run
-use core::time::Duration;
+use std::time::Duration;
 use serenity::{client::{Client, Context, EventHandler}, model::{channel::Message, gateway::Ready}};
 use topgg::Autoposter;
 
@@ -147,16 +147,16 @@ In your `Cargo.toml`:
 ```toml
 [dependencies]
 # using twilight with guild caching disabled
-topgg = { version = "1.4", features = ["autoposter", "twilight"] }
+topgg = { version = "1.5", features = ["autoposter", "twilight"] }
 
 # using twilight with guild caching enabled
-topgg = { version = "1.4", features = ["autoposter", "twilight-cached"] }
+topgg = { version = "1.5", features = ["autoposter", "twilight-cached"] }
 ```
 
 In your code:
 
 ```rust,no_run
-use core::time::Duration;
+use std::time::Duration;
 use topgg::Autoposter;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 
@@ -202,7 +202,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.4", default-features = false, features = ["actix-web"] }
+topgg = { version = "1.5", default-features = false, features = ["actix-web"] }
 ```
 
 In your code:
@@ -247,7 +247,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.4", default-features = false, features = ["axum"] }
+topgg = { version = "1.5", default-features = false, features = ["axum"] }
 ```
 
 In your code:
@@ -294,7 +294,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.4", default-features = false, features = ["rocket"] }
+topgg = { version = "1.5", default-features = false, features = ["rocket"] }
 ```
 
 In your code:
@@ -339,7 +339,7 @@ In your `Cargo.toml`:
 
 ```toml
 [dependencies]
-topgg = { version = "1.4", default-features = false, features = ["warp"] }
+topgg = { version = "1.5", default-features = false, features = ["warp"] }
 ```
 
 In your code:

@@ -17,12 +17,10 @@ cfg_if::cfg_if! {
     struct Cache {
       guilds: HashSet<GuildId>,
     }
-  } else {
-    use std::ops::Add;
   }
 }
 
-/// A built-in [`Handler`] for the [serenity] library.
+/// A built-in [`Handler`] for the serenity library.
 #[must_use]
 pub struct Serenity {
   #[cfg(not(feature = "serenity-cached"))]
@@ -54,7 +52,11 @@ macro_rules! serenity_handler {
           }
         }
 
-        /// Handles an entire [serenity] [`FullEvent`] enum. This can be used in [serenity] frameworks.
+        /// Handles an entire serenity [`FullEvent`] enum. This can be used in serenity frameworks.
+        ///
+        /// # Panics
+        ///
+        /// The `serenity-cached` feature is enabled but the bot doesn't cache guilds.
         pub async fn handle(&$self, $context: &Context, event: &FullEvent) {
           match event {
             $(
@@ -94,7 +96,7 @@ serenity_handler! {
   (self, context) => {
     ready {
       map(data_about_bot: Ready) {
-        self.handle_ready(&data_about_bot.guilds).await
+        self.handle_ready(&data_about_bot.guilds).await;
       }
 
       handle(guilds: &[UnavailableGuild]) {
@@ -106,7 +108,7 @@ serenity_handler! {
           if #[cfg(not(feature = "serenity-cached"))] {
             let mut cache = self.cache.lock().await;
 
-            cache.guilds = guilds.into_iter().map(|x| x.id).collect();
+            cache.guilds = guilds.iter().map(|x| x.id).collect();
           }
         }
       }
@@ -115,7 +117,7 @@ serenity_handler! {
     #[cfg(feature = "serenity-cached")]
     cache_ready {
       map(guilds: Vec<GuildId>) {
-        self.handle_cache_ready(guilds.len()).await
+        self.handle_cache_ready(guilds.len()).await;
       }
 
       handle(guild_count: usize) {
@@ -125,27 +127,13 @@ serenity_handler! {
       }
     }
 
-    #[cfg(feature = "serenity-cached")]
-    shards_ready {
-      map(total_shards: u32) {
-        // turns either &u32 or u32 to a u32 :)
-        self.handle_shards_ready(total_shards.add(0)).await
-      }
-
-      handle(shard_count: u32) {
-        let mut stats = self.stats.write().await;
-
-        stats.set_shard_count(shard_count as _);
-      }
-    }
-
     guild_create {
       map(guild: Guild, is_new: Option<bool>) {
         self.handle_guild_create(
           #[cfg(not(feature = "serenity-cached"))] guild.id,
           #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
-          #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the discord bot doesn't cache guilds"),
-        ).await
+          #[cfg(feature = "serenity-cached")] is_new.expect("serenity-cached feature is enabled but the bot doesn't cache guilds."),
+        ).await;
       }
 
       handle(
@@ -177,7 +165,7 @@ serenity_handler! {
         self.handle_guild_delete(
           #[cfg(feature = "serenity-cached")] context.cache.guilds().len(),
           #[cfg(not(feature = "serenity-cached"))] incomplete.id
-        ).await
+        ).await;
       }
 
       handle(

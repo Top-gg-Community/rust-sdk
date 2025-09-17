@@ -1,11 +1,11 @@
 use crate::{IncomingVote, Vote};
 use actix_web::{
   dev::Payload,
-  error::{Error, ErrorUnauthorized},
+  error::{Error, ErrorBadRequest},
   web::Json,
   FromRequest, HttpRequest,
 };
-use core::{
+use std::{
   future::Future,
   pin::Pin,
   task::{ready, Context, Poll},
@@ -34,7 +34,7 @@ impl Future for IncomingVoteFut {
       }
     }
 
-    Poll::Ready(Err(ErrorUnauthorized("401")))
+    Poll::Ready(Err(ErrorBadRequest("400")))
   }
 }
 

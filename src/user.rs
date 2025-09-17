@@ -3,95 +3,89 @@ use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
 /// A struct representing a user's social links.
+#[allow(clippy::doc_markdown)]
 #[derive(Clone, Debug, Deserialize)]
+#[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
 pub struct Socials {
-  /// A URL of this user's GitHub account.
-  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  /// This user's GitHub account URL.
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
   pub github: Option<String>,
 
-  /// A URL of this user's Instagram account.
-  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  /// This user's Instagram account URL.
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
   pub instagram: Option<String>,
 
-  /// A URL of this user's Reddit account.
-  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  /// This user's Reddit account URL.
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
   pub reddit: Option<String>,
 
-  /// A URL of this user's Twitter account.
-  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  /// This user's Twitter account URL.
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
   pub twitter: Option<String>,
 
-  /// A URL of this user's YouTube channel.
-  #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+  /// This user's YouTube channel URL.
+  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
   pub youtube: Option<String>,
 }
 
 util::debug_struct! {
-  /// A struct representing a user logged into [Top.gg](https://top.gg).
-  #[must_use]
+  /// A struct representing a user logged into Top.gg.
   #[derive(Clone, Deserialize)]
+  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
   User {
     public {
-      /// The Discord ID of this user.
-      #[serde(deserialize_with = "snowflake::deserialize")]
+      /// This user's ID.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       id: u64,
 
-      /// The username of this user.
+      /// This user's username.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       username: String,
 
       /// The user's bio.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       bio: Option<String>,
 
-      /// A URL of this user's profile banner image.
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
+      /// This user's profile banner image.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       banner: Option<String>,
 
-      /// A struct of this user's social links.
-      #[serde(rename = "social")]
+      /// This user's social links.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       socials: Option<Socials>,
 
-      /// Whether this user is a [Top.gg](https://top.gg) supporter or not.
-      #[serde(rename = "supporter")]
+      /// Whether this user is a Top.gg supporter or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       is_supporter: bool,
 
-      /// Whether this user is a [Top.gg](https://top.gg) certified developer or not.
-      #[serde(rename = "certifiedDev")]
+      /// Whether this user is a Top.gg certified developer or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       is_certified_dev: bool,
 
-      /// Whether this user is a [Top.gg](https://top.gg) moderator or not.
-      #[serde(rename = "mod")]
+      /// Whether this user is a Top.gg moderator or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       is_moderator: bool,
 
-      /// Whether this user is a [Top.gg](https://top.gg) website moderator or not.
-      #[serde(rename = "webMod")]
+      /// Whether this user is a Top.gg website moderator or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       is_web_moderator: bool,
 
-      /// Whether this user is a [Top.gg](https://top.gg) website administrator or not.
-      #[serde(rename = "admin")]
+      /// Whether this user is a Top.gg website administrator or not.
+      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
       is_admin: bool,
     }
 
-    private {
-      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
-      avatar: Option<String>,
-    }
-
     getters(self) {
-      /// Retrieves the creation date of this user.
-      #[must_use]
-      #[inline(always)]
+      /// This user's creation date.
+      #[allow(clippy::missing_panics_doc)]
       created_at: DateTime<Utc> => {
-        util::get_creation_date(self.id)
+        panic!("The User struct is deprecated as it's no longer supported by API v0.")
       }
 
-      /// Retrieves the Discord avatar URL of this user.
-      ///
-      /// Its format will either be PNG or GIF if animated.
-      #[must_use]
-      #[inline(always)]
+      /// This user's avatar URL.
+      #[allow(clippy::missing_panics_doc)]
       avatar: String => {
-        util::get_avatar(&self.avatar, self.id)
+        panic!("The User struct is deprecated as it's no longer supported by API v0.")
       }
     }
   }
@@ -103,38 +97,34 @@ pub(crate) struct Voted {
 }
 
 util::debug_struct! {
-  /// A struct representing a user who has voted on a Discord bot listed on [Top.gg](https://top.gg). (See [`Client::get_voters`][crate::Client::get_voters])
+  /// A struct representing a user who has voted on a Discord bot listed on Top.gg. (See [`Client::get_voters`][crate::Client::get_voters])
   #[must_use]
   #[derive(Clone, Deserialize)]
   Voter {
     public {
-      /// The Discord ID of this user.
+      /// This voter's ID.
       #[serde(deserialize_with = "snowflake::deserialize")]
       id: u64,
 
-      /// The username of this user.
+      /// This voter's username.
       username: String,
-    }
 
-    private {
-      avatar: Option<String>,
+      /// This voter's avatar URL.
+      avatar: String,
     }
 
     getters(self) {
-      /// Retrieves the creation date of this user.
+      /// This voter's creation date.
       #[must_use]
       #[inline(always)]
       created_at: DateTime<Utc> => {
         util::get_creation_date(self.id)
       }
 
-      /// Retrieves the Discord avatar URL of this user.
-      ///
-      /// Its format will either be PNG or GIF if animated.
-      #[must_use]
-      #[inline(always)]
+      /// This voter's avatar URL.
+      #[deprecated(since = "1.5.0", note = "Just directly use the public `avatar` property.")]
       avatar: String => {
-        util::get_avatar(&self.avatar, self.id)
+        self.avatar.clone()
       }
     }
   }

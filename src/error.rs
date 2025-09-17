@@ -1,21 +1,23 @@
-use core::{fmt, result};
-use std::error;
+use std::{error, fmt, result};
 
-/// A struct representing an error coming from this SDK - unexpected or not.
+/// An error coming from this SDK.
 #[derive(Debug)]
 pub enum Error {
-  /// An unexpected internal error coming from the client itself, preventing it from sending a request to [Top.gg](https://top.gg).
+  /// HTTP request failure from the client-side.
   InternalClientError(reqwest::Error),
 
-  /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
+  /// HTTP request failure from the server-side.
   InternalServerError,
 
-  /// The requested resource does not exist. (404)
+  /// Attempted to send an invalid request to the API.
+  InvalidRequest,
+
+  /// Such query does not exist.
   NotFound,
 
-  /// The client is being ratelimited from sending more HTTP requests.
+  /// Ratelimited from sending more requests.
   Ratelimit {
-    /// The amount of seconds before the ratelimit is lifted.
+    /// How long the client should wait in seconds before it could send requests again without receiving a 429.
     retry_after: u16,
   },
 }
@@ -23,13 +25,13 @@ pub enum Error {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InternalClientError(err) => write!(f, "internal client error: {err}"),
-      Self::InternalServerError => write!(f, "internal server error"),
-      Self::NotFound => write!(f, "not found"),
+      Self::InternalClientError(err) => write!(f, "Internal Client Error: {err}"),
+      Self::InternalServerError => write!(f, "Internal Server Error"),
+      Self::InvalidRequest => write!(f, "Invalid Request"),
+      Self::NotFound => write!(f, "Not Found"),
       Self::Ratelimit { retry_after } => write!(
         f,
-        "this client is ratelimited, try again in {} seconds",
-        retry_after / 60
+        "Blocked by the API for an hour. Please try again in {retry_after} seconds",
       ),
     }
   }
@@ -45,5 +47,5 @@ impl error::Error for Error {
   }
 }
 
-/// The [`Result`][std::result::Result] type primarily used in this SDK.
+/// The result type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;

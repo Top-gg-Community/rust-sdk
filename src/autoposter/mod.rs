@@ -1,9 +1,9 @@
 use crate::{Result, Stats};
-use core::{
+use std::{
   ops::{Deref, DerefMut},
+  sync::Arc,
   time::Duration,
 };
-use std::sync::Arc;
 use tokio::{
   sync::{mpsc, RwLock, RwLockWriteGuard, Semaphore},
   task::{spawn, JoinHandle},
@@ -49,8 +49,7 @@ impl SharedStatsGuard<'_> {
   /// Directly replaces the current [`Stats`] inside with the other.
   #[inline(always)]
   pub fn replace(&mut self, other: Stats) {
-    let ref_mut = self.guard.deref_mut();
-    *ref_mut = other;
+    *self.guard = other;
   }
 
   /// Sets the current [`Stats`] server count.
@@ -60,10 +59,8 @@ impl SharedStatsGuard<'_> {
   }
 
   /// Sets the current [`Stats`] shard count.
-  #[inline(always)]
-  pub fn set_shard_count(&mut self, shard_count: usize) {
-    self.guard.shard_count = Some(shard_count);
-  }
+  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+  pub fn set_shard_count(&mut self, _shard_count: usize) {}
 }
 
 impl Deref for SharedStatsGuard<'_> {
@@ -71,14 +68,14 @@ impl Deref for SharedStatsGuard<'_> {
 
   #[inline(always)]
   fn deref(&self) -> &Self::Target {
-    self.guard.deref()
+    &self.guard
   }
 }
 
 impl DerefMut for SharedStatsGuard<'_> {
   #[inline(always)]
   fn deref_mut(&mut self) -> &mut Self::Target {
-    self.guard.deref_mut()
+    &mut self.guard
   }
 }
 
@@ -103,7 +100,7 @@ impl SharedStats {
 
   /// Locks this [`SharedStats`] with exclusive write access, causing the current task to yield until the lock has been acquired. This is akin to [`RwLock::write`].
   #[inline(always)]
-  pub async fn write<'a>(&'a self) -> SharedStatsGuard<'a> {
+  pub async fn write(&self) -> SharedStatsGuard<'_> {
     SharedStatsGuard {
       sem: &self.sem,
       guard: self.stats.write().await,
@@ -116,17 +113,24 @@ impl SharedStats {
   }
 }
 
+impl Default for SharedStats {
+  #[inline(always)]
+  fn default() -> Self {
+    Self::new()
+  }
+}
+
 /// A trait for handling events from third-party Discord Bot libraries.
 ///
-/// The struct implementing this trait should own an [`SharedStats`] struct and update it accordingly whenever Discord updates them with new data regarding guild/shard count.
+/// The struct implementing this trait should own an [`SharedStats`] struct and update it accordingly whenever Discord updates them with new data regarding guild count.
 pub trait Handler: Send + Sync + 'static {
   /// The method that borrows [`SharedStats`] to the [`Autoposter`].
   fn stats(&self) -> &SharedStats;
 }
 
-/// A struct that lets you automate the process of posting bot statistics to [Top.gg](https://top.gg) in intervals.
+/// Automatically update the stats in your Discord bot's Top.gg page every few minutes.
 ///
-/// **NOTE:** This struct owns the thread handle that executes the automatic posting. The autoposter thread will stop once this struct is dropped.
+/// **NOTE**: This struct owns the autoposter thread which means that it will stop once it gets dropped.
 #[must_use]
 pub struct Autoposter<H> {
   handler: Arc<H>,
@@ -138,22 +142,16 @@ impl<H> Autoposter<H>
 where
   H: Handler,
 {
-  /// Creates an [`Autoposter`] struct as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
-  ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
-  /// - `handler` is a struct that handles the *retrieving stats* part before being sent to the [`Autoposter`]. This datatype is essentially the bridge between an external third-party Discord Bot library between this library.
-  ///
-  /// # Panics
-  ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
-  pub fn new<C>(client: &C, handler: H, interval: Duration) -> Self
+  /// Creates and starts an autoposter thread.
+  #[allow(unused_mut)]
+  pub fn new<C>(client: &C, handler: H, mut interval: Duration) -> Self
   where
     C: AsClient,
   {
-    assert!(
-      interval.as_secs() >= 900,
-      "The interval mustn't be shorter than 15 minutes."
-    );
+    #[cfg(not(test))]
+    if interval.as_secs() < 900 {
+      interval = Duration::from_secs(900);
+    }
 
     let client = client.as_client();
     let handler = Arc::new(handler);
@@ -180,22 +178,35 @@ where
     }
   }
 
-  /// Retrieves the [`Handler`] inside in the form of a [cloned][Arc::clone] [`Arc<H>`][Arc].
+  /// This autoposter's handler.
   #[inline(always)]
   pub fn handler(&self) -> Arc<H> {
     Arc::clone(&self.handler)
   }
-  
-  /// Returns a future that resolves every time the [`Autoposter`] has attempted to post the bot's stats. If you want to use the receiver directly, call [`receiver`].
+
+  /// Returns a future that resolves whenever an attempt to update the stats in your bot's Top.gg page has been made.
+  ///
+  /// **NOTE**: If you want to use the receiver directly, call [`receiver`][Autoposter::receiver].
+  ///
+  /// # Panics
+  ///
+  /// Panics if this method gets called again after [`receiver`][Autoposter::receiver] is called.
   #[inline(always)]
   pub async fn recv(&mut self) -> Option<Result<()>> {
-    self.receiver.as_mut().expect("receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
+    self.receiver.as_mut().expect("The receiver is already taken from the receiver() method. please call recv() directly from the receiver.").recv().await
   }
-  
-  /// Takes the receiver responsible for [`recv`]. Subsequent calls to this function and [`recv`] after this call will panic.
+
+  /// Takes the receiver responsible for [`recv`][Autoposter::recv].
+  ///
+  /// # Panics
+  ///
+  /// Panics if this method gets called for the second time.
   #[inline(always)]
   pub fn receiver(&mut self) -> mpsc::UnboundedReceiver<Result<()>> {
-    self.receiver.take().expect("receiver() can only be called once.")
+    self
+      .receiver
+      .take()
+      .expect("receiver() can only be called once.")
   }
 }
 
@@ -204,20 +215,60 @@ impl<H> Deref for Autoposter<H> {
 
   #[inline(always)]
   fn deref(&self) -> &Self::Target {
-    self.handler.deref()
+    &self.handler
   }
 }
 
 #[cfg(feature = "serenity")]
 #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
 impl Autoposter<Serenity> {
-  /// Creates an [`Autoposter`] struct from an existing built-in [serenity] [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates and starts a serenity-based autoposter thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
+  /// # Example
   ///
-  /// # Panics
+  /// ```rust,no_run
+  /// use std::time::Duration;
+  /// use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
+  /// use topgg::Autoposter;
   ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
+  /// struct AutoposterHandler;
+  ///
+  /// #[serenity::async_trait]
+  /// impl EventHandler for AutoposterHandler {
+  ///   async fn ready(&self, _: Context, ready: Ready) {
+  ///     println!("{} is now ready!", ready.user.name);
+  ///   }
+  /// }
+  ///
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
+  ///
+  ///   // Posts once every 30 minutes
+  ///   let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(1800));
+  ///   
+  ///   let bot_token = env!("BOT_TOKEN").to_string();
+  ///   let intents = GatewayIntents::GUILDS;
+  ///
+  ///   let mut bot = Client::builder(&bot_token, intents)
+  ///     .event_handler(AutoposterHandler)
+  ///     .event_handler_arc(autoposter.handler())
+  ///     .await
+  ///     .unwrap();
+  ///
+  ///   let mut receiver = autoposter.receiver();
+  ///
+  ///   tokio::spawn(async move {
+  ///     while let Some(result) = receiver.recv().await {
+  ///       println!("Just posted: {result:?}");
+  ///     }
+  ///   });
+  ///   
+  ///   if let Err(why) = bot.start().await {
+  ///     println!("Client error: {why:?}");
+  ///   }
+  /// }
+  /// ```
   #[inline(always)]
   pub fn serenity<C>(client: &C, interval: Duration) -> Self
   where
@@ -230,13 +281,50 @@ impl Autoposter<Serenity> {
 #[cfg(feature = "twilight")]
 #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
 impl Autoposter<Twilight> {
-  /// Creates an [`Autoposter`] struct from an existing built-in [twilight](https://twilight.rs) [`Handler`] as well as immediately starting the thread. The thread will never stop until this struct gets dropped.
+  /// Creates and starts a twilight-based autoposter thread.
   ///
-  /// - `client` can either be a reference to an existing [`Client`][crate::Client] or a [`&str`][std::str] representing a [Top.gg API](https://docs.top.gg) token.
+  /// # Example
   ///
-  /// # Panics
+  /// ```rust,no_run
+  /// use std::time::Duration;
+  /// use topgg::{Autoposter, Client};
+  /// use twilight_gateway::{Event, Intents, Shard, ShardId};
   ///
-  /// Panics if the interval argument is shorter than 15 minutes (900 seconds).
+  /// #[tokio::main]
+  /// async fn main() {
+  ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  ///   let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+  ///
+  ///   let mut shard = Shard::new(
+  ///     ShardId::ONE,
+  ///     env!("BOT_TOKEN").to_string(),
+  ///     Intents::GUILD_MESSAGES | Intents::GUILDS,
+  ///   );
+  ///
+  ///   loop {
+  ///     let event = match shard.next_event().await {
+  ///       Ok(event) => event,
+  ///       Err(source) => {
+  ///         if source.is_fatal() {
+  ///           break;
+  ///         }
+  ///
+  ///         continue;
+  ///       }
+  ///     };
+  ///     
+  ///     autoposter.handle(&event).await;
+  ///     
+  ///     match event {
+  ///       Event::Ready(_) => {
+  ///         println!("Bot is now ready!");
+  ///       },
+  ///
+  ///       _ => {}
+  ///     }
+  ///   }
+  /// }
+  /// ```
   #[inline(always)]
   pub fn twilight<C>(client: &C, interval: Duration) -> Self
   where
