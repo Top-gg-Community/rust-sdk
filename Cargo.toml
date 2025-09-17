@@ -1,9 +1,9 @@
 [package]
 name = "topgg"
-version = "2.0.0"
+version = "1.4.2"
 edition = "2021"
 authors = ["null (https://github.com/null8626)", "Top.gg <support@top.gg> (https://top.gg)"]
-description = "A simple API wrapper for Top.gg written in Rust."
+description = "The official Rust wrapper for the Top.gg API"
 readme = "README.md"
 repository = "https://github.com/Top-gg-Community/rust-sdk"
 license = "MIT"
@@ -12,49 +12,26 @@ categories = ["api-bindings", "web-programming::http-client"]
 exclude = [".gitattributes", ".github/", ".gitignore", "rustfmt.toml"]
 
 [dependencies]
-base64 = { version = "0.22", optional = true }
 cfg-if = "1"
 paste = { version = "1", optional = true }
 reqwest = { version = "0.12", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
-urlencoding = "2"
+urlencoding = { version = "2", optional = true }
 
 serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
-twilight-http = { version = "0.15", optional = true }
 twilight-model = { version = "0.15", optional = true }
 twilight-cache-inmemory = { version = "0.15", optional = true }
 
-chrono = { version = "0.4", default-features = false, optional = true, features = ["serde", "now"] }
+chrono = { version = "0.4", default-features = false, optional = true, features = ["serde"] }
 serde_json = { version = "1", optional = true }
 
 rocket = { version = "0.5", default-features = false, features = ["json"], optional = true }
-axum = { version = "0.8", default-features = false, optional = true, features = ["http1", "tokio"] }
+axum = { version = "0.7", default-features = false, optional = true, features = ["http1", "tokio"] }
 async-trait = { version = "0.1", optional = true }
 warp = { version = "0.3", default-features = false, optional = true }
 actix-web = { version = "4", default-features = false, optional = true }
-
-[dev-dependencies]
-tokio = { version = "1", features = ["rt", "macros"] }
-twilight-gateway = "0.15"
-
-[lints.clippy]
-all = { level = "warn", priority = -1 }
-pedantic = { level = "warn", priority = -1 }
-cast-lossless = "allow"
-cast-possible-truncation = "allow"
-cast-possible-wrap = "allow"
-cast-sign-loss = "allow"
-inline-always = "allow"
-module-name-repetitions = "allow"
-must-use-candidate = "allow"
-return-self-not-must-use = "allow"
-similar-names = "allow"
-single-match-else = "allow"
-too-many-lines = "allow"
-unnecessary-wraps = "allow"
-unreadable-literal = "allow"
 
 [package.metadata.docs.rs]
 all-features = true
@@ -63,18 +40,17 @@ rustc-args = ["--cfg", "docsrs"]
 
 [features]
 default = ["api"]
-api = ["async-trait", "base64", "chrono", "reqwest", "serde_json"]
-bot-autoposter = ["api", "tokio"]
-autoposter = ["bot-autoposter"]
+api = ["chrono", "reqwest", "serde_json"]
+autoposter = ["api", "tokio"]
 
 serenity = ["dep:serenity", "paste"]
 serenity-cached = ["serenity", "serenity/cache"]
 
-twilight = ["twilight-model", "twilight-http"]
+twilight = ["twilight-model"]
 twilight-cached = ["twilight", "twilight-cache-inmemory"]
 
-webhooks = []
-rocket = ["webhooks", "dep:rocket"]
-axum = ["webhooks", "async-trait", "serde_json", "dep:axum"]
-warp = ["webhooks", "async-trait", "dep:warp"]
-actix-web = ["webhooks", "dep:actix-web"]
+webhook = ["urlencoding"]
+rocket = ["webhook", "dep:rocket"]
+axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
+warp = ["webhook", "async-trait", "dep:warp"]
+actix-web = ["webhook", "dep:actix-web"]

@@ -1,28 +1,24 @@
-use crate::Incoming;
+use crate::{IncomingVote, Vote};
 use actix_web::{
   dev::Payload,
-  error::{Error, ErrorBadRequest, ErrorUnauthorized},
+  error::{Error, ErrorUnauthorized},
   web::Json,
   FromRequest, HttpRequest,
 };
-use serde::de::DeserializeOwned;
-use std::{
+use core::{
   future::Future,
   pin::Pin,
   task::{ready, Context, Poll},
 };
 
 #[doc(hidden)]
-pub struct IncomingFut<T: DeserializeOwned> {
+pub struct IncomingVoteFut {
   req: HttpRequest,
-  json_fut: <Json<T> as FromRequest>::Future,
+  json_fut: <Json<Vote> as FromRequest>::Future,
 }
 
-impl<T> Future for IncomingFut<T>
-where
-  T: DeserializeOwned,
-{
-  type Output = Result<Incoming<T>, Error>;
+impl Future for IncomingVoteFut {
+  type Output = Result<IncomingVote, Error>;
 
   fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
     if let Ok(json) = ready!(Pin::new(&mut self.json_fut).poll(cx)) {
@@ -30,31 +26,26 @@ where
 
       if let Some(authorization) = headers.get("Authorization") {
         if let Ok(authorization) = authorization.to_str() {
-          return Poll::Ready(Ok(Incoming {
+          return Poll::Ready(Ok(IncomingVote {
             authorization: authorization.to_owned(),
-            data: json.into_inner(),
+            vote: json.into_inner(),
           }));
         }
       }
-
-      return Poll::Ready(Err(ErrorUnauthorized("401")));
     }
 
-    Poll::Ready(Err(ErrorBadRequest("400")))
+    Poll::Ready(Err(ErrorUnauthorized("401")))
   }
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "actix-web")))]
-impl<T> FromRequest for Incoming<T>
-where
-  T: DeserializeOwned,
-{
+impl FromRequest for IncomingVote {
   type Error = Error;
-  type Future = IncomingFut<T>;
+  type Future = IncomingVoteFut;
 
   #[inline(always)]
   fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-    IncomingFut {
+    IncomingVoteFut {
       req: req.clone(),
       json_fut: Json::from_request(req, payload),
     }

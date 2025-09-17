@@ -1,15 +1,14 @@
 use crate::{
-  bot::{Bot, BotQuery, BotStats, Bots, IsWeekend},
-  util,
-  vote::{Voted, Voter},
-  Error, Result, Snowflake,
+  bot::{Bot, IsWeekend},
+  user::{User, Voted, Voter},
+  util, Error, Result, Snowflake, Stats,
 };
 use reqwest::{header, IntoUrl, Method, Response, StatusCode, Version};
 use serde::{de::DeserializeOwned, Deserialize};
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "bot-autoposter")] {
-    use crate::bot_autoposter;
+  if #[cfg(feature = "autoposter")] {
+    use crate::autoposter;
     use std::sync::Arc;
 
     type SyncedClient = Arc<InnerClient>;
@@ -24,40 +23,30 @@ struct Ratelimit {
   retry_after: u16,
 }
 
-#[macro_export]
 macro_rules! api {
   ($e:literal) => {
     concat!("https://top.gg/api", $e)
   };
 
   ($e:literal, $($rest:tt)*) => {
-    format!($crate::client::api!($e), $($rest)*)
+    format!(api!($e), $($rest)*)
   };
 }
 
-pub(crate) use api;
-
+#[derive(Debug)]
 pub struct InnerClient {
   http: reqwest::Client,
   token: String,
-  id: u64,
 }
 
-#[derive(Deserialize)]
-pub(crate) struct ErrorJson {
-  #[serde(default, alias = "message", alias = "detail")]
-  message: Option<String>,
-}
-
-// This is implemented here because the Discord bot autoposter needs to access this struct from a different thread.
+// this is implemented here because autoposter needs to access this struct from a different thread.
 impl InnerClient {
-  pub(crate) fn new(token: String) -> Self {
-    let id = util::parse_api_token(&token);
+  pub(crate) fn new(mut token: String) -> Self {
+    token.insert_str(0, "Bearer ");
 
     Self {
       http: reqwest::Client::new(),
       token,
-      id,
     }
   }
 
@@ -90,13 +79,8 @@ impl InnerClient {
           Ok(response)
         } else {
           Err(match status {
-            StatusCode::UNAUTHORIZED | StatusCode::FORBIDDEN => panic!("Invalid API token."),
-            StatusCode::NOT_FOUND => Error::NotFound(
-              util::parse_json::<ErrorJson>(response)
-                .await
-                .ok()
-                .and_then(|err| err.message),
-            ),
+            StatusCode::UNAUTHORIZED => panic!("Invalid Top.gg API token."),
+            StatusCode::NOT_FOUND => Error::NotFound,
             StatusCode::TOO_MANY_REQUESTS => match util::parse_json::<Ratelimit>(response).await {
               Ok(ratelimit) => Error::Ratelimit {
                 retry_after: ratelimit.retry_after,
@@ -128,76 +112,79 @@ impl InnerClient {
     }
   }
 
-  pub(crate) async fn post_bot_server_count(&self, server_count: usize) -> Result<()> {
-    if server_count == 0 {
-      return Err(Error::InvalidRequest);
-    }
-
+  pub(crate) async fn post_stats(&self, new_stats: &Stats) -> Result<()> {
     self
       .send_inner(
         Method::POST,
         api!("/bots/stats"),
-        serde_json::to_vec(&BotStats {
-          server_count: Some(server_count),
-        })
-        .unwrap(),
+        serde_json::to_vec(new_stats).unwrap(),
       )
       .await
       .map(|_| ())
   }
 }
 
-/// Interact with the API's endpoints.
+/// A struct representing a [Top.gg API](https://docs.top.gg) client instance.
 #[must_use]
+#[derive(Debug)]
 pub struct Client {
   inner: SyncedClient,
 }
 
 impl Client {
-  /// Creates a new instance.
+  /// Creates a brand new client instance from a [Top.gg](https://top.gg) token.
   ///
-  /// To retrieve your API token, [see this tutorial](https://github.com/top-gg-community/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
-  ///
-  /// # Panics
-  ///
-  /// Panics if the client uses an invalid API token.
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
-  /// ```
+  /// To get your [Top.gg](https://top.gg) token, [view this tutorial](https://github.com/top-gg/rust-sdk/assets/60427892/d2df5bd3-bc48-464c-b878-a04121727bff).
   #[inline(always)]
   pub fn new(token: String) -> Self {
     let inner = InnerClient::new(token);
 
-    #[cfg(feature = "bot-autoposter")]
+    #[cfg(feature = "autoposter")]
     let inner = Arc::new(inner);
 
     Self { inner }
   }
 
-  /// Fetches a Discord bot from its ID.
+  /// Fetches a user from a Discord ID.
   ///
   /// # Panics
   ///
-  /// Panics if:
-  /// - The specified ID is invalid.
-  /// - The client uses an invalid API token.
+  /// Panics if any of the following conditions are met:
+  /// - The ID argument is a string but not numeric
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - The specified bot does not exist. ([`NotFound`][crate::Error::NotFound])
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested user does not exist ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  pub async fn get_user<I>(&self, id: I) -> Result<User>
+  where
+    I: Snowflake,
+  {
+    self
+      .inner
+      .send(Method::GET, api!("/users/{}", id.as_snowflake()), None)
+      .await
+  }
+
+  /// Fetches a listed Discord bot from a Discord ID.
   ///
-  /// # Example
+  /// # Panics
   ///
-  /// ```rust,no_run
-  /// let bot = client.get_bot(264811613708746752).await.unwrap();
-  /// ```
+  /// Panics if any of the following conditions are met:
+  /// - The ID argument is a string but not numeric
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
+  ///
+  /// # Errors
+  ///
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The requested Discord bot is not listed on [Top.gg](https://top.gg) ([`NotFound`][crate::Error::NotFound])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn get_bot<I>(&self, id: I) -> Result<Bot>
   where
     I: Snowflake,
@@ -208,158 +195,75 @@ impl Client {
       .await
   }
 
-  /// Fetches your Discord bot's posted server count.
+  /// Fetches your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// let server_count = client.get_bot_server_count().await.unwrap();
-  /// ```
-  pub async fn get_bot_server_count(&self) -> Result<Option<usize>> {
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  pub async fn get_stats(&self) -> Result<Stats> {
     self
       .inner
       .send(Method::GET, api!("/bots/stats"), None)
       .await
-      .map(|stats: BotStats| stats.server_count)
   }
 
-  /// Updates the server count in your Discord bot's Top.gg page.
+  /// Posts your Discord bot's statistics.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - The bot is currently in zero servers. ([`InvalidRequest`][crate::Error::InvalidRequest])
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// client.post_bot_server_count(bot.server_count()).await.unwrap();
-  /// ```
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   #[inline(always)]
-  pub async fn post_bot_server_count(&self, server_count: usize) -> Result<()> {
-    self.inner.post_bot_server_count(server_count).await
+  pub async fn post_stats(&self, new_stats: Stats) -> Result<()> {
+    self.inner.post_stats(&new_stats).await
   }
 
-  /// Fetches your project's recent unique voters.
-  ///
-  /// The amount of voters returned can't exceed 100, so you would need to use the `page` argument for this.
+  /// Fetches your Discord bot's last 1000 voters.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// //                             Page number
-  /// let voters = client.get_voters(1).await.unwrap();
-  ///
-  /// for voter in voters {
-  ///   println!("{}", voter.username);
-  /// }
-  /// ```
-  pub async fn get_voters(&self, mut page: usize) -> Result<Vec<Voter>> {
-    if page < 1 {
-      page = 1;
-    }
-
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
+  pub async fn get_voters(&self) -> Result<Vec<Voter>> {
     self
       .inner
-      .send(
-        Method::GET,
-        api!("/bots/{}/votes?page={}", self.inner.id, page),
-        None,
-      )
+      .send(Method::GET, api!("/bots/votes"), None)
       .await
   }
 
-  pub(crate) async fn get_bots_inner(&self, path: String) -> Result<Vec<Bot>> {
-    self
-      .inner
-      .send::<Bots>(Method::GET, api!("{}", path), None)
-      .await
-      .map(|res| res.results)
-  }
-
-  /// Fetches Discord bots that matches the specified query.
+  /// Checks if the specified user has voted your Discord bot.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// Panics if any of the following conditions are met:
+  /// - The user ID argument is a string and it's not a valid ID (expected things like `"123456789"`)
+  /// - The client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// let bots = client
-  ///   .get_bots()
-  ///   .limit(250)
-  ///   .skip(50)
-  ///   .sort_by_monthly_votes()
-  ///   .await
-  ///   .unwrap();
-  ///
-  /// for bot in bots {
-  ///   println!("{}", bot.name);
-  /// }
-  /// ```
-  #[inline(always)]
-  pub fn get_bots(&self) -> BotQuery<'_> {
-    BotQuery::new(self)
-  }
-
-  /// Checks if a Top.gg user has voted for your Discord bot in the past 12 hours.
-  ///
-  /// # Panics
-  ///
-  /// Panics if:
-  /// - The specified ID is invalid.
-  /// - The client uses an invalid API token.
-  ///
-  /// # Errors
-  ///
-  /// Returns [`Err`] if:
-  /// - The specified user has not logged in to Top.gg. ([`NotFound`][crate::Error::NotFound])
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// let has_voted = client.has_voted(8226924471638491136).await.unwrap();
-  /// ```
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn has_voted<I>(&self, user_id: I) -> Result<bool>
   where
     I: Snowflake,
@@ -375,24 +279,18 @@ impl Client {
       .map(|res| res.voted != 0)
   }
 
-  /// Checks if the weekend multiplier is active, where a single vote counts as two.
+  /// Checks if the weekend multiplier is active.
   ///
   /// # Panics
   ///
-  /// Panics if the client uses an invalid API token.
+  /// Panics if the client uses an invalid [Top.gg API](https://docs.top.gg) token (unauthorized)
   ///
   /// # Errors
   ///
-  /// Returns [`Err`] if:
-  /// - HTTP request failure from the client-side. ([`InternalClientError`][crate::Error::InternalClientError])
-  /// - HTTP request failure from the server-side. ([`InternalServerError`][crate::Error::InternalServerError])
-  /// - Ratelimited from sending more requests. ([`Ratelimit`][crate::Error::Ratelimit])
-  ///
-  /// # Example
-  ///
-  /// ```rust,no_run
-  /// let is_weekend = client.is_weekend().await.unwrap();
-  /// ```
+  /// Errors if any of the following conditions are met:
+  /// - An internal error from the client itself preventing it from sending a HTTP request to [Top.gg](https://top.gg) ([`InternalClientError`][crate::Error::InternalClientError])
+  /// - An unexpected response from the [Top.gg](https://top.gg) servers ([`InternalServerError`][crate::Error::InternalServerError])
+  /// - The client is being ratelimited from sending more HTTP requests ([`Ratelimit`][crate::Error::Ratelimit])
   pub async fn is_weekend(&self) -> Result<bool> {
     self
       .inner
@@ -403,14 +301,14 @@ impl Client {
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "bot-autoposter")] {
-    impl bot_autoposter::AsClientSealed for Client {
+  if #[cfg(feature = "autoposter")] {
+    impl autoposter::AsClientSealed for Client {
       #[inline(always)]
       fn as_client(&self) -> Arc<InnerClient> {
         Arc::clone(&self.inner)
       }
     }
 
-    impl bot_autoposter::AsClient for Client {}
+    impl autoposter::AsClient for Client {}
   }
 }

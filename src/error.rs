@@ -1,23 +1,21 @@
-use std::{error, fmt, result};
+use core::{fmt, result};
+use std::error;
 
-/// An error coming from this SDK.
+/// A struct representing an error coming from this SDK - unexpected or not.
 #[derive(Debug)]
 pub enum Error {
-  /// HTTP request failure from the client-side.
+  /// An unexpected internal error coming from the client itself, preventing it from sending a request to [Top.gg](https://top.gg).
   InternalClientError(reqwest::Error),
 
-  /// HTTP request failure from the server-side.
+  /// An unexpected error coming from [Top.gg](https://top.gg)'s servers themselves.
   InternalServerError,
 
-  /// Attempted to send an invalid request to the API.
-  InvalidRequest,
+  /// The requested resource does not exist. (404)
+  NotFound,
 
-  /// Such query does not exist. Inside is the message from the API if available.
-  NotFound(Option<String>),
-
-  /// Ratelimited from sending more requests.
+  /// The client is being ratelimited from sending more HTTP requests.
   Ratelimit {
-    /// How long the client should wait in seconds before it could send requests again without receiving a 429.
+    /// The amount of seconds before the ratelimit is lifted.
     retry_after: u16,
   },
 }
@@ -25,17 +23,13 @@ pub enum Error {
 impl fmt::Display for Error {
   fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
     match self {
-      Self::InternalClientError(err) => write!(f, "Internal Client Error: {err}"),
-      Self::InternalServerError => write!(f, "Internal Server Error"),
-      Self::InvalidRequest => write!(f, "Invalid Request"),
-      Self::NotFound(message) => write!(
-        f,
-        "Not Found: {}",
-        message.as_deref().unwrap_or("<no message>")
-      ),
+      Self::InternalClientError(err) => write!(f, "internal client error: {err}"),
+      Self::InternalServerError => write!(f, "internal server error"),
+      Self::NotFound => write!(f, "not found"),
       Self::Ratelimit { retry_after } => write!(
         f,
-        "Blocked by the API for an hour. Please try again in {retry_after} seconds",
+        "this client is ratelimited, try again in {} seconds",
+        retry_after / 60
       ),
     }
   }
@@ -51,5 +45,5 @@ impl error::Error for Error {
   }
 }
 
-/// The result type primarily used in this SDK.
+/// The [`Result`][std::result::Result] type primarily used in this SDK.
 pub type Result<T> = result::Result<T, Error>;
