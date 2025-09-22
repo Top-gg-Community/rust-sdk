@@ -18,7 +18,7 @@ paste = { version = "1", optional = true }
 reqwest = { version = "0.12", optional = true }
 serde = { version = "1", features = ["derive"] }
 tokio = { version = "1", features = ["rt", "sync", "time"], optional = true }
-urlencoding = { version = "2", optional = true }
+urlencoding = "2"
 
 serenity = { version = "0.12", features = ["builder", "client", "gateway", "model", "utils"], optional = true }
 
@@ -31,12 +31,12 @@ serde_json = { version = "1", optional = true }
 rocket = { version = "0.5", default-features = false, features = ["json"], optional = true }
 axum = { version = "0.8", default-features = false, optional = true, features = ["http1", "tokio"] }
 async-trait = { version = "0.1", optional = true }
-warp = { version = "0.3", default-features = false, optional = true }
-actix-web = { version = "4", default-features = false, optional = true }
-
+warp = { version = "0.4", default-features = false, features = ["server"], optional = true }
+actix-web = { version = "4", default-features = false, features = ["macros"], optional = true }
 
 [dev-dependencies]
-tokio = { version = "1", features = ["rt", "macros"] }
+reqwest = "0.12"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 twilight-gateway = "0.15"
 
 [lints.clippy]
@@ -66,14 +66,16 @@ default = ["api"]
 api = ["base64", "chrono", "reqwest", "serde_json"]
 autoposter = ["api", "tokio"]
 
-serenity = ["dep:serenity", "paste"]
+serenity = ["dep:serenity", "async-trait", "paste"]
 serenity-cached = ["serenity", "serenity/cache"]
 
 twilight = ["twilight-model"]
 twilight-cached = ["twilight", "twilight-cache-inmemory"]
 
-webhook = ["urlencoding"]
-rocket = ["webhook", "dep:rocket"]
+webhook = []
+rocket = ["webhook", "async-trait", "dep:rocket"]
 axum = ["webhook", "async-trait", "serde_json", "dep:axum"]
 warp = ["webhook", "async-trait", "dep:warp"]
 actix-web = ["webhook", "dep:actix-web"]
+
+_internal-doctest = []

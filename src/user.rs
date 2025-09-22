@@ -5,7 +5,6 @@ use serde::Deserialize;
 /// A user's social links.
 #[allow(clippy::doc_markdown)]
 #[derive(Clone, Debug, Deserialize)]
-#[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
 pub struct Socials {
   /// This user's GitHub account URL.
   #[serde(skip)]
@@ -31,7 +30,6 @@ pub struct Socials {
 util::debug_struct! {
   /// A user logged into Top.gg.
   #[derive(Clone, Deserialize)]
-  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
   User {
     public {
       /// This user's ID.
@@ -75,17 +73,24 @@ util::debug_struct! {
       is_admin: bool,
     }
 
+    private {
+      #[serde(skip)]
+      avatar: Option<String>,
+    }
+
     getters(self) {
       /// This user's creation date.
-      #[allow(clippy::missing_panics_doc)]
+      #[must_use]
+      #[inline(always)]
       created_at: DateTime<Utc> => {
-        panic!("The User struct is deprecated as it's no longer supported by API v0.")
+        util::get_creation_date(self.id)
       }
 
       /// This user's avatar URL.
-      #[allow(clippy::missing_panics_doc)]
+      #[must_use]
+      #[inline(always)]
       avatar: String => {
-        panic!("The User struct is deprecated as it's no longer supported by API v0.")
+        util::get_avatar(self.avatar.as_ref(), self.id)
       }
     }
   }

@@ -1,6 +1,6 @@
 use crate::{snowflake, util, Client};
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Deserializer, Serialize};
+use serde::{Deserialize, Serialize};
 use std::{
   cmp::min,
   fmt::Write,
@@ -8,15 +8,15 @@ use std::{
   pin::Pin,
 };
 
-#[inline(always)]
-pub(crate) fn deserialize_support_server<'de, D>(
-  deserializer: D,
-) -> Result<Option<String>, D::Error>
-where
-  D: Deserializer<'de>,
-{
-  util::deserialize_optional_string(deserializer)
-    .map(|inner| inner.map(|support| format!("https://discord.com/invite/{support}")))
+/// A Discord bot's reviews on Top.gg.
+#[derive(Clone, Debug, Deserialize)]
+pub struct BotReviews {
+  /// This bot's average review score out of 5.
+  #[serde(rename = "averageScore")]
+  pub score: f64,
+
+  /// This bot's review count.
+  pub count: usize,
 }
 
 util::debug_struct! {
@@ -38,7 +38,6 @@ util::debug_struct! {
 
       /// This bot's discriminator.
       #[serde(skip)]
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       discriminator: String,
 
       /// This bot's prefix.
@@ -72,14 +71,12 @@ util::debug_struct! {
       #[serde(deserialize_with = "snowflake::deserialize_vec")]
       owners: Vec<u64>,
 
-      /// This bot's guild IDs.
+      /// This bot's server IDs.
       #[serde(skip)]
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       guilds: Vec<u64>,
 
       /// This bot's banner image URL.
       #[serde(skip)]
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       banner_url: Option<String>,
 
       /// This bot's approval date.
@@ -93,12 +90,10 @@ util::debug_struct! {
 
       /// Whether this bot is certified or not.
       #[serde(skip)]
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       is_certified: bool,
 
       /// This bot's shards.
       #[serde(skip)]
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shards: Vec<usize>,
 
       /// The amount of votes this bot has.
@@ -110,7 +105,7 @@ util::debug_struct! {
       monthly_votes: usize,
 
       /// This bot's support URL.
-      #[serde(default, deserialize_with = "deserialize_support_server")]
+      #[serde(default, deserialize_with = "util::deserialize_optional_string")]
       support: Option<String>,
 
       /// This bot's avatar URL.
@@ -123,6 +118,10 @@ util::debug_struct! {
       /// This bot's posted server count.
       #[serde(default)]
       server_count: Option<usize>,
+
+      /// This bot's reviews.
+      #[serde(rename = "reviews")]
+      review: BotReviews,
     }
 
     private {
@@ -157,7 +156,6 @@ util::debug_struct! {
       }
 
       /// This bot's shard count.
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shard_count: usize => {
         0
       }
@@ -183,41 +181,86 @@ pub(crate) struct Bots {
 util::debug_struct! {
   /// A Discord bot's statistics.
   ///
-  /// # Example
+  /// # Examples
   ///
-  /// ```rust,no_run
+  /// Solely from a server count:
+  ///
+  /// ```rust
   /// use topgg::Stats;
   ///
-  /// let _stats = Stats {
-  ///   server_count: Some(12345),
-  /// };
+  /// let _stats = Stats::from(12345);
+  /// ```
+  ///
+  /// Server count with a shard count:
+  ///
+  /// ```rust
+  /// use topgg::Stats;
+  ///
+  /// let server_count = 12345;
+  /// let shard_count = 10;
+  /// let _stats = Stats::from_count(server_count, Some(shard_count));
+  /// ```
+  ///
+  /// Solely from shards information:
+  ///
+  /// ```rust
+  /// use topgg::Stats;
+  ///
+  /// // the shard posting this data has 456 servers.
+  /// let _stats = Stats::from_shards([123, 456, 789], Some(1));
   /// ```
   #[must_use]
   #[derive(Clone, Serialize, Deserialize)]
   Stats {
-    public {
-      /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
+    protected {
+      #[serde(skip_serializing_if = "Option::is_none")]
+      shard_count: Option<usize>,
+
       #[serde(skip_serializing_if = "Option::is_none")]
       server_count: Option<usize>,
     }
 
+    private {
+      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
+      shards: Option<Vec<usize>>,
+
+      #[serde(default, skip_serializing_if = "Option::is_none", deserialize_with = "util::deserialize_default")]
+      shard_id: Option<usize>,
+    }
+
     getters(self) {
       /// This bot's list of server count for each shard.
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+      #[must_use]
+      #[inline(always)]
       shards: &[usize] => {
-        &[]
+        match self.shards {
+          Some(ref shards) => shards,
+          None => &[],
+        }
       }
 
       /// This bot's shard count.
-      #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+      #[must_use]
+      #[inline(always)]
       shard_count: usize => {
-        0
+        self.shard_count.unwrap_or(match self.shards {
+          Some(ref shards) => shards.len(),
+          None => 0,
+        })
       }
 
       /// The amount of servers this bot is in. `None` if such information is publicly unavailable.
-      #[deprecated(since = "1.5.0", note = "Just directly use the public `server_count` property.")]
+      #[must_use]
       server_count: Option<usize> => {
-        self.server_count
+        self.server_count.or_else(|| {
+          self.shards.as_ref().and_then(|shards| {
+            if shards.is_empty() {
+              None
+            } else {
+              Some(shards.iter().copied().sum())
+            }
+          })
+        })
       }
     }
   }
@@ -225,31 +268,63 @@ util::debug_struct! {
 
 impl Stats {
   /// Creates a [`Stats`] struct from the cache of a serenity [`Context`][serenity::client::Context].
-  #[inline(always)]
   #[cfg(feature = "serenity-cached")]
   #[cfg_attr(docsrs, doc(cfg(feature = "serenity-cached")))]
   pub fn from_context(context: &serenity::client::Context) -> Self {
-    Self {
-      server_count: Some(context.cache.guilds().len()),
-    }
+    Self::from_count(
+      context.cache.guilds().len(),
+      Some(context.cache.shard_count() as _),
+    )
   }
 
   /// Creates a [`Stats`] struct based on total server and optionally, shard count data.
-  #[deprecated(since = "1.5.0", note = "Just directly use a struct declaration.")]
-  pub const fn from_count(server_count: usize, _shard_count: Option<usize>) -> Self {
+  pub const fn from_count(server_count: usize, shard_count: Option<usize>) -> Self {
     Self {
       server_count: Some(server_count),
+      shard_count,
+      shards: None,
+      shard_id: None,
     }
   }
 
   /// Creates a [`Stats`] struct based on an array of server count per shard and optionally the index (to the array) of shard posting this data.
-  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-  pub fn from_shards<A>(shards: A, _shard_index: Option<usize>) -> Self
+  ///
+  /// # Panics
+  ///
+  /// Panics if the `shard_index` argument is [`Some`] yet it's out of range of the `shards` array.
+  ///
+  /// # Example
+  ///
+  /// Basic usage:
+  ///
+  /// ```rust
+  /// use topgg::Stats;
+  ///
+  /// // the shard posting this data has 456 servers.
+  /// let _stats = Stats::from_shards([123, 456, 789], Some(1));
+  /// ```
+  pub fn from_shards<A>(shards: A, shard_index: Option<usize>) -> Self
   where
     A: IntoIterator<Item = usize>,
   {
+    let mut total_server_count = 0;
+    let shards = shards.into_iter();
+    let mut shards_list = Vec::with_capacity(shards.size_hint().0);
+
+    for server_count in shards {
+      total_server_count += server_count;
+      shards_list.push(server_count);
+    }
+
+    if let Some(index) = shard_index {
+      assert!(index < shards_list.len(), "Shard index out of range.");
+    }
+
     Self {
-      server_count: Some(shards.into_iter().sum()),
+      server_count: Some(total_server_count),
+      shard_count: Some(shards_list.len()),
+      shards: Some(shards_list),
+      shard_id: shard_index,
     }
   }
 }
@@ -258,9 +333,7 @@ impl Stats {
 impl From<usize> for Stats {
   #[inline(always)]
   fn from(server_count: usize) -> Self {
-    Self {
-      server_count: Some(server_count),
-    }
+    Self::from_count(server_count, None)
   }
 }
 
@@ -274,6 +347,7 @@ pub(crate) struct IsWeekend {
 pub struct GetBots<'a> {
   client: &'a Client,
   query: String,
+  search: String,
   sort: Option<&'static str>,
 }
 
@@ -310,6 +384,7 @@ impl<'a> GetBots<'a> {
     Self {
       client,
       query: String::from('?'),
+      search: String::new(),
       sort: None,
     }
   }
@@ -333,24 +408,25 @@ impl<'a> GetBots<'a> {
     skip: u16 = query("offset={}&", min(skip, 499));
 
     /// Queries only bots that has this username.
-    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-    username: &str;
+    username: &str = search("username%3A%20{}%20", urlencoding::encode(username));
+
+    /// Queries only bots that has this discriminator.
+    discriminator: &str = search("discriminator%3A%20{discriminator}%20");
 
     /// Queries only bots that has this prefix.
-    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-    prefix: &str;
+    prefix: &str = search("prefix%3A%20{}%20", urlencoding::encode(prefix));
 
     /// Queries only bots that has this vote count.
-    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-    votes: usize;
+    votes: usize = search("points%3A%20{votes}%20");
 
     /// Queries only bots that has this monthly vote count.
-    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-    monthly_votes: usize;
+    monthly_votes: usize = search("monthlyPoints%3A%20{monthly_votes}%20");
+
+    /// Queries only Top.gg certified bots or not.
+    certified: bool = search("certifiedBot%3A%20{certified}%20");
 
     /// Queries only bots that has this Top.gg vanity URL.
-    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-    vanity: &str;
+    vanity: &str = search("vanity%3A%20{}%20", urlencoding::encode(vanity));
   }
 }
 
@@ -360,6 +436,12 @@ impl<'a> IntoFuture for GetBots<'a> {
 
   fn into_future(self) -> Self::IntoFuture {
     let mut query = self.query;
+
+    if self.search.is_empty() {
+      query.pop();
+    } else {
+      write!(&mut query, "search={}", self.search).unwrap();
+    }
 
     if let Some(sort) = self.sort {
       write!(&mut query, "sort={sort}&").unwrap();

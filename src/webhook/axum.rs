@@ -52,14 +52,30 @@ where
 ///
 /// Basic usage:
 ///
-/// ```rust,no_run
-/// use axum::{routing::get, Router, Server};
-/// use std::{net::SocketAddr, sync::Arc};
+/// ```rust
+/// use axum::{routing::get, Router};
+/// use std::sync::Arc;
+/// use tokio::net::TcpListener;
 /// use topgg::{Vote, VoteHandler};
+/// #
+/// # use std::time::Duration;
+/// # use tokio::{sync::{oneshot, Notify}, time::sleep};
+/// #
+/// # async fn test_request() -> reqwest::Result<reqwest::Response> {
+/// #   let client = reqwest::Client::new();
+/// #   
+/// #   client
+/// #     .post("http://127.0.0.1:8080/webhook")
+/// #     .header("Content-Type", "application/json")
+/// #     .header("Authorization", env!("TOPGG_WEBHOOK_PASSWORD"))
+/// #     .body("{\"bot\":\"1026525568344264724\",\"user\":\"661200758510977084\",\"type\":\"test\",\"isWeekend\":false}")
+/// #     .send()
+/// #     .await
+/// # }
 ///
 /// struct MyVoteHandler {}
 ///
-/// #[axum::async_trait]
+/// #[async_trait::async_trait]
 /// impl VoteHandler for MyVoteHandler {
 ///   async fn voted(&self, vote: Vote) {
 ///     println!("{:?}", vote);
@@ -74,17 +90,50 @@ where
 /// async fn main() {
 ///   let state = Arc::new(MyVoteHandler {});
 ///
-///   let app = Router::new().route("/", get(index)).nest(
+///   let router = Router::new().route("/", get(index)).nest(
 ///     "/webhook",
 ///     topgg::axum::webhook(env!("TOPGG_WEBHOOK_PASSWORD").to_string(), Arc::clone(&state)),
 ///   );
 ///
-///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
+///   let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
 ///
-///   Server::bind(&addr)
-///     .serve(app.into_make_service())
+/// # let local_immature_thread_closure = Arc::new(Notify::const_new());
+/// # let thread_immature_thread_closure = Arc::clone(&local_immature_thread_closure);
+/// #
+/// # let (shutdown_tx, shutdown_rx) = oneshot::channel();
+/// #
+/// # let test_thread = tokio::spawn(async move {
+/// #   sleep(Duration::from_secs(5));
+/// #   
+/// #   tokio::select! {
+/// #     _ = thread_immature_thread_closure.notified() => {
+/// #       return Ok(None);
+/// #     }
+/// #     
+/// #     result = test_request() => {
+/// #       shutdown_tx.send(()).unwrap();
+/// #       
+/// #       return result.map(Some);
+/// #     }
+/// #   }
+/// # });
+/// #
+/// # if let Err(why) =
+///   axum::serve(listener, router)
+/// #   .with_graceful_shutdown(async { shutdown_rx.await.ok(); })
 ///     .await
+/// # {
+/// #   local_immature_thread_closure.notify_one();
+/// #   
+/// #   panic!("Server error: {why:?}");
+/// # }
+/// # /*
 ///     .unwrap();
+/// # */
+/// #
+/// # let test_response = test_thread.await.unwrap().unwrap().unwrap();
+/// #
+/// # assert_eq!(test_response.status(), reqwest::StatusCode::NO_CONTENT);
 /// }
 /// ```
 #[inline(always)]

@@ -127,6 +127,20 @@ where
   Err(Error::InternalServerError)
 }
 
+pub(crate) fn get_avatar(hash: Option<&String>, id: u64) -> String {
+  match hash {
+    Some(hash) => {
+      let ext = if hash.starts_with("a_") { "gif" } else { "png" };
+
+      format!("https://cdn.discordapp.com/avatars/{id}/{hash}.{ext}?size=1024")
+    }
+    _ => format!(
+      "https://cdn.discordapp.com/embed/avatars/{}.png",
+      (id >> 22) % 5
+    ),
+  }
+}
+
 #[derive(Deserialize)]
 #[allow(clippy::used_underscore_binding)]
 struct TokenStructure {

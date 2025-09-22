@@ -1,9 +1,12 @@
-# [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url]
+# [topgg](https://crates.io/crates/topgg) [![crates.io][crates-io-image]][crates-io-url] [![crates.io downloads][crates-io-downloads-image]][crates-io-url] [![license][github-license-image]][github-license-url] [![BLAZINGLY FAST!!!][blazingly-fast-image]][blazingly-fast-url]
 
 [crates-io-image]: https://img.shields.io/crates/v/topgg?style=flat-square
 [crates-io-downloads-image]: https://img.shields.io/crates/d/topgg?style=flat-square
 [crates-io-url]: https://crates.io/crates/topgg
-
+[github-license-image]: https://img.shields.io/github/license/top-gg/rust-sdk?style=flat-square
+[github-license-url]: https://github.com/top-gg/rust-sdk/blob/main/LICENSE
+[blazingly-fast-image]: https://img.shields.io/badge/speed-BLAZINGLY%20FAST!!!%20%F0%9F%94%A5%F0%9F%9A%80%F0%9F%92%AA%F0%9F%98%8E-brightgreen.svg?style=flat-square
+[blazingly-fast-url]: https://twitter.com/acdlite/status/974390255393505280
 The official Rust SDK for the [Top.gg API](https://docs.top.gg).
 
 ## Getting Started
@@ -14,27 +17,28 @@ Make sure to have a [Top.gg API](https://docs.top.gg) token handy. If not, then 
 topgg = "1.5"
 ```
 
-For more information, please read [the documentation](https://docs.rs/topgg)!
-
 ## Features
 
 This library provides several feature flags that can be enabled/disabled in `Cargo.toml`. Such as:
 
 - **`api`**: Interacting with the [Top.gg API](https://docs.top.gg) and accessing the `top.gg/api/*` endpoints. (enabled by default)
   - **`autoposter`**: Automating the process of periodically posting bot statistics to the [Top.gg API](https://docs.top.gg).
-- **`webhook`**: Accessing the [serde deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
-  - **`actix-web`**: Wrapper for working with the [actix-web](https://actix.rs/) web framework.
-  - **`axum`**: Wrapper for working with the [axum](https://crates.io/crates/axum) web framework.
-  - **`rocket`**: Wrapper for working with the [rocket](https://rocket.rs/) web framework.
-  - **`warp`**: Wrapper for working with the [warp](https://crates.io/crates/warp) web framework.
-- **`serenity`**: Extra helpers for working with [serenity](https://crates.io/crates/serenity) library (with bot caching disabled).
-  - **`serenity-cached`**: Extra helpers for working with [serenity](https://crates.io/crates/serenity) library (with bot caching enabled).
-- **`twilight`**: Extra helpers for working with [twilight](https://twilight.rs) library (with bot caching disabled).
-  - **`twilight-cached`**: Extra helpers for working with [twilight](https://twilight.rs) library (with bot caching enabled).
+- **`webhook`**: Accessing the [`serde` deserializable](https://docs.rs/serde/latest/serde/de/trait.DeserializeOwned.html) `topgg::Vote` struct.
+  - **`actix-web`**: Wrapper for working with the [`actix-web`](https://actix.rs/) web framework.
+  - **`axum`**: Wrapper for working with the [`axum`](https://crates.io/crates/axum) web framework.
+  - **`rocket`**: Wrapper for working with the [`rocket`](https://rocket.rs/) web framework.
+  - **`warp`**: Wrapper for working with the [`warp`](https://crates.io/crates/warp) web framework.
+- **`serenity`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching disabled).
+  - **`serenity-cached`**: Extra helpers for working with [`serenity`](https://crates.io/crates/serenity) library (with bot caching enabled).
+- **`twilight`**: Extra helpers for working with [`twilight`](https://twilight.rs) library (with bot caching disabled).
+  - **`twilight-cached`**: Extra helpers for working with [`twilight`](https://twilight.rs) library (with bot caching enabled).
 
 ## Examples
 
-### Fetching a user from its Discord ID
+More things can be read in the [documentation](https://docs.rs/topgg).
+
+<details>
+<summary><b><code>api</code></b>: Fetching a single Discord user from it's Discord ID</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -51,7 +55,54 @@ async fn main() {
 }
 ```
 
-### Posting your bot's statistics
+</details>
+<details>
+<summary><b><code>api</code></b>: Fetching a single Discord bot from it's Discord ID</summary>
+
+```rust,no_run
+use topgg::Client;
+
+#[tokio::main]
+async fn main() {
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  let bot = client.get_bot(264811613708746752).await.unwrap();
+  
+  assert_eq!(bot.username, "Luca");
+  assert_eq!(bot.discriminator, "1375");
+  assert_eq!(bot.id, 264811613708746752);
+  
+  println!("{:?}", bot);
+}
+```
+
+</details>
+<details>
+<summary><b><code>api</code></b>: Querying several Discord bots</summary>
+
+```rust,no_run
+use topgg::Client;
+
+#[tokio::main]
+async fn main() {
+  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  
+  let bots = client
+    .get_bots()
+    .limit(250)
+    .skip(50)
+    .username("shiro")
+    .certified(true)
+    .await;
+  
+  for bot in bots {
+    println!("{:?}", bot);
+  }
+}
+```
+
+</details>
+<details>
+<summary><b><code>api</code></b>: Posting your Discord bot's statistics</summary>
 
 ```rust,no_run
 use topgg::{Client, Stats};
@@ -68,7 +119,9 @@ async fn main() {
 }
 ```
 
-### Checking if a user has voted your bot
+</details>
+<details>
+<summary><b><code>api</code></b>: Checking if a user has voted for your Discord bot</summary>
 
 ```rust,no_run
 use topgg::Client;
@@ -83,7 +136,9 @@ async fn main() {
 }
 ```
 
-### Autoposting with [serenity](https://crates.io/crates/serenity)
+</details>
+<details>
+<summary><b><code>autoposter</code></b>, <b><code>serenity</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://crates.io/crates/serenity">serenity</a></i> library</summary>
 
 In your `Cargo.toml`:
 
@@ -99,7 +154,7 @@ topgg = { version = "1.5", features = ["autoposter", "serenity-cached"] }
 In your code:
 
 ```rust,no_run
-use std::time::Duration;
+use core::time::Duration;
 use serenity::{client::{Client, Context, EventHandler}, model::{channel::Message, gateway::Ready}};
 use topgg::Autoposter;
 
@@ -140,7 +195,9 @@ async fn main() {
 }
 ```
 
-### Autoposting with [twilight](https://twilight.rs)
+</details>
+<details>
+<summary><b><code>autoposter</code></b>, <b><code>twilight</code></b>: Automating the process of periodically posting your Discord bot's statistics with the <i><a href="https://twilight.rs">twilight</a></i> library</summary>
 
 In your `Cargo.toml`:
 
@@ -156,7 +213,7 @@ topgg = { version = "1.5", features = ["autoposter", "twilight-cached"] }
 In your code:
 
 ```rust,no_run
-use std::time::Duration;
+use core::time::Duration;
 use topgg::Autoposter;
 use twilight_gateway::{Event, Intents, Shard, ShardId};
 
@@ -196,7 +253,9 @@ async fn main() {
 }
 ```
 
-### Writing an [actix-web](https://actix.rs) webhook for listening to votes
+</details>
+<details>
+<summary><b><code>actix-web</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -241,7 +300,9 @@ async fn main() -> io::Result<()> {
 }
 ```
 
-### Writing an [axum](https://crates.io/crates/axum) webhook for listening to votes
+</details>
+<details>
+<summary><b><code>axum</code></b>: Writing an <a href="https://crates.io/crates/axum"><code>axum</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -288,7 +349,9 @@ async fn main() {
 }
 ```
 
-### Writing a [rocket](https://rocket.rs) webhook for listening to votes
+</details>
+<details>
+<summary><b><code>rocket</code></b>: Writing a <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -333,7 +396,9 @@ fn main() {
 }
 ```
 
-### Writing a [warp](https://crates.io/crates/warp) webhook for listening to votes
+</details>
+<details>
+<summary><b><code>warp</code></b>: Writing a <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -376,3 +441,5 @@ async fn main() {
   warp::serve(routes).run(addr).await
 }
 ```
+
+</details>

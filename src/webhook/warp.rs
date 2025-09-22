@@ -8,10 +8,14 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///
 /// Basic usage:
 ///
-/// ```rust,no_run
-/// use std::{net::SocketAddr, sync::Arc};
+/// ```rust
+/// use std::sync::Arc;
+/// use tokio::net::TcpListener;
 /// use topgg::{Vote, VoteHandler};
 /// use warp::Filter;
+/// #
+/// # use std::time::Duration;
+/// # use tokio::{sync::oneshot, time::sleep};
 ///
 /// struct MyVoteHandler {}
 ///
@@ -35,9 +39,37 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///
 ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
 ///
-///   let addr: SocketAddr = "127.0.0.1:8080".parse().unwrap();
+///   let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
+/// #
+/// # let (shutdown_tx, shutdown_rx) = oneshot::channel();
+/// #
+/// # let test_thread = tokio::spawn(async move {
+/// #   sleep(Duration::from_secs(5));
+/// #   
+/// #   let client = reqwest::Client::new();
+/// #   
+/// #   let response = client
+/// #     .post("http://127.0.0.1:8080/webhook")
+/// #     .header("Content-Type", "application/json")
+/// #     .header("Authorization", env!("TOPGG_WEBHOOK_PASSWORD"))
+/// #     .body("{\"bot\":\"1026525568344264724\",\"user\":\"661200758510977084\",\"type\":\"test\",\"isWeekend\":false}")
+/// #     .send()
+/// #     .await;
+/// #   
+/// #   shutdown_tx.send(()).unwrap();
+/// #   
+/// #   response
+/// # });
 ///
-///   warp::serve(routes).run(addr).await
+///   warp::serve(routes)
+///     .incoming(listener)
+/// #   .graceful(async { shutdown_rx.await.ok(); })
+///     .run()
+///     .await;
+/// #
+/// # let test_response = test_thread.await.unwrap().unwrap();
+/// #
+/// # assert_eq!(test_response.status(), reqwest::StatusCode::NO_CONTENT);
 /// }
 /// ```
 #[cfg_attr(docsrs, doc(cfg(feature = "warp")))]

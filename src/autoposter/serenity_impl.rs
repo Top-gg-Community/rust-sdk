@@ -79,7 +79,7 @@ macro_rules! serenity_handler {
         )*
       }
 
-      #[serenity::async_trait]
+      #[async_trait::async_trait]
       #[allow(unused_variables)]
       impl EventHandler for Serenity {
         $(

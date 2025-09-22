@@ -84,23 +84,172 @@ cfg_if::cfg_if! {
     impl IncomingVote {
       /// Authenticates a valid password with this request. Returns a [`Some(Vote)`][`Vote`] if succeeds, otherwise `None`.
       ///
-      /// # Example
+      /// # Examples
       ///
-      /// Basic usage:
+      /// Basic usage with actix-web:
       ///
-      /// ```rust,no_run
-      /// match incoming_vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
-      ///   Some(vote) => {
-      ///     println!("{:?}", vote);
+      /// ```rust
+      /// use actix_web::{error::{Error, ErrorUnauthorized}, post};
+      /// use topgg::IncomingVote;
+      /// #
+      /// # use actix_web::{get, App, HttpServer};
+      /// # use std::{sync::Arc, time::Duration};
+      /// # use tokio::{sync::{oneshot, Notify}, time::sleep};
+      /// #
+      /// # async fn test_request() -> reqwest::Result<reqwest::Response> {
+      /// #   let client = reqwest::Client::new();
+      /// #
+      /// #   client
+      /// #     .post("http://127.0.0.1:8080/webhook")
+      /// #     .header("Content-Type", "application/json")
+      /// #     .header("Authorization", env!("TOPGG_WEBHOOK_PASSWORD"))
+      /// #     .body("{\"bot\":\"1026525568344264724\",\"user\":\"661200758510977084\",\"type\":\"test\",\"isWeekend\":false}")
+      /// #     .send()
+      /// #     .await
+      /// # }
       ///
-      ///     // respond with 204 NO CONTENT...
-      ///   },
-      ///   _ => {
-      ///     println!("found an unauthorized attacker.");
+      /// #[post("/webhook")]
+      /// async fn voted(incoming_vote: IncomingVote) -> Result<&'static str, Error> {
+      ///   match incoming_vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
       ///
-      ///     // respond with 401 UNAUTHORIZED...
+      ///       Ok("ok")
+      ///     },
+      ///     _ => {
+      ///       println!("found an unauthorized attacker.");
+      ///
+      ///       Err(ErrorUnauthorized("401"))
+      ///     }
       ///   }
       /// }
+      /// #
+      /// # #[get("/")]
+      /// # async fn index() -> &'static str {
+      /// #   "Hello, World!"
+      /// # }
+      /// #
+      /// # #[actix_web::main]
+      /// # async fn main() {
+      /// #   let server = HttpServer::new(|| App::new().service(index).service(voted))
+      /// #     .bind("127.0.0.1:8080")
+      /// #     .unwrap()
+      /// #     .run();
+      /// #
+      /// #   let server_handle = server.handle();
+      /// #
+      /// #   let local_immature_thread_closure = Arc::new(Notify::const_new());
+      /// #   let thread_immature_thread_closure = Arc::clone(&local_immature_thread_closure);
+      /// #
+      /// #   let test_thread = tokio::spawn(async move {
+      /// #     sleep(Duration::from_secs(5));
+      /// #
+      /// #     tokio::select! {
+      /// #       _ = thread_immature_thread_closure.notified() => {
+      /// #         return Ok(None);
+      /// #       }
+      /// #
+      /// #       result = test_request() => {
+      /// #         server_handle.stop(true);
+      /// #
+      /// #         return result.map(Some);
+      /// #       }
+      /// #     }
+      /// #   });
+      /// #
+      /// #   if let Err(why) = server.await {
+      /// #     local_immature_thread_closure.notify_one();
+      /// #
+      /// #     panic!("Server error: {why:?}");
+      /// #   }
+      /// #
+      /// #   let test_response = test_thread.await.unwrap().unwrap().unwrap();
+      /// #
+      /// #   assert_eq!(test_response.status(), reqwest::StatusCode::OK);
+      /// # }
+      /// ```
+      ///
+      /// Basic usage with rocket:
+      ///
+      /// ```rust
+      /// use rocket::{http::Status, post};
+      /// use topgg::IncomingVote;
+      /// #
+      /// # use rocket::{get, launch, routes, Config};
+      /// # use std::{sync::Arc, time::Duration};
+      /// # use tokio::{sync::{oneshot, Notify}, time::sleep};
+      /// #
+      /// # async fn test_request() -> reqwest::Result<reqwest::Response> {
+      /// #   let client = reqwest::Client::new();
+      /// #
+      /// #   client
+      /// #     .post("http://127.0.0.1:8080/webhook")
+      /// #     .header("Content-Type", "application/json")
+      /// #     .header("Authorization", env!("TOPGG_WEBHOOK_PASSWORD"))
+      /// #     .body("{\"bot\":\"1026525568344264724\",\"user\":\"661200758510977084\",\"type\":\"test\",\"isWeekend\":false}")
+      /// #     .send()
+      /// #     .await
+      /// # }
+      ///
+      /// #[post("/webhook", data = "<incoming_vote>")]
+      /// fn voted(incoming_vote: IncomingVote) -> Status {
+      ///   match incoming_vote.authenticate(env!("TOPGG_WEBHOOK_PASSWORD")) {
+      ///     Some(vote) => {
+      ///       println!("{:?}", vote);
+      ///
+      ///       Status::NoContent
+      ///     },
+      ///     _ => {
+      ///       println!("found an unauthorized attacker.");
+      ///
+      ///       Status::Unauthorized
+      ///     }
+      ///   }
+      /// }
+      /// #
+      /// # #[get("/")]
+      /// # fn index() -> &'static str {
+      /// #   "Hello, World!"
+      /// # }
+      /// #
+      /// # #[rocket::main]
+      /// # async fn main() {
+      /// #   let config = Config {
+      /// #     address: "127.0.0.1".parse().unwrap(),
+      /// #     port: 8080,
+      /// #     ..Config::default()
+      /// #   };
+      /// #
+      /// #   let rocket = rocket::custom(config).mount("/", routes![index, voted]).ignite().await.unwrap();
+      /// #   let shutdown = rocket.shutdown();
+      /// #
+      /// #   let local_immature_thread_closure = Arc::new(Notify::const_new());
+      /// #   let thread_immature_thread_closure = Arc::clone(&local_immature_thread_closure);
+      /// #
+      /// #   let test_thread = tokio::spawn(async move {
+      /// #     tokio::select! {
+      /// #       _ = thread_immature_thread_closure.notified() => {
+      /// #         return Ok(None);
+      /// #       }
+      /// #
+      /// #       result = test_request() => {
+      /// #         shutdown.notify();
+      /// #
+      /// #         return result.map(Some);
+      /// #       }
+      /// #     }
+      /// #   });
+      /// #
+      /// #   if let Err(why) = rocket.launch().await {
+      /// #     local_immature_thread_closure.notify_one();
+      /// #
+      /// #     panic!("Server error: {why:?}");
+      /// #   }
+      /// #
+      /// #   let test_response = test_thread.await.unwrap().unwrap().unwrap();
+      /// #
+      /// #   assert_eq!(test_response.status(), reqwest::StatusCode::NO_CONTENT);
+      /// # }
       /// ```
       #[must_use]
       #[inline(always)]
@@ -120,7 +269,9 @@ cfg_if::cfg_if! {
     /// An async trait for adding an on-vote event handler to your application logic.
     ///
     /// It's described as follows (without [`async_trait`]'s macro expansion):
-    /// ```rust,no_run
+    /// ```rust
+    /// # use topgg::Vote;
+    /// #
     /// #[async_trait::async_trait]
     /// pub trait VoteHandler: Send + Sync + 'static {
     ///   async fn voted(&self, vote: Vote);

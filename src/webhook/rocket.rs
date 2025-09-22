@@ -7,7 +7,7 @@ use rocket::{
 };
 
 #[cfg_attr(docsrs, doc(cfg(feature = "rocket")))]
-#[rocket::async_trait]
+#[async_trait::async_trait]
 impl<'r> FromData<'r> for IncomingVote {
   type Error = ();
 

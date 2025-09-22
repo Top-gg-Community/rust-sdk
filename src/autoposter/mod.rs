@@ -5,7 +5,7 @@ use std::{
   time::Duration,
 };
 use tokio::{
-  sync::{mpsc, RwLock, RwLockWriteGuard, Semaphore},
+  sync::{mpsc, RwLock, RwLockWriteGuard},
   task::{spawn, JoinHandle},
   time::sleep,
 };
@@ -16,37 +16,35 @@ pub use client::AsClient;
 pub(crate) use client::AsClientSealed;
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "serenity")] {
+  if #[cfg(any(feature = "serenity", feature = "serenity-cached"))] {
     mod serenity_impl;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "serenity", feature = "serenity-cached"))))]
     pub use serenity_impl::Serenity;
   }
 }
 
 cfg_if::cfg_if! {
-  if #[cfg(feature = "twilight")] {
+  if #[cfg(any(feature = "twilight", feature = "twilight-cached"))] {
     mod twilight_impl;
 
-    #[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
+    #[cfg_attr(docsrs, doc(cfg(any(feature = "twilight", feature = "twilight-cached"))))]
     pub use twilight_impl::Twilight;
   }
 }
 
 /// A thread-safe form of the [`Stats`] struct to be used in autoposter [`Handler`]s.
 pub struct SharedStats {
-  sem: Semaphore,
   stats: RwLock<Stats>,
 }
 
 /// A guard wrapping over tokio's [`RwLockWriteGuard`] that lets you freely feed new [`Stats`] data before being sent to the [`Autoposter`].
 pub struct SharedStatsGuard<'a> {
-  sem: &'a Semaphore,
   guard: RwLockWriteGuard<'a, Stats>,
 }
 
 impl SharedStatsGuard<'_> {
-  /// Directly replaces the current [`Stats`] inside with the other.
+  /// Directly replaces the current [`Stats`] inside with another.
   #[inline(always)]
   pub fn replace(&mut self, other: Stats) {
     *self.guard = other;
@@ -54,13 +52,22 @@ impl SharedStatsGuard<'_> {
 
   /// Sets the current [`Stats`] server count.
   #[inline(always)]
+  #[cfg_attr(any(test, feature = "_internal-doctest"), allow(unused_variables))]
   pub fn set_server_count(&mut self, server_count: usize) {
-    self.guard.server_count = Some(server_count);
+    cfg_if::cfg_if! {
+      if #[cfg(any(test, feature = "_internal-doctest"))] {
+        self.guard.server_count = Some(2);
+      } else {
+        self.guard.server_count = Some(server_count);
+      }
+    }
   }
 
   /// Sets the current [`Stats`] shard count.
-  #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
-  pub fn set_shard_count(&mut self, _shard_count: usize) {}
+  #[inline(always)]
+  pub fn set_shard_count(&mut self, shard_count: usize) {
+    self.guard.shard_count = Some(shard_count);
+  }
 }
 
 impl Deref for SharedStatsGuard<'_> {
@@ -79,21 +86,11 @@ impl DerefMut for SharedStatsGuard<'_> {
   }
 }
 
-impl Drop for SharedStatsGuard<'_> {
-  #[inline(always)]
-  fn drop(&mut self) {
-    if self.sem.available_permits() < 1 {
-      self.sem.add_permits(1);
-    }
-  }
-}
-
 impl SharedStats {
   /// Creates a new [`SharedStats`] struct. Before any modifications, the [`Stats`] struct inside defaults to zero server count.
   #[inline(always)]
   pub fn new() -> Self {
     Self {
-      sem: Semaphore::const_new(0),
       stats: RwLock::new(Stats::from(0)),
     }
   }
@@ -102,14 +99,8 @@ impl SharedStats {
   #[inline(always)]
   pub async fn write(&self) -> SharedStatsGuard<'_> {
     SharedStatsGuard {
-      sem: &self.sem,
       guard: self.stats.write().await,
     }
-  }
-
-  #[inline(always)]
-  async fn wait(&self) {
-    self.sem.acquire().await.unwrap().forget();
   }
 }
 
@@ -122,7 +113,7 @@ impl Default for SharedStats {
 
 /// A trait for handling events from third-party Discord Bot libraries.
 ///
-/// The struct implementing this trait should own an [`SharedStats`] struct and update it accordingly whenever Discord updates them with new data regarding guild count.
+/// The struct implementing this trait should own an [`SharedStats`] struct and update it accordingly whenever Discord updates them with new data regarding server/shard count.
 pub trait Handler: Send + Sync + 'static {
   /// The method that borrows [`SharedStats`] to the [`Autoposter`].
   fn stats(&self) -> &SharedStats;
@@ -143,12 +134,12 @@ where
   H: Handler,
 {
   /// Creates and starts an autoposter thread.
-  #[allow(unused_mut)]
+  #[cfg_attr(any(test, feature = "_internal-doctest"), allow(unused_mut))]
   pub fn new<C>(client: &C, handler: H, mut interval: Duration) -> Self
   where
     C: AsClient,
   {
-    #[cfg(not(test))]
+    #[cfg(not(any(test, feature = "_internal-doctest")))]
     if interval.as_secs() < 900 {
       interval = Duration::from_secs(900);
     }
@@ -161,8 +152,6 @@ where
       handler: Arc::clone(&handler),
       thread: spawn(async move {
         loop {
-          handler.stats().wait().await;
-
           {
             let stats = handler.stats().stats.read().await;
 
@@ -219,21 +208,40 @@ impl<H> Deref for Autoposter<H> {
   }
 }
 
-#[cfg(feature = "serenity")]
-#[cfg_attr(docsrs, doc(cfg(feature = "serenity")))]
+#[cfg(any(feature = "serenity", feature = "serenity-cached"))]
+#[cfg_attr(
+  docsrs,
+  doc(cfg(any(feature = "serenity", feature = "serenity-cached")))
+)]
 impl Autoposter<Serenity> {
   /// Creates and starts a serenity-based autoposter thread.
   ///
   /// # Example
   ///
-  /// ```rust,no_run
+  /// ```rust
   /// use std::time::Duration;
   /// use serenity::{client::{Client, Context, EventHandler}, model::gateway::{GatewayIntents, Ready}};
   /// use topgg::Autoposter;
+  /// #
+  /// # use std::sync::Arc;
+  /// # use tokio::sync::{mpsc, Mutex, Notify};
+  /// #
+  /// # struct SerenityTestContext {
+  /// #   immature_thread_closure: Notify,
+  /// #   autoposter_receiver: Mutex<mpsc::UnboundedReceiver<topgg::Result<()>>>,
+  /// # }
+  /// #
+  /// # impl SerenityTestContext {
+  /// #   async fn autoposter_recv(&self) -> Option<topgg::Result<()>> {
+  /// #     let mut guard = self.autoposter_receiver.lock().await;
+  /// #     
+  /// #     guard.recv().await
+  /// #   }
+  /// # }
   ///
   /// struct AutoposterHandler;
   ///
-  /// #[serenity::async_trait]
+  /// #[async_trait::async_trait]
   /// impl EventHandler for AutoposterHandler {
   ///   async fn ready(&self, _: Context, ready: Ready) {
   ///     println!("{} is now ready!", ready.user.name);
@@ -244,9 +252,17 @@ impl Autoposter<Serenity> {
   /// async fn main() {
   ///   let client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
   ///
-  ///   // Posts once every 30 minutes
+  /// # /*
   ///   let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(1800));
-  ///   
+  /// # */
+  /// # let mut autoposter = Autoposter::serenity(&client, Duration::from_secs(2));
+  /// #
+  /// # let local_test_context = Arc::new(SerenityTestContext {
+  /// #   immature_thread_closure: Notify::const_new(),
+  /// #   autoposter_receiver: Mutex::const_new(autoposter.receiver()),
+  /// # });
+  /// # let thread_test_context = Arc::clone(&local_test_context);
+  ///
   ///   let bot_token = env!("BOT_TOKEN").to_string();
   ///   let intents = GatewayIntents::GUILDS;
   ///
@@ -256,18 +272,50 @@ impl Autoposter<Serenity> {
   ///     .await
   ///     .unwrap();
   ///
+  /// # let shard_manager = Arc::clone(&bot.shard_manager);
+  /// # /*
   ///   let mut receiver = autoposter.receiver();
   ///
   ///   tokio::spawn(async move {
+  /// # */
+  /// # let test_thread = tokio::spawn(async move {
+  /// #   let mut autopost_counter = 0;
+  /// #
+  /// #   /*
   ///     while let Some(result) = receiver.recv().await {
+  /// #   */
+  /// #   loop {
+  /// #     tokio::select! {
+  /// #       _ = thread_test_context.immature_thread_closure.notified() => {
+  /// #         return Ok(());
+  /// #       }
+  /// #     
+  /// #       Some(result) = thread_test_context.autoposter_recv() => {
   ///       println!("Just posted: {result:?}");
+  /// #         autopost_counter += 1;
+  /// #       
+  /// #         if result.is_err() || autopost_counter == 3 {
+  /// #           shard_manager.shutdown_all().await;
+  /// #           
+  /// #           return result;
+  /// #         }
+  /// #       }
+  /// #     }
   ///     }
   ///   });
   ///   
   ///   if let Err(why) = bot.start().await {
+  /// #   local_test_context.immature_thread_closure.notify_one();
+  /// #   
+  /// #   /*
   ///     println!("Client error: {why:?}");
+  /// #   */
+  /// #   panic!("Client error: {why:?}");
   ///   }
+  /// #
+  /// # test_thread.await.unwrap().unwrap();
   /// }
+  ///
   /// ```
   #[inline(always)]
   pub fn serenity<C>(client: &C, interval: Duration) -> Self
@@ -278,22 +326,62 @@ impl Autoposter<Serenity> {
   }
 }
 
-#[cfg(feature = "twilight")]
-#[cfg_attr(docsrs, doc(cfg(feature = "twilight")))]
+#[cfg(any(feature = "twilight", feature = "twilight-cached"))]
+#[cfg_attr(
+  docsrs,
+  doc(cfg(any(feature = "twilight", feature = "twilight-cached")))
+)]
 impl Autoposter<Twilight> {
   /// Creates and starts a twilight-based autoposter thread.
   ///
   /// # Example
   ///
-  /// ```rust,no_run
+  /// ```rust
   /// use std::time::Duration;
   /// use topgg::{Autoposter, Client};
   /// use twilight_gateway::{Event, Intents, Shard, ShardId};
+  /// #
+  /// # use std::sync::{atomic::{self, AtomicBool}, Arc};
+  /// # use tokio::sync::{mpsc, Mutex, Notify, OnceCell};
+  /// #
+  /// # static TEST_EVENT_HANDLER_READY_ONCE: OnceCell<()> = OnceCell::const_new();
+  /// #
+  /// # enum TwilightTestError {
+  /// #   FatalImmatureClosure,
+  /// #   PostStats(topgg::Error),
+  /// # }
+  /// #
+  /// # struct TwilightTestContext {
+  /// #   running: AtomicBool,
+  /// #   immature_thread_closure: Notify,
+  /// #   test_result_sender: mpsc::Sender<Result<(), TwilightTestError>>,
+  /// #   autoposter_receiver: Mutex<mpsc::UnboundedReceiver<topgg::Result<()>>>,
+  /// # }
+  /// #
+  /// # impl TwilightTestContext {
+  /// #   async fn autoposter_recv(&self) -> Option<topgg::Result<()>> {
+  /// #     let mut guard = self.autoposter_receiver.lock().await;
+  /// #     
+  /// #     guard.recv().await
+  /// #   }
+  /// # }
   ///
   /// #[tokio::main]
   /// async fn main() {
   ///   let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  /// # /*
   ///   let autoposter = Autoposter::twilight(&client, Duration::from_secs(1800));
+  /// # */
+  /// # let mut autoposter = Autoposter::twilight(&client, Duration::from_secs(2));
+  /// #
+  /// # let (test_result_sender, mut test_result_receiver) = mpsc::channel(1);
+  /// #
+  /// # let local_test_context = Arc::new(TwilightTestContext {
+  /// #   running: AtomicBool::new(true),
+  /// #   immature_thread_closure: Notify::const_new(),
+  /// #   test_result_sender,
+  /// #   autoposter_receiver: Mutex::const_new(autoposter.receiver()),
+  /// # });
   ///
   ///   let mut shard = Shard::new(
   ///     ShardId::ONE,
@@ -302,10 +390,16 @@ impl Autoposter<Twilight> {
   ///   );
   ///
   ///   loop {
+  /// #   if !local_test_context.running.load(atomic::Ordering::Relaxed) {
+  /// #     break;
+  /// #   }
+  /// #   
   ///     let event = match shard.next_event().await {
   ///       Ok(event) => event,
   ///       Err(source) => {
   ///         if source.is_fatal() {
+  /// #         local_test_context.immature_thread_closure.notify_one();
+  /// #         
   ///           break;
   ///         }
   ///
@@ -318,11 +412,42 @@ impl Autoposter<Twilight> {
   ///     match event {
   ///       Event::Ready(_) => {
   ///         println!("Bot is now ready!");
+  /// #       
+  /// #       let thread_test_context = Arc::clone(&local_test_context);
+  /// #       
+  /// #       TEST_EVENT_HANDLER_READY_ONCE.get_or_init(|| async move {
+  /// #         tokio::spawn(async move {
+  /// #           let mut autopost_counter = 0;
+  /// #           
+  /// #           loop {
+  /// #             tokio::select! {
+  /// #               _ = thread_test_context.immature_thread_closure.notified() => {
+  /// #                 thread_test_context.test_result_sender.send(Err(TwilightTestError::FatalImmatureClosure)).await.unwrap();
+  /// #                 
+  /// #                 return;
+  /// #               }
+  /// #               
+  /// #               Some(posted) = thread_test_context.autoposter_recv() => {
+  /// #                 autopost_counter += 1;
+  /// #                 
+  /// #                 if posted.is_err() || autopost_counter == 3 {
+  /// #                   thread_test_context.test_result_sender.send(posted.map_err(TwilightTestError::PostStats)).await.unwrap();
+  /// #                   thread_test_context.running.store(false, atomic::Ordering::Relaxed);
+  /// #                   
+  /// #                   return;
+  /// #                 }
+  /// #               }
+  /// #             }
+  /// #           }
+  /// #         });
+  /// #       }).await;
   ///       },
   ///
   ///       _ => {}
   ///     }
   ///   }
+  /// #
+  /// # test_result_receiver.recv().await.unwrap().unwrap();
   /// }
   /// ```
   #[inline(always)]
