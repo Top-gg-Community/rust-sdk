@@ -47,7 +47,7 @@ where
 }
 
 /// Creates a new axum [`Router`] for receiving vote events.
-/// 
+///
 /// # Example
 ///
 /// Basic usage:

@@ -1,6 +1,12 @@
-use crate::{snowflake, util};
+use crate::{snowflake, util, Client};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Deserializer, Serialize};
+use std::{
+  cmp::min,
+  fmt::Write,
+  future::{Future, IntoFuture},
+  pin::Pin,
+};
 
 #[inline(always)]
 pub(crate) fn deserialize_support_server<'de, D>(
@@ -14,7 +20,7 @@ where
 }
 
 util::debug_struct! {
-  /// A struct representing a Discord Bot listed on Top.gg.
+  /// A Discord Bot listed on Top.gg.
   #[must_use]
   #[derive(Clone, Deserialize)]
   Bot {
@@ -31,7 +37,7 @@ util::debug_struct! {
       username: String,
 
       /// This bot's discriminator.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       discriminator: String,
 
@@ -67,17 +73,17 @@ util::debug_struct! {
       owners: Vec<u64>,
 
       /// This bot's guild IDs.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       guilds: Vec<u64>,
 
       /// This bot's banner image URL.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       banner_url: Option<String>,
 
       /// This bot's approval date.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "Actually refers to submission date. Use `submitted_at` instead.")]
       approved_at: DateTime<Utc>,
 
@@ -86,12 +92,12 @@ util::debug_struct! {
       submitted_at: DateTime<Utc>,
 
       /// Whether this bot is certified or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       is_certified: bool,
 
       /// This bot's shards.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
       shards: Vec<usize>,
 
@@ -169,8 +175,13 @@ util::debug_struct! {
   }
 }
 
+#[derive(Deserialize)]
+pub(crate) struct Bots {
+  pub(crate) results: Vec<Bot>,
+}
+
 util::debug_struct! {
-  /// A struct representing a Discord bot's statistics.
+  /// A Discord bot's statistics.
   ///
   /// # Example
   ///
@@ -256,4 +267,104 @@ impl From<usize> for Stats {
 #[derive(Deserialize)]
 pub(crate) struct IsWeekend {
   pub(crate) is_weekend: bool,
+}
+
+/// Query configuration for [`get_bots`][crate::Client::get_bots].
+#[must_use]
+pub struct GetBots<'a> {
+  client: &'a Client,
+  query: String,
+  sort: Option<&'static str>,
+}
+
+macro_rules! get_bots_method {
+  ($(
+    $(#[$details:meta])*
+    $input_name:ident: $input_type:ty $(= $property:ident($($format:tt)*))?;
+  )*) => {$(
+    $(#[$details])*
+    #[allow(unused, unused_mut)]
+    pub fn $input_name(mut self, $input_name: $input_type) -> Self {
+      $(write!(&mut self.$property, $($format)*).unwrap();)?
+      self
+    }
+  )*};
+}
+
+macro_rules! get_bots_sort {
+  ($(
+    $(#[$details:meta])*
+    $func_name:ident: $api_name:ident,
+  )*) => {$(
+    $(#[$details])*
+    pub fn $func_name(mut self) -> Self {
+      self.sort.replace(stringify!($api_name));
+      self
+    }
+  )*};
+}
+
+impl<'a> GetBots<'a> {
+  #[inline(always)]
+  pub(crate) fn new(client: &'a Client) -> Self {
+    Self {
+      client,
+      query: String::from('?'),
+      sort: None,
+    }
+  }
+
+  get_bots_sort! {
+    /// Sorts results based on each bot's ID.
+    sort_by_id: id,
+
+    /// Sorts results based on each bot's approval date.
+    sort_by_approval_date: date,
+
+    /// Sorts results based on each bot's monthly vote count.
+    sort_by_monthly_votes: monthlyPoints,
+  }
+
+  get_bots_method! {
+    /// Sets the maximum amount of bots to be queried. This cannot be more than 500.
+    limit: u16 = query("limit={}&", min(limit, 500));
+
+    /// Sets the amount of bots to be skipped during the query. This cannot be more than 499.
+    skip: u16 = query("offset={}&", min(skip, 499));
+
+    /// Queries only bots that has this username.
+    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+    username: &str;
+
+    /// Queries only bots that has this prefix.
+    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+    prefix: &str;
+
+    /// Queries only bots that has this vote count.
+    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+    votes: usize;
+
+    /// Queries only bots that has this monthly vote count.
+    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+    monthly_votes: usize;
+
+    /// Queries only bots that has this Top.gg vanity URL.
+    #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
+    vanity: &str;
+  }
+}
+
+impl<'a> IntoFuture for GetBots<'a> {
+  type Output = crate::Result<Vec<Bot>>;
+  type IntoFuture = Pin<Box<dyn Future<Output = Self::Output> + Send + 'a>>;
+
+  fn into_future(self) -> Self::IntoFuture {
+    let mut query = self.query;
+
+    if let Some(sort) = self.sort {
+      write!(&mut query, "sort={sort}&").unwrap();
+    }
+
+    Box::pin(self.client.get_bots_inner(query))
+  }
 }

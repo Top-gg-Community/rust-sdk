@@ -1,4 +1,4 @@
-use crate::{snowflake, util};
+use crate::snowflake;
 use serde::{Deserialize, Deserializer};
 use std::collections::HashMap;
 
@@ -33,7 +33,7 @@ where
   )
 }
 
-/// A struct representing a dispatched Top.gg bot/server vote event.
+/// A dispatched Top.gg bot/server vote event.
 #[must_use]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
@@ -50,7 +50,7 @@ pub struct Vote {
   pub voter_id: u64,
 
   /// Whether this vote's receiver is a server or not (bot otherwise).
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   #[deprecated(since = "1.5.0", note = "No longer supported.")]
   pub is_server: bool,
 
@@ -70,7 +70,7 @@ pub struct Vote {
 
 cfg_if::cfg_if! {
   if #[cfg(any(feature = "actix-web", feature = "rocket"))] {
-    /// A struct that represents an **unauthenticated** request containing a [`Vote`] data.
+    /// An **unauthenticated** request containing a [`Vote`] data.
     ///
     /// To authenticate this structure with a valid password and consume the [`Vote`] data inside of it, see the [`authenticate`][IncomingVote::authenticate] method.
     #[must_use]

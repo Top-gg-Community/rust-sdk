@@ -2,76 +2,76 @@ use crate::{snowflake, util};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 
-/// A struct representing a user's social links.
+/// A user's social links.
 #[allow(clippy::doc_markdown)]
 #[derive(Clone, Debug, Deserialize)]
 #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
 pub struct Socials {
   /// This user's GitHub account URL.
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   pub github: Option<String>,
 
   /// This user's Instagram account URL.
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   pub instagram: Option<String>,
 
   /// This user's Reddit account URL.
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   pub reddit: Option<String>,
 
   /// This user's Twitter account URL.
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   pub twitter: Option<String>,
 
   /// This user's YouTube channel URL.
-  #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+  #[serde(skip)]
   pub youtube: Option<String>,
 }
 
 util::debug_struct! {
-  /// A struct representing a user logged into Top.gg.
+  /// A user logged into Top.gg.
   #[derive(Clone, Deserialize)]
   #[deprecated(since = "1.5.0", note = "No longer supported by API v0.")]
   User {
     public {
       /// This user's ID.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       id: u64,
 
       /// This user's username.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       username: String,
 
       /// The user's bio.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       bio: Option<String>,
 
       /// This user's profile banner image.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       banner: Option<String>,
 
       /// This user's social links.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       socials: Option<Socials>,
 
       /// Whether this user is a Top.gg supporter or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       is_supporter: bool,
 
       /// Whether this user is a Top.gg certified developer or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       is_certified_dev: bool,
 
       /// Whether this user is a Top.gg moderator or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       is_moderator: bool,
 
       /// Whether this user is a Top.gg website moderator or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       is_web_moderator: bool,
 
       /// Whether this user is a Top.gg website administrator or not.
-      #[serde(default, deserialize_with = "util::deserialize_deprecated")]
+      #[serde(skip)]
       is_admin: bool,
     }
 
@@ -97,7 +97,7 @@ pub(crate) struct Voted {
 }
 
 util::debug_struct! {
-  /// A struct representing a user who has voted on a Discord bot listed on Top.gg. (See [`Client::get_voters`][crate::Client::get_voters])
+  /// A user who has voted on a Discord bot listed on Top.gg. (See [`Client::get_voters`][crate::Client::get_voters])
   #[must_use]
   #[derive(Clone, Deserialize)]
   Voter {

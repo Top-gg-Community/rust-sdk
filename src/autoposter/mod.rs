@@ -33,7 +33,7 @@ cfg_if::cfg_if! {
   }
 }
 
-/// A struct representing a thread-safe form of the [`Stats`] struct to be used in autoposter [`Handler`]s.
+/// A thread-safe form of the [`Stats`] struct to be used in autoposter [`Handler`]s.
 pub struct SharedStats {
   sem: Semaphore,
   stats: RwLock<Stats>,
