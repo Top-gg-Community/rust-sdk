@@ -393,7 +393,7 @@ impl Client {
     GetBots::new(self)
   }
 
-  /// Checks if a Top.gg user has voted for your Discord bot in the past 12 hours.
+  /// Checks if a Top.gg user has voted for your project in the past 12 hours.
   ///
   /// # Panics
   ///
