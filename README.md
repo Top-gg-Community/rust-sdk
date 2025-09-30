@@ -180,7 +180,7 @@ async fn main() {
   let topgg_client = topgg::Client::new(env!("TOPGG_TOKEN").to_string());
   let autoposter = Autoposter::serenity(&topgg_client, Duration::from_secs(1800));
   
-  let bot_token = env!("DISCORD_TOKEN").to_string();
+  let bot_token = env!("BOT_TOKEN").to_string();
   let intents = GatewayIntents::GUILD_MESSAGES | GatewayIntents::GUILDS | GatewayIntents::MESSAGE_CONTENT;
 
   let mut client = Client::builder(&bot_token, intents)
@@ -224,7 +224,7 @@ async fn main() {
 
   let mut shard = Shard::new(
     ShardId::ONE,
-    env!("DISCORD_TOKEN").to_string(),
+    env!("BOT_TOKEN").to_string(),
     Intents::GUILD_MEMBERS | Intents::GUILDS,
   );
 
