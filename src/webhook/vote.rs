@@ -33,11 +33,11 @@ where
   )
 }
 
-/// A dispatched Top.gg bot/server vote event.
+/// A dispatched Top.gg project vote event.
 #[must_use]
 #[derive(Clone, Debug, Deserialize)]
 pub struct Vote {
-  /// The ID of the bot/server that received a vote.
+  /// The ID of the project that received a vote.
   #[serde(
     deserialize_with = "snowflake::deserialize",
     alias = "bot",
