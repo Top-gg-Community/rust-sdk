@@ -255,7 +255,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>actix-web</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>actix-web</code></b>: Writing an <a href="https://actix.rs/"><code>actix-web</code></a> webhook for listening to your project's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -302,7 +302,7 @@ async fn main() -> io::Result<()> {
 
 </details>
 <details>
-<summary><b><code>axum</code></b>: Writing an <a href="https://crates.io/crates/axum"><code>axum</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>axum</code></b>: Writing an <a href="https://crates.io/crates/axum"><code>axum</code></a> webhook for listening to your project's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -351,7 +351,7 @@ async fn main() {
 
 </details>
 <details>
-<summary><b><code>rocket</code></b>: Writing a <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>rocket</code></b>: Writing a <a href="https://rocket.rs"><code>rocket</code></a> webhook for listening to your project's vote events</summary>
 
 In your `Cargo.toml`:
 
@@ -398,7 +398,7 @@ fn main() {
 
 </details>
 <details>
-<summary><b><code>warp</code></b>: Writing a <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your bot/server's vote events</summary>
+<summary><b><code>warp</code></b>: Writing a <a href="https://crates.io/crates/warp"><code>warp</code></a> webhook for listening to your project's vote events</summary>
 
 In your `Cargo.toml`:
 

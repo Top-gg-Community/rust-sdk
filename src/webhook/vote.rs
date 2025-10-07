@@ -54,7 +54,7 @@ pub struct Vote {
   #[deprecated(since = "1.5.0", note = "No longer supported.")]
   pub is_server: bool,
 
-  /// Whether this vote is just a test coming from the bot/server owner or not. Most of the time this would be `false`.
+  /// Whether this vote is just a test coming from the project owner. Most of the time this would be `false`.
   #[serde(deserialize_with = "deserialize_is_test", rename = "type")]
   pub is_test: bool,
 
@@ -63,7 +63,7 @@ pub struct Vote {
   #[serde(default, rename = "isWeekend")]
   pub is_weekend: bool,
 
-  /// query strings found on the vote page.
+  /// Query strings found on the vote page.
   #[serde(default, deserialize_with = "deserialize_query_string")]
   pub query: HashMap<String, String>,
 }

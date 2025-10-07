@@ -52,23 +52,23 @@ util::debug_struct! {
       #[serde(skip)]
       socials: Option<Socials>,
 
-      /// Whether this user is a Top.gg supporter or not.
+      /// Whether this user is a Top.gg supporter.
       #[serde(skip)]
       is_supporter: bool,
 
-      /// Whether this user is a Top.gg certified developer or not.
+      /// Whether this user is a Top.gg certified developer.
       #[serde(skip)]
       is_certified_dev: bool,
 
-      /// Whether this user is a Top.gg moderator or not.
+      /// Whether this user is a Top.gg moderator.
       #[serde(skip)]
       is_moderator: bool,
 
-      /// Whether this user is a Top.gg website moderator or not.
+      /// Whether this user is a Top.gg website moderator.
       #[serde(skip)]
       is_web_moderator: bool,
 
-      /// Whether this user is a Top.gg website administrator or not.
+      /// Whether this user is a Top.gg website administrator.
       #[serde(skip)]
       is_admin: bool,
     }

@@ -88,7 +88,7 @@ util::debug_struct! {
       #[serde(rename = "date")]
       submitted_at: DateTime<Utc>,
 
-      /// Whether this bot is certified or not.
+      /// Whether this bot is certified.
       #[serde(skip)]
       is_certified: bool,
 
@@ -422,7 +422,7 @@ impl<'a> GetBots<'a> {
     /// Queries only bots that has this monthly vote count.
     monthly_votes: usize = search("monthlyPoints%3A%20{monthly_votes}%20");
 
-    /// Queries only Top.gg certified bots or not.
+    /// Queries only Top.gg certified bots.
     certified: bool = search("certifiedBot%3A%20{certified}%20");
 
     /// Queries only bots that has this Top.gg vanity URL.
