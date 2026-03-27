@@ -1,62 +1,61 @@
-use crate::Incoming;
-use actix_web::{
-  dev::Payload,
-  error::{Error, ErrorBadRequest, ErrorUnauthorized},
-  web::Json,
-  FromRequest, HttpRequest,
-};
-use serde::de::DeserializeOwned;
+use super::IncomingPayload;
 use std::{
   future::Future,
   pin::Pin,
-  task::{ready, Context, Poll},
+  task::{Context, Poll, ready},
 };
 
+use actix_web::{
+  FromRequest, HttpRequest,
+  dev::Payload,
+  error::{Error, ErrorBadRequest, ErrorUnauthorized},
+};
+use futures_core::stream::Stream;
+
 #[doc(hidden)]
-pub struct IncomingFut<T: DeserializeOwned> {
+pub struct IncomingPayloadFut {
   req: HttpRequest,
-  json_fut: <Json<T> as FromRequest>::Future,
+  payload: Payload,
+  body: Vec<u8>,
 }
 
-impl<T> Future for IncomingFut<T>
-where
-  T: DeserializeOwned,
-{
-  type Output = Result<Incoming<T>, Error>;
+impl Future for IncomingPayloadFut {
+  type Output = Result<IncomingPayload, Error>;
 
   fn poll(mut self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<Self::Output> {
-    if let Ok(json) = ready!(Pin::new(&mut self.json_fut).poll(cx)) {
-      let headers = self.req.headers();
+    while let Some(body) = ready!(Pin::new(&mut self.payload).poll_next(cx)) {
+      match body {
+        Ok(body) => self.body.extend_from_slice(&body),
 
-      if let Some(authorization) = headers.get("Authorization") {
-        if let Ok(authorization) = authorization.to_str() {
-          return Poll::Ready(Ok(Incoming {
-            authorization: authorization.to_owned(),
-            data: json.into_inner(),
-          }));
-        }
+        Err(_) => return Poll::Ready(Err(ErrorBadRequest("400"))),
       }
-
-      return Poll::Ready(Err(ErrorUnauthorized("401")));
     }
 
-    Poll::Ready(Err(ErrorBadRequest("400")))
+    let headers = self.req.headers();
+
+    if let (Some(signature), Some(trace)) = (
+      headers.get("x-topgg-signature"),
+      headers.get("x-topgg-trace"),
+    ) && let (Ok(signature), Ok(trace)) = (signature.to_str(), trace.to_str())
+      && let Some(incoming) = IncomingPayload::new(signature, self.body.clone(), trace)
+    {
+      return Poll::Ready(Ok(incoming));
+    }
+
+    Poll::Ready(Err(ErrorUnauthorized("401")))
   }
 }
 
 #[cfg_attr(docsrs, doc(cfg(feature = "actix-web")))]
-impl<T> FromRequest for Incoming<T>
-where
-  T: DeserializeOwned,
-{
+impl FromRequest for IncomingPayload {
   type Error = Error;
-  type Future = IncomingFut<T>;
+  type Future = IncomingPayloadFut;
 
-  #[inline(always)]
   fn from_request(req: &HttpRequest, payload: &mut Payload) -> Self::Future {
-    IncomingFut {
+    IncomingPayloadFut {
       req: req.clone(),
-      json_fut: Json::from_request(req, payload),
+      payload: payload.take(),
+      body: vec![],
     }
   }
 }

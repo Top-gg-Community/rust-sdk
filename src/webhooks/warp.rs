@@ -1,36 +1,34 @@
-use super::Webhook;
-use serde::de::DeserializeOwned;
-use std::sync::Arc;
-use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
+use super::Payload;
+
+use bytes::Bytes;
+use warp::{Filter, Rejection, body, header, path};
 
 /// Creates a new warp [`Filter`] for receiving webhook events.
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use std::{net::SocketAddr, sync::Arc};
-/// use topgg::{VoteEvent, Webhook};
-/// use warp::Filter;
+/// use std::net::SocketAddr;
 ///
-/// struct MyVoteListener {}
-///
-/// #[async_trait::async_trait]
-/// impl Webhook<VoteEvent> for MyVoteListener {
-///   async fn callback(&self, vote: VoteEvent) {
-///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
-///   }
-/// }
+/// use warp::{http::StatusCode, reply, Filter};
 ///
 /// #[tokio::main]
 /// async fn main() {
-///   let state = Arc::new(MyVoteListener {});
-///
-///   // POST /votes
+///   // POST /webhook
 ///   let webhook = topgg::warp::webhook(
-///     "votes",
-///     env!("MY_TOPGG_WEBHOOK_SECRET").to_string(),
-///     Arc::clone(&state),
-///   );
+///     "webhook",
+///     env!("TOPGG_WEBHOOK_SECRET").to_string()
+///   ).then(|payload, _trace| async move {
+///     match payload {
+///       Some(payload) => {
+///         println!("{payload:?}");
+///
+///         reply::with_status("", StatusCode::NO_CONTENT)
+///       },
+///
+///       None => reply::with_status("Unauthorized", StatusCode::UNAUTHORIZED)
+///     }
+///   });
 ///
 ///   let routes = warp::get().map(|| "Hello, World!").or(webhook);
 ///
@@ -39,34 +37,20 @@ use warp::{body, header, http::StatusCode, path, Filter, Rejection, Reply};
 ///   warp::serve(routes).run(addr).await
 /// }
 /// ```
+#[must_use]
 #[cfg_attr(docsrs, doc(cfg(feature = "warp")))]
-pub fn webhook<D, T>(
+pub fn webhook(
   endpoint: &'static str,
-  password: String,
-  state: Arc<T>,
-) -> impl Filter<Extract = impl Reply, Error = Rejection> + Clone
-where
-  D: DeserializeOwned + Send,
-  T: Webhook<D>,
-{
-  let password = Arc::new(password);
-
+  secret: String,
+) -> impl Filter<Extract = (Option<Payload>, String), Error = Rejection> + Clone {
   warp::post()
     .and(path(endpoint))
-    .and(header("Authorization"))
-    .and(body::json())
-    .then(move |auth: String, data: D| {
-      let current_state = Arc::clone(&state);
-      let current_password = Arc::clone(&password);
-
-      async move {
-        if auth == *current_password {
-          current_state.callback(data).await;
-
-          StatusCode::NO_CONTENT
-        } else {
-          StatusCode::UNAUTHORIZED
-        }
-      }
+    .and(header("x-topgg-signature"))
+    .and(body::bytes())
+    .map(move |signature: String, body: Bytes| {
+      str::from_utf8(&body)
+        .ok()
+        .and_then(|body| Payload::new(&signature, body, &secret))
     })
+    .and(header("x-topgg-trace"))
 }

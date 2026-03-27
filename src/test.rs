@@ -1,5 +1,7 @@
-use crate::Client;
-use tokio::time::{sleep, Duration};
+use super::{Client, UserSource};
+
+use serde_json::json;
+use tokio::time::{Duration, sleep};
 
 macro_rules! delayed {
   ($($b:tt)*) => {
@@ -9,46 +11,40 @@ macro_rules! delayed {
 }
 
 #[tokio::test]
+#[allow(clippy::unreadable_literal)]
 async fn api() {
-  let client = Client::new(env!("TOPGG_TOKEN").to_string());
+  let client = Client::new(env!("TOPGG_TOKEN").into());
 
   delayed! {
-    let bot = client.get_bot(264811613708746752).await.unwrap();
-
-    assert_eq!(bot.name, "Luca");
-    assert_eq!(bot.id, 264811613708746752);
+    let _project = client.get_self().await.unwrap();
   }
 
   delayed! {
-    let _bots = client
-      .get_bots()
-      .limit(250)
-      .skip(50)
-      .sort_by_monthly_votes()
-      .await
-      .unwrap();
+    client.post_commands(json!([{
+      "id": "1",
+      "type": 1,
+      "application_id": "1",
+      "name": "test",
+      "description": "command description",
+      "default_member_permissions": "",
+      "version": "1"
+    }])).await.unwrap();
   }
 
   delayed! {
-    client
-    .post_bot_server_count(2)
-    .await
-    .unwrap();
+    let _vote = client.get_vote(UserSource::Discord(661200758510977084)).await.unwrap();
   }
 
   delayed! {
-    assert_eq!(client.get_bot_server_count().await.unwrap().unwrap(), 2);
+    let _vote = client.get_vote(UserSource::Topgg(8226924471638491136)).await.unwrap();
   }
 
   delayed! {
-    let _voters = client.get_voters(1).await.unwrap();
-  }
+    use chrono::{TimeZone, Utc};
 
-  delayed! {
-    let _has_voted = client.has_voted(661200758510977084).await.unwrap();
-  }
+    let since = Utc.with_ymd_and_hms(2026, 1, 1, 0, 0, 0).single().unwrap();
 
-  delayed! {
-    let _is_weekend = client.is_weekend().await.unwrap();
+    let _first_page = client.get_votes(since).await.unwrap();
+    let _second_page = _first_page.next().await.unwrap();
   }
 }

@@ -1,45 +1,69 @@
-use super::Webhook;
-use axum::{
-  extract::State,
-  http::{HeaderMap, StatusCode},
-  response::IntoResponse,
-  routing::post,
-  Router,
-};
-use serde::de::DeserializeOwned;
+use super::Payload;
 use std::sync::Arc;
 
-struct WebhookState<T> {
-  state: Arc<T>,
-  password: Arc<String>,
-}
+use axum::{
+  Router,
+  extract::State,
+  http::{HeaderMap, StatusCode},
+  response::{IntoResponse, Response},
+  routing::post,
+};
 
-impl<T> Clone for WebhookState<T> {
-  #[inline(always)]
-  fn clone(&self) -> Self {
-    Self {
-      state: Arc::clone(&self.state),
-      password: Arc::clone(&self.password),
-    }
-  }
-}
-
-/// Creates a new axum [`Router`] for receiving vote events.
+/// An axum webhook listener for listening to payloads.
 ///
 /// # Example
 ///
 /// ```rust,no_run
-/// use axum::{routing::get, Router};
-/// use topgg::{VoteEvent, Webhook};
-/// use tokio::net::TcpListener;
-/// use std::sync::Arc;
-///
-/// struct MyVoteListener {}
+/// struct MyTopggListener {}
 ///
 /// #[async_trait::async_trait]
-/// impl Webhook<VoteEvent> for MyVoteListener {
-///   async fn callback(&self, vote: VoteEvent) {
-///     println!("A user with the ID of {} has voted us on Top.gg!", vote.voter_id);
+/// impl topgg::axum::Listener for MyTopggListener {
+///   async fn callback(self: Arc<Self>, payload: Payload, _trace: &str) -> Response {
+///     println!("{payload:?}");
+///
+///     (StatusCode::NO_CONTENT, ()).into_response()
+///   }
+/// }
+/// ```
+#[async_trait::async_trait]
+#[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
+pub trait Listener: Send + Sync + 'static {
+  async fn callback(self: Arc<Self>, payload: Payload, trace: &str) -> Response;
+}
+
+struct WebhookState<T> {
+  state: Arc<T>,
+  secret: Arc<String>,
+}
+
+impl<T> Clone for WebhookState<T> {
+  fn clone(&self) -> Self {
+    Self {
+      state: self.state.clone(),
+      secret: self.secret.clone(),
+    }
+  }
+}
+
+/// Creates a new axum [`Router`] for receiving webhook payloads.
+///
+/// # Example
+///
+/// ```rust,no_run
+/// use topgg::Payload;
+/// use std::sync::Arc;
+///
+/// use axum::{http::status::StatusCode, response::{IntoResponse, Response}, routing::get, Router};
+/// use tokio::net::TcpListener;
+///
+/// struct MyTopggListener {}
+///
+/// #[async_trait::async_trait]
+/// impl topgg::axum::Listener for MyTopggListener {
+///   async fn callback(self: Arc<Self>, payload: Payload, _trace: &str) -> Response {
+///     println!("{payload:?}");
+///
+///     (StatusCode::NO_CONTENT, ()).into_response()
 ///   }
 /// }
 ///
@@ -49,11 +73,11 @@ impl<T> Clone for WebhookState<T> {
 ///
 /// #[tokio::main]
 /// async fn main() {
-///   let state = Arc::new(MyVoteListener {});
+///   let state = Arc::new(MyTopggListener {});
 ///
 ///   let router = Router::new().route("/", get(index)).nest(
-///     "/votes",
-///     topgg::axum::webhook(env!("MY_TOPGG_WEBHOOK_SECRET").to_string(), Arc::clone(&state)),
+///     "/webhook",
+///     topgg::axum::webhook(Arc::clone(&state), env!("TOPGG_WEBHOOK_SECRET").to_string()),
 ///   );
 ///
 ///   let listener = TcpListener::bind("127.0.0.1:8080").await.unwrap();
@@ -61,36 +85,31 @@ impl<T> Clone for WebhookState<T> {
 ///   axum::serve(listener, router).await.unwrap();
 /// }
 /// ```
-#[inline(always)]
 #[cfg_attr(docsrs, doc(cfg(feature = "axum")))]
-pub fn webhook<D, T>(password: String, state: Arc<T>) -> Router
+pub fn webhook<S>(state: Arc<S>, secret: String) -> Router
 where
-  D: DeserializeOwned + Send,
-  T: Webhook<D>,
+  S: Listener,
 {
   Router::new()
     .route(
       "/",
       post(
-        async |headers: HeaderMap, State(webhook): State<WebhookState<T>>, body: String| {
-          if let Some(authorization) = headers.get("Authorization") {
-            if let Ok(authorization) = authorization.to_str() {
-              if authorization == *(webhook.password) {
-                if let Ok(data) = serde_json::from_str(&body) {
-                  webhook.state.callback(data).await;
-
-                  return (StatusCode::NO_CONTENT, ()).into_response();
-                }
-              }
-            }
+        async |headers: HeaderMap, State(wrapped_state): State<WebhookState<S>>, body: String| {
+          if let Some(signature) = headers.get("x-topgg-signature")
+            && let Ok(signature) = signature.to_str()
+            && let Some(trace) = headers.get("x-topgg-trace")
+            && let Ok(trace) = trace.to_str()
+            && let Some(payload) = Payload::new(signature, &body, &wrapped_state.secret)
+          {
+            wrapped_state.state.callback(payload, trace).await
+          } else {
+            (StatusCode::UNAUTHORIZED, ()).into_response()
           }
-
-          (StatusCode::UNAUTHORIZED, ()).into_response()
         },
       ),
     )
     .with_state(WebhookState {
       state,
-      password: Arc::new(password),
+      secret: Arc::new(secret),
     })
 }

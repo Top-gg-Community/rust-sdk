@@ -1,31 +1,30 @@
-use crate::Incoming;
+use super::IncomingPayload;
+
 use rocket::{
-  data::{Data, FromData, Outcome},
+  data::{Data, FromData, Outcome, ToByteUnit},
   http::Status,
   request::Request,
-  serde::json::Json,
 };
-use serde::de::DeserializeOwned;
 
 #[cfg_attr(docsrs, doc(cfg(feature = "rocket")))]
 #[rocket::async_trait]
-impl<'r, T> FromData<'r> for Incoming<T>
-where
-  T: DeserializeOwned,
-{
+impl<'r> FromData<'r> for IncomingPayload {
   type Error = ();
 
   async fn from_data(request: &'r Request<'_>, data: Data<'r>) -> Outcome<'r, Self> {
     let headers = request.headers();
 
-    if let Some(authorization) = headers.get_one("Authorization") {
-      return match <Json<T> as FromData>::from_data(request, data).await {
-        Outcome::Success(data) => Outcome::Success(Self {
-          authorization: authorization.to_owned(),
-          data: data.into_inner(),
-        }),
-        _ => Outcome::Error((Status::BadRequest, ())),
-      };
+    if let (Some(signature), Some(trace)) = (
+      headers.get_one("x-topgg-signature"),
+      headers.get_one("x-topgg-trace"),
+    ) {
+      if let Ok(body) = data.open(2.mebibytes()).into_bytes().await
+        && let Some(output) = Self::new(signature, body.into_inner(), trace)
+      {
+        return Outcome::Success(output);
+      }
+
+      return Outcome::Error((Status::BadRequest, ()));
     }
 
     Outcome::Error((Status::Unauthorized, ()))
