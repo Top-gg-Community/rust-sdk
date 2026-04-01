@@ -1,33 +1,47 @@
-use crate::Incoming;
+use super::IncomingPayload;
+use std::time::Duration;
+
+use chrono::Utc;
 use rocket::{
-  data::{Data, FromData, Outcome},
+  data::{Data, FromData, Outcome, ToByteUnit},
   http::Status,
   request::Request,
-  serde::json::Json,
 };
-use serde::de::DeserializeOwned;
+use tokio::time::timeout;
 
 #[cfg_attr(docsrs, doc(cfg(feature = "rocket")))]
 #[rocket::async_trait]
-impl<'r, T> FromData<'r> for Incoming<T>
-where
-  T: DeserializeOwned,
-{
+impl<'r> FromData<'r> for IncomingPayload {
   type Error = ();
 
   async fn from_data(request: &'r Request<'_>, data: Data<'r>) -> Outcome<'r, Self> {
+    let now = Utc::now();
     let headers = request.headers();
 
-    if let Some(authorization) = headers.get_one("Authorization") {
-      return match <Json<T> as FromData>::from_data(request, data).await {
-        Outcome::Success(data) => Outcome::Success(Self {
-          authorization: authorization.to_owned(),
-          data: data.into_inner(),
-        }),
-        _ => Outcome::Error((Status::BadRequest, ())),
-      };
+    if let (Some(signature), Some(trace)) = (
+      headers.get_one("x-topgg-signature"),
+      headers.get_one("x-topgg-trace"),
+    ) {
+      match timeout(
+        Duration::from_secs(5),
+        data.open(2.mebibytes()).into_bytes(),
+      )
+      .await
+      {
+        Ok(Ok(body)) => {
+          if let Ok(body) = String::from_utf8(body.into_inner())
+            && let Some(payload) = Self::new(now, body, signature, trace)
+          {
+            return Outcome::Success(payload);
+          }
+        }
+
+        Err(_) => return Outcome::Error((Status::RequestTimeout, ())),
+
+        _ => {}
+      }
     }
 
-    Outcome::Error((Status::Unauthorized, ()))
+    Outcome::Error((Status::BadRequest, ()))
   }
 }
